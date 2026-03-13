@@ -76,6 +76,9 @@ interface StoreState {
   armstrongManutencoes: ArmstrongManutencao[];
   armstrongPCMAreas: ArmstrongPCMArea[];
   armstrongBacklog: ArmstrongBacklog[];
+  refrigeracaoManutencoes: ArmstrongManutencao[];
+  refrigeracaoPCMAreas: ArmstrongPCMArea[];
+  refrigeracaoBacklog: ArmstrongBacklog[];
   fetchAndaimes: () => Promise<void>;
   addAndaime: (andaime: Omit<Andaime, 'id' | 'status'>) => Promise<any>;
   approveAndaime: (id: number, password: string) => Promise<void>;
@@ -101,6 +104,18 @@ interface StoreState {
   updateArmstrongBacklog: (id: number, updates: Partial<ArmstrongBacklog>, password?: string) => Promise<void>;
   deleteArmstrongBacklog: (id: number, password: string) => Promise<void>;
   batchDeleteArmstrongBacklog: (ids: number[], password: string) => Promise<void>;
+
+  fetchRefrigeracao: () => Promise<void>;
+  addRefrigeracaoManutencao: (manutencao: Omit<ArmstrongManutencao, 'id'>) => Promise<void>;
+  updateRefrigeracaoManutencao: (id: number, updates: Partial<ArmstrongManutencao>, password?: string) => Promise<void>;
+  deleteRefrigeracaoManutencao: (id: number, password: string) => Promise<void>;
+  batchDeleteRefrigeracaoManutencoes: (ids: number[], password: string) => Promise<void>;
+  addRefrigeracaoPCMArea: (area: Omit<ArmstrongPCMArea, 'id'>) => Promise<void>;
+  deleteRefrigeracaoPCMArea: (id: number) => Promise<void>;
+  addRefrigeracaoBacklog: (item: Omit<ArmstrongBacklog, 'id'>) => Promise<void>;
+  updateRefrigeracaoBacklog: (id: number, updates: Partial<ArmstrongBacklog>, password?: string) => Promise<void>;
+  deleteRefrigeracaoBacklog: (id: number, password: string) => Promise<void>;
+  batchDeleteRefrigeracaoBacklog: (ids: number[], password: string) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -110,6 +125,9 @@ export const useStore = create<StoreState>((set, get) => ({
   armstrongManutencoes: [],
   armstrongPCMAreas: [],
   armstrongBacklog: [],
+  refrigeracaoManutencoes: [],
+  refrigeracaoPCMAreas: [],
+  refrigeracaoBacklog: [],
 
   fetchAndaimes: async () => {
     try {
@@ -301,11 +319,25 @@ export const useStore = create<StoreState>((set, get) => ({
         fetch('/api/armstrong/backlog')
       ]);
       
-      const [manutencoes, pcmAreas, backlog] = await Promise.all([
-        manutencoesRes.json(),
-        pcmAreasRes.json(),
-        backlogRes.json()
-      ]);
+      if (!manutencoesRes.ok || !pcmAreasRes.ok || !backlogRes.ok) {
+        throw new Error('Failed to fetch armstrong data from server');
+      }
+      
+      const manutencoes = await manutencoesRes.json().catch(async () => {
+        const text = await manutencoesRes.text();
+        console.error('Manutencoes response not JSON:', text);
+        return [];
+      });
+      const pcmAreas = await pcmAreasRes.json().catch(async () => {
+        const text = await pcmAreasRes.text();
+        console.error('PCM Areas response not JSON:', text);
+        return [];
+      });
+      const backlog = await backlogRes.json().catch(async () => {
+        const text = await backlogRes.text();
+        console.error('Backlog response not JSON:', text);
+        return [];
+      });
 
       set({ 
         armstrongManutencoes: Array.isArray(manutencoes) ? manutencoes : [],
@@ -318,11 +350,15 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   addArmstrongManutencao: async (manutencao) => {
-    await fetch('/api/armstrong/manutencoes', {
+    const res = await fetch('/api/armstrong/manutencoes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(manutencao),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add manutencao');
+    }
     get().fetchArmstrong();
   },
 
@@ -366,11 +402,15 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   addArmstrongPCMArea: async (area) => {
-    await fetch('/api/armstrong/pcm-areas', {
+    const res = await fetch('/api/armstrong/pcm-areas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(area),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add PCM area');
+    }
     get().fetchArmstrong();
   },
 
@@ -382,11 +422,15 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   addArmstrongBacklog: async (item) => {
-    await fetch('/api/armstrong/backlog', {
+    const res = await fetch('/api/armstrong/backlog', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add backlog item');
+    }
     get().fetchArmstrong();
   },
 
@@ -427,5 +471,155 @@ export const useStore = create<StoreState>((set, get) => ({
       throw new Error(error.error);
     }
     get().fetchArmstrong();
+  },
+
+  fetchRefrigeracao: async () => {
+    try {
+      const [manutencoesRes, pcmAreasRes, backlogRes] = await Promise.all([
+        fetch('/api/refrigeracao/manutencoes'),
+        fetch('/api/refrigeracao/pcm-areas'),
+        fetch('/api/refrigeracao/backlog')
+      ]);
+      
+      if (!manutencoesRes.ok || !pcmAreasRes.ok || !backlogRes.ok) {
+        throw new Error('Failed to fetch refrigeracao data from server');
+      }
+      
+      const manutencoes = await manutencoesRes.json().catch(() => []);
+      const pcmAreas = await pcmAreasRes.json().catch(() => []);
+      const backlog = await backlogRes.json().catch(() => []);
+
+      set({ 
+        refrigeracaoManutencoes: Array.isArray(manutencoes) ? manutencoes : [],
+        refrigeracaoPCMAreas: Array.isArray(pcmAreas) ? pcmAreas : [],
+        refrigeracaoBacklog: Array.isArray(backlog) ? backlog : []
+      });
+    } catch (error) {
+      console.error('Failed to fetch refrigeracao data:', error);
+    }
+  },
+
+  addRefrigeracaoManutencao: async (manutencao) => {
+    const res = await fetch('/api/refrigeracao/manutencoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(manutencao),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add manutencao');
+    }
+    get().fetchRefrigeracao();
+  },
+
+  updateRefrigeracaoManutencao: async (id, updates, password) => {
+    const res = await fetch(`/api/refrigeracao/manutencoes/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updates, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  deleteRefrigeracaoManutencao: async (id, password) => {
+    const res = await fetch(`/api/refrigeracao/manutencoes/${id}/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  batchDeleteRefrigeracaoManutencoes: async (ids, password) => {
+    const res = await fetch('/api/refrigeracao/manutencoes/batch-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  addRefrigeracaoPCMArea: async (area) => {
+    const res = await fetch('/api/refrigeracao/pcm-areas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(area),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add PCM area');
+    }
+    get().fetchRefrigeracao();
+  },
+
+  deleteRefrigeracaoPCMArea: async (id) => {
+    await fetch(`/api/refrigeracao/pcm-areas/${id}`, {
+      method: 'DELETE',
+    });
+    get().fetchRefrigeracao();
+  },
+
+  addRefrigeracaoBacklog: async (item) => {
+    const res = await fetch('/api/refrigeracao/backlog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add backlog item');
+    }
+    get().fetchRefrigeracao();
+  },
+
+  updateRefrigeracaoBacklog: async (id, updates, password) => {
+    const res = await fetch(`/api/refrigeracao/backlog/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updates, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  deleteRefrigeracaoBacklog: async (id, password) => {
+    const res = await fetch(`/api/refrigeracao/backlog/${id}/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  batchDeleteRefrigeracaoBacklog: async (ids, password) => {
+    const res = await fetch('/api/refrigeracao/backlog/batch-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
   },
 }));

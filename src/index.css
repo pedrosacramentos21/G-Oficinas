@@ -14,12 +14,16 @@
 
 @layer components {
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
+    height: 8px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 }

@@ -34,15 +34,15 @@ export default function SalaMotores() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col gap-8 animate-in fade-in duration-500 overflow-hidden">
+      <div className="shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">SALA DE MOTORES</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Gestão de intervenções e atividades</p>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 md:gap-6">
+          <div className="bg-white px-4 md:px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
             <div className="bg-green-50 p-2 rounded-lg">
               <DollarSign className="text-green-500" size={20} />
             </div>
@@ -54,7 +54,7 @@ export default function SalaMotores() {
 
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95 whitespace-nowrap"
           >
             <Plus size={20} />
             Nova Atividade
@@ -62,10 +62,10 @@ export default function SalaMotores() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-250px)]">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-hidden">
         {COLUMNS.map(column => (
-          <div key={column.id} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50">
-            <div className="flex items-center justify-between px-4 py-2">
+          <div key={column.id} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 min-h-0">
+            <div className="flex items-center justify-between px-4 py-2 shrink-0">
               <div className="flex items-center gap-2">
                 <div className={cn("w-2 h-2 rounded-full", column.color)} />
                 <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{column.name}</h2>

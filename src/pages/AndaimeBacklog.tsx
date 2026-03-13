@@ -28,13 +28,13 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
+    <div className="h-full flex flex-col gap-8 animate-in fade-in duration-500 overflow-hidden">
+      <div className="shrink-0">
         <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
         <p className="text-sm text-gray-500 font-medium mt-1">Gestão de solicitações por área operacional</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {COLUMNS.map(column => {
           const points = andaimes
             .filter(a => {
@@ -68,10 +68,10 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-hidden">
         {COLUMNS.map(column => (
-          <div key={column} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 h-[600px]">
-            <div className="flex items-center justify-between px-4 py-2">
+          <div key={column} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 min-h-0">
+            <div className="flex items-center justify-between px-4 py-2 shrink-0">
               <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{column}</h2>
               <span className="bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
                 {andaimes.filter(a => {

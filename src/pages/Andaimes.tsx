@@ -200,7 +200,7 @@ export default function Andaimes() {
             events={events}
             slotMinTime="00:00:00"
             slotMaxTime="23:59:59"
-            initialScrollTime="08:00:00"
+            scrollTime="08:00:00"
             allDaySlot={false}
             height="100%"
             expandRows={true}

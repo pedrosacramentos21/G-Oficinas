@@ -9,7 +9,7 @@ import {
   Plus, 
   ChevronLeft, 
   ChevronRight, 
-  Flame, 
+  Snowflake, 
   Calendar as CalendarIcon, 
   LayoutGrid, 
   X, 
@@ -31,22 +31,22 @@ import PasswordModal from '../components/PasswordModal';
 
 const STATUS_OPTIONS = ['Não planejada', 'Planejada', 'Concluída'];
 
-export default function Armstrong() {
+export default function Refrigeracao() {
   const { 
-    armstrongManutencoes, 
-    armstrongPCMAreas, 
-    armstrongBacklog,
-    fetchArmstrong,
-    addArmstrongManutencao,
-    updateArmstrongManutencao,
-    deleteArmstrongManutencao,
-    addArmstrongPCMArea,
-    deleteArmstrongPCMArea,
-    addArmstrongBacklog,
-    updateArmstrongBacklog,
-    deleteArmstrongBacklog,
-    batchDeleteArmstrongManutencoes,
-    batchDeleteArmstrongBacklog
+    refrigeracaoManutencoes, 
+    refrigeracaoPCMAreas, 
+    refrigeracaoBacklog,
+    fetchRefrigeracao,
+    addRefrigeracaoManutencao,
+    updateRefrigeracaoManutencao,
+    deleteRefrigeracaoManutencao,
+    addRefrigeracaoPCMArea,
+    deleteRefrigeracaoPCMArea,
+    addRefrigeracaoBacklog,
+    updateRefrigeracaoBacklog,
+    deleteRefrigeracaoBacklog,
+    batchDeleteRefrigeracaoManutencoes,
+    batchDeleteRefrigeracaoBacklog
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
@@ -83,8 +83,8 @@ export default function Armstrong() {
   });
 
   useEffect(() => {
-    fetchArmstrong();
-  }, [fetchArmstrong]);
+    fetchRefrigeracao();
+  }, [fetchRefrigeracao]);
 
   const handlePrev = () => {
     const calendarApi = calendarRef.current?.getApi();
@@ -136,18 +136,15 @@ export default function Armstrong() {
     e.preventDefault();
     try {
       if (selectedItem && modalType === 'details') {
-        // This is handled via password modal for existing interventions
         return;
       }
       
-      // Add to calendar
-      await addArmstrongManutencao(formData);
+      await addRefrigeracaoManutencao(formData);
       
-      // Sync with backlog
-      const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+      const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
       
       if (!selectedItem && !existingBacklog) {
-        await addArmstrongBacklog({
+        await addRefrigeracaoBacklog({
           area: formData.area,
           titulo: formData.titulo,
           impacto_energetico: formData.impacto_energetico,
@@ -156,16 +153,14 @@ export default function Armstrong() {
           status: formData.status
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
-        // This was a backlog item being scheduled
-        await updateArmstrongBacklog(selectedItem.id, { status: formData.status }, 'Itf2026');
+        await updateRefrigeracaoBacklog(selectedItem.id, { status: formData.status }, 'Itf2026');
       } else if (existingBacklog) {
-        // Update existing backlog item status
-        await updateArmstrongBacklog(existingBacklog.id, { status: formData.status }, 'Itf2026');
+        await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status }, 'Itf2026');
       }
 
       setIsModalOpen(false);
       setSelectedItem(null);
-      fetchArmstrong();
+      fetchRefrigeracao();
     } catch (err: any) {
       alert(err.message);
     }
@@ -174,29 +169,27 @@ export default function Armstrong() {
   const handlePasswordConfirm = async (password: string) => {
     try {
       if (passwordModal.action === 'edit') {
-        await updateArmstrongManutencao(passwordModal.id!, formData, password);
-        // Sync with backlog
-        const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+        await updateRefrigeracaoManutencao(passwordModal.id!, formData, password);
+        const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
         if (existingBacklog) {
-          await updateArmstrongBacklog(existingBacklog.id, { status: formData.status }, password);
+          await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status }, password);
         }
       } else if (passwordModal.action === 'delete') {
-        await deleteArmstrongManutencao(passwordModal.id!, password);
+        await deleteRefrigeracaoManutencao(passwordModal.id!, password);
       } else if (passwordModal.action === 'backlog-edit') {
-        await updateArmstrongBacklog(passwordModal.id!, formData, password);
-        // Sync with calendar
-        const existingManutencao = armstrongManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
+        await updateRefrigeracaoBacklog(passwordModal.id!, formData, password);
+        const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
         if (existingManutencao) {
-          await updateArmstrongManutencao(existingManutencao.id, { status: formData.status }, password);
+          await updateRefrigeracaoManutencao(existingManutencao.id, { status: formData.status }, password);
         }
       } else if (passwordModal.action === 'backlog-delete') {
-        await deleteArmstrongBacklog(passwordModal.id!, password);
+        await deleteRefrigeracaoBacklog(passwordModal.id!, password);
       } else if (passwordModal.action === 'batch-delete') {
-        await batchDeleteArmstrongManutencoes(passwordModal.ids!, password);
+        await batchDeleteRefrigeracaoManutencoes(passwordModal.ids!, password);
         setSelectionMode(false);
         setSelectedIds([]);
       } else if (passwordModal.action === 'backlog-batch-delete') {
-        await batchDeleteArmstrongBacklog(passwordModal.ids!, password);
+        await batchDeleteRefrigeracaoBacklog(passwordModal.ids!, password);
         setSelectionMode(false);
         setSelectedIds([]);
       }
@@ -220,26 +213,24 @@ export default function Armstrong() {
     const newStatus = destination.droppableId;
     const itemId = parseInt(draggableId);
     
-    const item = armstrongBacklog.find(b => b.id === itemId);
+    const item = refrigeracaoBacklog.find(b => b.id === itemId);
     if (!item || item.status === newStatus) return;
 
     try {
-      await updateArmstrongBacklog(itemId, { status: newStatus }, 'Itf2026');
+      await updateRefrigeracaoBacklog(itemId, { status: newStatus }, 'Itf2026');
       
-      // Sync with calendar if exists
-      const existingManutencao = armstrongManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
+      const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
       if (existingManutencao) {
-        await updateArmstrongManutencao(existingManutencao.id, { status: newStatus }, 'Itf2026');
+        await updateRefrigeracaoManutencao(existingManutencao.id, { status: newStatus }, 'Itf2026');
       }
       
-      fetchArmstrong();
+      fetchRefrigeracao();
     } catch (err: any) {
       alert(err.message);
     }
   };
 
-  // Calendar Events
-  const events = armstrongManutencoes.map(m => ({
+  const events = refrigeracaoManutencoes.map(m => ({
     id: String(m.id),
     title: m.titulo || m.descricao || 'Intervenção',
     start: `${m.data}T${m.hora_inicio}`,
@@ -250,7 +241,6 @@ export default function Armstrong() {
     extendedProps: m
   }));
 
-  // PCM Areas for the current week
   const getWeekDays = (date: Date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - start.getDay());
@@ -265,7 +255,7 @@ export default function Armstrong() {
 
   const handleAddPCMAreaTag = async (date: string) => {
     if (addingPCMArea?.date === date && addingPCMArea.value.trim()) {
-      await addArmstrongPCMArea({ data: date, area: addingPCMArea.value.trim() });
+      await addRefrigeracaoPCMArea({ data: date, area: addingPCMArea.value.trim() });
       setAddingPCMArea(null);
     } else {
       setAddingPCMArea({ date, value: '' });
@@ -281,22 +271,21 @@ export default function Armstrong() {
     }
   };
 
-  // Backlog Indicators
-  const pendingBacklog = armstrongBacklog.filter(b => b.status !== 'Concluída');
-  const totalGain = armstrongBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
-  const totalInvestment = armstrongBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
+  const pendingBacklog = refrigeracaoBacklog.filter(b => b.status !== 'Concluída');
+  const totalGain = refrigeracaoBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const totalInvestment = refrigeracaoBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
     <div className="h-full flex flex-col gap-6 p-6 overflow-hidden">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
-            <Flame className="text-white" size={24} />
+          <div className="bg-sky-500 p-3 rounded-2xl shadow-lg shadow-sky-500/20">
+            <Snowflake className="text-white" size={24} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Armstrong (Vapor)</h1>
-            <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Gestão de purgadores e sistemas de vapor</p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Refrigeração</h1>
+            <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Gestão de ar condicionado e sistemas de frio</p>
           </div>
         </div>
 
@@ -310,7 +299,7 @@ export default function Armstrong() {
                 }}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg font-black text-[10px] transition-all",
-                  activeTab === 'calendario' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                  activeTab === 'calendario' ? "bg-white text-sky-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
                 )}
               >
                 <CalendarIcon size={14} />
@@ -324,7 +313,7 @@ export default function Armstrong() {
                 }}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg font-black text-[10px] transition-all",
-                  activeTab === 'backlog' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                  activeTab === 'backlog' ? "bg-white text-sky-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
                 )}
               >
                 <LayoutGrid size={14} />
@@ -369,7 +358,7 @@ export default function Armstrong() {
               )}
               <button 
                 onClick={openNewModal}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-xs"
+                className="bg-sky-500 hover:bg-sky-600 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-sky-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-xs"
               >
                 <Plus size={18} />
                 Nova Manutenção
@@ -391,14 +380,14 @@ export default function Armstrong() {
           {/* PCM Areas Panel */}
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <AlertCircle size={12} className="text-orange-500" />
+              <AlertCircle size={12} className="text-sky-500" />
               Áreas em PCM (Parada de Manutenção)
             </h2>
             <div className="grid grid-cols-7 gap-3">
               {weekDays.map((day, idx) => {
                 const dateStr = day.toISOString().split('T')[0];
                 const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
-                const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
+                const areas = refrigeracaoPCMAreas.filter(a => a.data === dateStr);
                 
                 return (
                   <div key={idx} className="flex flex-col gap-1.5">
@@ -409,7 +398,7 @@ export default function Armstrong() {
                       {areas.map(a => (
                         <div key={a.id} className="bg-white border border-slate-200 px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                           <span className="text-[9px] font-bold text-slate-700 uppercase">{a.area}</span>
-                          <button onClick={() => deleteArmstrongPCMArea(a.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                          <button onClick={() => deleteRefrigeracaoPCMArea(a.id)} className="text-slate-300 hover:text-red-500 transition-colors">
                             <X size={10} />
                           </button>
                         </div>
@@ -420,7 +409,7 @@ export default function Armstrong() {
                           <input
                             ref={pcmInputRef}
                             type="text"
-                            className="w-full bg-white border border-orange-500 rounded-lg px-2 py-1 text-[9px] font-bold uppercase focus:outline-none"
+                            className="w-full bg-white border border-sky-500 rounded-lg px-2 py-1 text-[9px] font-bold uppercase focus:outline-none"
                             value={addingPCMArea.value}
                             onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
                             onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
@@ -435,7 +424,7 @@ export default function Armstrong() {
                           onClick={() => handleAddPCMAreaTag(dateStr)}
                           className="w-full h-full absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/40 backdrop-blur-[1px] flex items-center justify-center transition-all rounded-2xl"
                         >
-                          <Plus size={16} className="text-orange-500" />
+                          <Plus size={16} className="text-sky-500" />
                         </button>
                       )}
                     </div>
@@ -478,13 +467,13 @@ export default function Armstrong() {
                       data.status === 'Concluída' ? "border-green-500 bg-green-50/50" : 
                       data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/50" : 
                       "border-red-500 bg-red-50/50",
-                      isSelected && "ring-2 ring-orange-500 ring-offset-1"
+                      isSelected && "ring-2 ring-sky-500 ring-offset-1"
                     )}
                   >
                     {selectionMode && (
                       <div className="absolute top-1 right-1">
                         {isSelected ? (
-                          <CheckSquare size={12} className="text-orange-500" />
+                          <CheckSquare size={12} className="text-sky-500" />
                         ) : (
                           <Square size={12} className="text-slate-300" />
                         )}
@@ -516,7 +505,7 @@ export default function Armstrong() {
                         {data.responsavel}
                       </div>
                     </div>
-                    <div className="mt-1 pt-1 border-t border-orange-100">
+                    <div className="mt-1 pt-1 border-t border-sky-100">
                       <p className="text-[8px] text-slate-600 font-bold uppercase truncate italic">
                         {data.descricao}
                       </p>
@@ -541,7 +530,7 @@ export default function Armstrong() {
               </div>
             </div>
             <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-6">
-              <div className="bg-orange-50 p-4 rounded-2xl text-orange-500">
+              <div className="bg-sky-50 p-4 rounded-2xl text-sky-500">
                 <TrendingUp size={32} />
               </div>
               <div>
@@ -574,12 +563,12 @@ export default function Armstrong() {
                       <div className="flex items-center justify-between px-4 py-2 shrink-0">
                         <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{status}</h2>
                         <span className="bg-white text-slate-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
-                          {armstrongBacklog.filter(b => b.status === status).length}
+                          {refrigeracaoBacklog.filter(b => b.status === status).length}
                         </span>
                       </div>
 
                       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                        {armstrongBacklog
+                        {refrigeracaoBacklog
                           .filter(b => b.status === status)
                           .map((item, index) => (
                             // @ts-ignore
@@ -601,13 +590,13 @@ export default function Armstrong() {
                                     status === 'Não planejada' ? "bg-red-50 border-red-100 hover:shadow-red-200/50" :
                                     status === 'Planejada' ? "bg-yellow-50 border-yellow-100 hover:shadow-yellow-200/50" :
                                     "bg-green-50 border-green-100 hover:shadow-green-200/50",
-                                    selectedIds.includes(item.id) && "ring-2 ring-orange-500 ring-offset-2"
+                                    selectedIds.includes(item.id) && "ring-2 ring-sky-500 ring-offset-2"
                                   )}
                                 >
                                   {selectionMode && (
                                     <div className="absolute top-4 right-4">
                                       {selectedIds.includes(item.id) ? (
-                                        <CheckSquare size={16} className="text-orange-500" />
+                                        <CheckSquare size={16} className="text-sky-500" />
                                       ) : (
                                         <Square size={16} className="text-slate-300" />
                                       )}
@@ -643,7 +632,7 @@ export default function Armstrong() {
                                                 });
                                                 setIsModalOpen(true);
                                               }}
-                                              className="p-2 bg-white rounded-xl text-orange-500 hover:bg-orange-500 hover:text-white transition-all shadow-sm"
+                                              className="p-2 bg-white rounded-xl text-sky-500 hover:bg-sky-500 hover:text-white transition-all shadow-sm"
                                               title="Agendar no Calendário"
                                             >
                                               <CalendarIcon size={14} />
@@ -707,7 +696,7 @@ export default function Armstrong() {
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-4">
-                <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
+                <div className="bg-sky-500 p-3 rounded-2xl shadow-lg shadow-sky-500/20">
                   {modalType === 'manutencao' ? <Plus className="text-white" size={24} /> : <Info className="text-white" size={24} />}
                 </div>
                 <div>
@@ -715,7 +704,7 @@ export default function Armstrong() {
                     {modalType === 'manutencao' ? 'Nova Manutenção' : 'Detalhes da Intervenção'}
                   </h2>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                    {modalType === 'manutencao' ? 'Planejamento de Sistema de Vapor' : 'Informações Completas'}
+                    {modalType === 'manutencao' ? 'Planejamento de Sistema de Frio' : 'Informações Completas'}
                   </p>
                 </div>
               </div>
@@ -732,10 +721,10 @@ export default function Armstrong() {
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.titulo}
                       onChange={e => setFormData({...formData, titulo: e.target.value})}
-                      placeholder="Ex: Troca de Purgador"
+                      placeholder="Ex: Manutenção Preventiva AC"
                     />
                   </div>
                   <div className="space-y-2">
@@ -743,10 +732,10 @@ export default function Armstrong() {
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
-                      placeholder="Ex: Brassagem 1"
+                      placeholder="Ex: Escritório Central"
                     />
                   </div>
                   <div className="space-y-2">
@@ -754,10 +743,10 @@ export default function Armstrong() {
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.equipamento}
                       onChange={e => setFormData({...formData, equipamento: e.target.value})}
-                      placeholder="Ex: Purgador P12"
+                      placeholder="Ex: Chiller 01"
                     />
                   </div>
                   <div className="space-y-2">
@@ -765,7 +754,7 @@ export default function Armstrong() {
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.responsavel}
                       onChange={e => setFormData({...formData, responsavel: e.target.value})}
                     />
@@ -775,7 +764,7 @@ export default function Armstrong() {
                     <input 
                       type="date"
                       required
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.data}
                       onChange={e => setFormData({...formData, data: e.target.value})}
                     />
@@ -783,7 +772,7 @@ export default function Armstrong() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário Início</label>
                     <select 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.hora_inicio}
                       onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
                     >
@@ -796,7 +785,7 @@ export default function Armstrong() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário Término</label>
                     <select 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.hora_fim}
                       onChange={e => setFormData({...formData, hora_fim: e.target.value})}
                     >
@@ -810,20 +799,20 @@ export default function Armstrong() {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto Energético (MJ/hL)</label>
                     <input 
                       type="text"
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.impacto_energetico}
                       onChange={e => setFormData({...formData, impacto_energetico: e.target.value})}
-                      placeholder="Ex: 1000"
+                      placeholder="Ex: 500"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Investimento Estimado (R$)</label>
                     <input 
                       type="text"
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all"
                       value={formData.investimento_estimado}
                       onChange={e => setFormData({...formData, investimento_estimado: e.target.value})}
-                      placeholder="Ex: 25.000,00"
+                      placeholder="Ex: 10.000,00"
                     />
                   </div>
                   <div className="col-span-2 space-y-2">
@@ -851,7 +840,7 @@ export default function Armstrong() {
                   <div className="col-span-2 space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição da Intervenção</label>
                     <textarea 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-24 resize-none"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all h-24 resize-none"
                       value={formData.descricao}
                       onChange={e => setFormData({...formData, descricao: e.target.value})}
                     />
@@ -859,7 +848,7 @@ export default function Armstrong() {
                   <div className="col-span-2 space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observações</label>
                     <textarea 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-20 resize-none"
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all h-20 resize-none"
                       value={formData.observacoes}
                       onChange={e => setFormData({...formData, observacoes: e.target.value})}
                     />
@@ -880,7 +869,7 @@ export default function Armstrong() {
                       <button 
                         type="button"
                         onClick={() => setPasswordModal({ isOpen: true, id: selectedItem.id, action: 'edit' })}
-                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
+                        className="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
                       >
                         <CheckCircle2 size={18} />
                         SALVAR ALTERAÇÕES
@@ -889,7 +878,7 @@ export default function Armstrong() {
                   ) : (
                     <button 
                       type="submit"
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-[0.2em]"
+                      className="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-[0.2em]"
                     >
                       <CheckCircle2 size={20} />
                       Salvar Intervenção
@@ -911,7 +900,7 @@ export default function Armstrong() {
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-calendar .fc {
           --fc-border-color: #f1f5f9;
-          --fc-today-bg-color: #fff7ed;
+          --fc-today-bg-color: #f0f9ff;
           font-family: 'Inter', sans-serif;
         }
         .custom-calendar .fc-col-header-cell {
@@ -938,14 +927,14 @@ export default function Armstrong() {
         .custom-calendar .fc-event {
           border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 4px 12px rgba(242, 92, 5, 0.08);
+          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08);
           transition: all 0.2s;
           border: none !important;
           margin: 2px !important;
         }
         .custom-calendar .fc-event:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(242, 92, 5, 0.12);
+          box-shadow: 0 8px 16px rgba(14, 165, 233, 0.12);
           z-index: 50;
         }
       `}} />

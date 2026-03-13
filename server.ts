@@ -1,111 +1,18 @@
 import express from 'express';
-import Database from 'better-sqlite3';
+import { createClient } from '@supabase/supabase-js';
 import cors from 'cors';
+import path from 'path';
+import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 
-const db = new Database('andaimes.db');
+dotenv.config();
 
-// Initialize database with new tables
-try {
-  // Check if we need to migrate (simple check for new column)
-  const tableInfo = db.prepare("PRAGMA table_info(solicitacoes_andaime)").all();
-  const hasNewColumn = tableInfo.some((col: any) => col.name === 'data_montagem');
-  
-  if (tableInfo.length > 0 && !hasNewColumn) {
-    console.log('Old schema detected, dropping tables for migration...');
-    db.exec('DROP TABLE IF EXISTS solicitacoes_andaime');
-  }
-} catch (e) {
-  console.error('Migration check failed:', e);
-}
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS solicitacoes_andaime (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    area TEXT NOT NULL,
-    local_setor TEXT NOT NULL,
-    tipo_servico TEXT NOT NULL,
-    quantidade_pontos INTEGER NOT NULL,
-    data_montagem TEXT NOT NULL,
-    data_desmontagem TEXT NOT NULL,
-    hora_inicio TEXT NOT NULL,
-    hora_fim TEXT NOT NULL,
-    solicitante TEXT NOT NULL,
-    descricao_local TEXT,
-    status TEXT DEFAULT 'pendente',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS solicitacoes_pta (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    equipamento TEXT NOT NULL,
-    area TEXT NOT NULL,
-    responsavel TEXT NOT NULL,
-    data TEXT NOT NULL,
-    hora_inicio TEXT NOT NULL,
-    hora_fim TEXT NOT NULL,
-    descricao TEXT,
-    prioridade TEXT NOT NULL,
-    status TEXT DEFAULT 'pendente',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS atividades_sala_motores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    titulo TEXT NOT NULL,
-    responsavel TEXT NOT NULL,
-    data TEXT NOT NULL,
-    status TEXT DEFAULT 'pendente',
-    custo_evitado REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS oficina_servicos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    servico TEXT NOT NULL,
-    responsavel TEXT NOT NULL,
-    data TEXT NOT NULL,
-    status TEXT DEFAULT 'pendente',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS armstrong_manutencao (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    titulo TEXT,
-    area TEXT NOT NULL,
-    equipamento TEXT NOT NULL,
-    responsavel TEXT NOT NULL,
-    data TEXT NOT NULL,
-    hora_inicio TEXT NOT NULL,
-    hora_fim TEXT NOT NULL,
-    descricao TEXT,
-    observacoes TEXT,
-    impacto_energetico TEXT,
-    investimento_estimado TEXT,
-    status TEXT DEFAULT 'Planejada',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS armstrong_pcm_areas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data TEXT NOT NULL,
-    area TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS armstrong_backlog (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    area TEXT NOT NULL,
-    titulo TEXT NOT NULL,
-    impacto_energetico TEXT,
-    investimento_estimado TEXT,
-    data_prevista TEXT,
-    status TEXT DEFAULT 'Não planejada',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const MASTER_PASSWORD = 'Itf2026';
+;
 
 async function startServer() {
   const app = express();
@@ -115,16 +22,22 @@ async function startServer() {
   app.use(cors());
 
   // API Routes for Andaimes
-  app.get('/api/andaimes', (req, res) => {
+  app.get('/api/andaimes', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM solicitacoes_andaime ORDER BY data_montagem DESC, hora_inicio ASC').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('solicitacoes_andaime')
+        .select('*')
+        .order('data_montagem', { ascending: false })
+        .order('hora_inicio', { ascending: true });
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch andaimes' });
     }
   });
 
-  app.post('/api/andaimes', (req, res) => {
+  app.post('/api/andaimes', async (req, res) => {
     const { 
       area, local_setor, tipo_servico, quantidade_pontos, 
       data_montagem, data_desmontagem, hora_inicio, hora_fim, 
@@ -139,70 +52,73 @@ async function startServer() {
       return res.status(400).json({ error: 'A data de desmontagem não pode ser anterior à data de montagem.' });
     }
     
-    // All scaffolding requests must be pending by default
     const status = 'pendente';
     
     try {
-      // Keep conflict detection for the message but status is always pending
-      const conflict = db.prepare(`
-        SELECT * FROM solicitacoes_andaime 
-        WHERE data_montagem = ? AND status = 'aprovado' AND (
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio < ? AND hora_fim > ?) OR
-          (hora_inicio >= ? AND hora_fim <= ?)
-        )
-      `).get(data_montagem, hora_fim, hora_inicio, hora_inicio, hora_inicio, hora_inicio, hora_fim);
+      // Conflict detection
+      const { data: conflicts, error: conflictError } = await supabase
+        .from('solicitacoes_andaime')
+        .select('*')
+        .eq('data_montagem', data_montagem)
+        .eq('status', 'aprovado')
+        .or(`and(hora_inicio.lt.${hora_fim},hora_fim.gt.${hora_inicio})`);
 
-      const info = db.prepare(`
-        INSERT INTO solicitacoes_andaime (
+      if (conflictError) throw conflictError;
+
+      const { data, error } = await supabase
+        .from('solicitacoes_andaime')
+        .insert([{
           area, local_setor, tipo_servico, quantidade_pontos, 
           data_montagem, data_desmontagem, hora_inicio, hora_fim, 
           solicitante, descricao_local, status
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        area, local_setor, tipo_servico, quantidade_pontos, 
-        data_montagem, data_desmontagem, hora_inicio, hora_fim, 
-        solicitante, descricao_local, status
-      );
+        }])
+        .select();
 
-      if (conflict) {
+      if (error) throw error;
+
+      if (conflicts && conflicts.length > 0) {
         res.json({ 
-          id: info.lastInsertRowid,
-          message: `${(conflict as any).solicitante} já realizou um agendamento para este período, gentileza negociar priorização diretamente com ele(a) e sinalizar para Pedro Sacramento - ITF.` 
+          id: data[0].id,
+          message: `${conflicts[0].solicitante} já realizou um agendamento para este período, gentileza negociar priorização diretamente com ele(a) e sinalizar para Pedro Sacramento - ITF.` 
         });
       } else {
-        res.json({ id: info.lastInsertRowid });
+        res.json({ id: data[0].id });
       }
     } catch (error) {
       res.status(500).json({ error: 'Failed to create andaime request' });
     }
   });
 
-  app.patch('/api/andaimes/:id', (req, res) => {
+  app.patch('/api/andaimes/:id', async (req, res) => {
     const { id } = req.params;
     const { password, ...updates } = req.body;
 
-    const request = db.prepare('SELECT status FROM solicitacoes_andaime WHERE id = ?').get(id) as any;
-    if (!request) return res.status(404).json({ error: 'Not found' });
-
-    if (request.status === 'aprovado' && password !== MASTER_PASSWORD) {
-      return res.status(401).json({ error: 'Senha mestre necessária para alterar solicitações aprovadas.' });
-    }
-
     try {
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-      const setClause = keys.map(k => `${k} = ?`).join(', ');
+      const { data: request, error: fetchError } = await supabase
+        .from('solicitacoes_andaime')
+        .select('status')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !request) return res.status(404).json({ error: 'Not found' });
+
+      if (request.status === 'aprovado' && password !== MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Senha mestre necessária para alterar solicitações aprovadas.' });
+      }
+
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .update(updates)
+        .eq('id', id);
       
-      db.prepare(`UPDATE solicitacoes_andaime SET ${setClause} WHERE id = ?`).run(...values, id);
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update andaime' });
     }
   });
 
-  app.post('/api/andaimes/:id/aprovar', (req, res) => {
+  app.post('/api/andaimes/:id/aprovar', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
@@ -211,38 +127,57 @@ async function startServer() {
     }
 
     try {
-      db.prepare("UPDATE solicitacoes_andaime SET status = 'aprovado' WHERE id = ?").run(id);
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .update({ status: 'aprovado' })
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to approve andaime' });
     }
   });
 
-  app.post('/api/andaimes/:id/delete', (req, res) => {
+  app.post('/api/andaimes/:id/delete', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    const request = db.prepare('SELECT status FROM solicitacoes_andaime WHERE id = ?').get(id) as any;
-    if (request && request.status === 'aprovado' && password !== MASTER_PASSWORD) {
-      return res.status(401).json({ error: 'Senha mestre necessária para excluir solicitações aprovadas.' });
-    }
-
     try {
-      db.prepare('DELETE FROM solicitacoes_andaime WHERE id = ?').run(id);
+      const { data: request, error: fetchError } = await supabase
+        .from('solicitacoes_andaime')
+        .select('status')
+        .eq('id', id)
+        .single();
+
+      if (request && request.status === 'aprovado' && password !== MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Senha mestre necessária para excluir solicitações aprovadas.' });
+      }
+
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete andaime' });
     }
   });
 
-  app.post('/api/andaimes/batch-delete', (req, res) => {
+  app.post('/api/andaimes/batch-delete', async (req, res) => {
     const { ids, password } = req.body;
     if (password !== MASTER_PASSWORD) {
       return res.status(401).json({ error: 'Senha mestre incorreta.' });
     }
     try {
-      const placeholders = ids.map(() => '?').join(',');
-      db.prepare(`DELETE FROM solicitacoes_andaime WHERE id IN (${placeholders})`).run(...ids);
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to batch delete andaimes' });
@@ -250,16 +185,22 @@ async function startServer() {
   });
 
   // API Routes for PTAs
-  app.get('/api/ptas', (req, res) => {
+  app.get('/api/ptas', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM solicitacoes_pta ORDER BY data DESC, hora_inicio ASC').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('solicitacoes_pta')
+        .select('*')
+        .order('data', { ascending: false })
+        .order('hora_inicio', { ascending: true });
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch ptas' });
     }
   });
 
-  app.post('/api/ptas', (req, res) => {
+  app.post('/api/ptas', async (req, res) => {
     const { equipamento, area, responsavel, data, data_fim, hora_inicio, hora_fim, descricao, prioridade, recorrente } = req.body;
     
     const dates = [];
@@ -277,24 +218,26 @@ async function startServer() {
     try {
       const results = [];
       for (const d of dates) {
-        // Conflict Detection: same equipment, same day, overlapping time, and already approved
-        const conflict = db.prepare(`
-          SELECT * FROM solicitacoes_pta 
-          WHERE equipamento = ? AND data = ? AND status = 'aprovado' AND (
-            (hora_inicio < ? AND hora_fim > ?) OR
-            (hora_inicio < ? AND hora_fim > ?) OR
-            (hora_inicio >= ? AND hora_fim <= ?)
-          )
-        `).get(equipamento, d, hora_fim, hora_inicio, hora_inicio, hora_inicio, hora_inicio, hora_fim);
+        // Conflict Detection
+        const { data: conflicts, error: conflictError } = await supabase
+          .from('solicitacoes_pta')
+          .select('*')
+          .eq('equipamento', equipamento)
+          .eq('data', d)
+          .eq('status', 'aprovado')
+          .or(`and(hora_inicio.lt.${hora_fim},hora_fim.gt.${hora_inicio})`);
 
-        const status = conflict ? 'pendente' : 'aprovado';
+        if (conflictError) throw conflictError;
+
+        const status = (conflicts && conflicts.length > 0) ? 'pendente' : 'aprovado';
         
-        const info = db.prepare(`
-          INSERT INTO solicitacoes_pta (equipamento, area, responsavel, data, hora_inicio, hora_fim, descricao, prioridade, status)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(equipamento, area, responsavel, d, hora_inicio, hora_fim, descricao, prioridade, status);
+        const { data: inserted, error } = await supabase
+          .from('solicitacoes_pta')
+          .insert([{ equipamento, area, responsavel, data: d, hora_inicio, hora_fim, descricao, prioridade, status }])
+          .select();
         
-        results.push({ id: info.lastInsertRowid, data: d, status, conflict: !!conflict });
+        if (error) throw error;
+        results.push({ id: inserted[0].id, data: d, status, conflict: conflicts && conflicts.length > 0 });
       }
       
       const hasConflict = results.some(r => r.conflict);
@@ -312,7 +255,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/ptas/:id/aprovar', (req, res) => {
+  app.post('/api/ptas/:id/aprovar', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
@@ -321,38 +264,57 @@ async function startServer() {
     }
 
     try {
-      db.prepare("UPDATE solicitacoes_pta SET status = 'aprovado' WHERE id = ?").run(id);
+      const { error } = await supabase
+        .from('solicitacoes_pta')
+        .update({ status: 'aprovado' })
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to approve pta' });
     }
   });
 
-  app.post('/api/ptas/:id/delete', (req, res) => {
+  app.post('/api/ptas/:id/delete', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    const request = db.prepare('SELECT status FROM solicitacoes_pta WHERE id = ?').get(id) as any;
-    if (request && request.status === 'aprovado' && password !== MASTER_PASSWORD) {
-      return res.status(401).json({ error: 'Senha mestre necessária para excluir solicitações aprovadas.' });
-    }
-
     try {
-      db.prepare('DELETE FROM solicitacoes_pta WHERE id = ?').run(id);
+      const { data: request, error: fetchError } = await supabase
+        .from('solicitacoes_pta')
+        .select('status')
+        .eq('id', id)
+        .single();
+
+      if (request && request.status === 'aprovado' && password !== MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Senha mestre necessária para excluir solicitações aprovadas.' });
+      }
+
+      const { error } = await supabase
+        .from('solicitacoes_pta')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete pta' });
     }
   });
 
-  app.post('/api/ptas/batch-delete', (req, res) => {
+  app.post('/api/ptas/batch-delete', async (req, res) => {
     const { ids, password } = req.body;
     if (password !== MASTER_PASSWORD) {
       return res.status(401).json({ error: 'Senha mestre incorreta.' });
     }
     try {
-      const placeholders = ids.map(() => '?').join(',');
-      db.prepare(`DELETE FROM solicitacoes_pta WHERE id IN (${placeholders})`).run(...ids);
+      const { error } = await supabase
+        .from('solicitacoes_pta')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to batch delete ptas' });
@@ -360,33 +322,45 @@ async function startServer() {
   });
 
   // API Routes for Sala de Motores
-  app.get('/api/sala-motores', (req, res) => {
+  app.get('/api/sala-motores', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM atividades_sala_motores ORDER BY data DESC').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('atividades_sala_motores')
+        .select('*')
+        .order('data', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch sala de motores' });
     }
   });
 
-  app.post('/api/sala-motores', (req, res) => {
+  app.post('/api/sala-motores', async (req, res) => {
     const { titulo, responsavel, data, custo_evitado } = req.body;
     try {
-      const info = db.prepare(`
-        INSERT INTO atividades_sala_motores (titulo, responsavel, data, custo_evitado)
-        VALUES (?, ?, ?, ?)
-      `).run(titulo, responsavel, data, custo_evitado);
-      res.json({ id: info.lastInsertRowid });
+      const { data: inserted, error } = await supabase
+        .from('atividades_sala_motores')
+        .insert([{ titulo, responsavel, data, custo_evitado }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
     } catch (error) {
       res.status(500).json({ error: 'Failed to create activity' });
     }
   });
 
-  app.patch('/api/sala-motores/:id', (req, res) => {
+  app.patch('/api/sala-motores/:id', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     try {
-      db.prepare('UPDATE atividades_sala_motores SET status = ? WHERE id = ?').run(status, id);
+      const { error } = await supabase
+        .from('atividades_sala_motores')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update activity' });
@@ -394,157 +368,408 @@ async function startServer() {
   });
 
   // API Routes for Armstrong
-  app.get('/api/armstrong/manutencoes', (req, res) => {
+  app.get('/api/armstrong/manutencoes', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM armstrong_manutencao ORDER BY data ASC, hora_inicio ASC').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('armstrong_manutencao')
+        .select('*')
+        .order('data', { ascending: true })
+        .order('hora_inicio', { ascending: true });
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch armstrong manutencoes' });
     }
   });
 
-  app.post('/api/armstrong/manutencoes', (req, res) => {
+  app.post('/api/armstrong/manutencoes', async (req, res) => {
     const { titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
     try {
-      const info = db.prepare(`
-        INSERT INTO armstrong_manutencao (titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status || 'Planejada');
-      res.json({ id: info.lastInsertRowid });
+      const { data: inserted, error } = await supabase
+        .from('armstrong_manutencao')
+        .insert([{ titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status: status || 'Planejada' }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
     } catch (error) {
       res.status(500).json({ error: 'Failed to create armstrong manutencao' });
     }
   });
 
-  app.patch('/api/armstrong/manutencoes/:id', (req, res) => {
+  app.patch('/api/armstrong/manutencoes/:id', async (req, res) => {
     const { id } = req.params;
     const { password, ...updates } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-      const setClause = keys.map(k => `${k} = ?`).join(', ');
-      db.prepare(`UPDATE armstrong_manutencao SET ${setClause} WHERE id = ?`).run(...values, id);
+      const { error } = await supabase
+        .from('armstrong_manutencao')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update armstrong manutencao' });
     }
   });
 
-  app.post('/api/armstrong/manutencoes/:id/delete', (req, res) => {
+  app.post('/api/armstrong/manutencoes/:id/delete', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      db.prepare('DELETE FROM armstrong_manutencao WHERE id = ?').run(id);
+      const { error } = await supabase
+        .from('armstrong_manutencao')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete armstrong manutencao' });
     }
   });
 
-  app.post('/api/armstrong/manutencoes/batch-delete', (req, res) => {
+  app.post('/api/armstrong/manutencoes/batch-delete', async (req, res) => {
     const { ids, password } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      const placeholders = ids.map(() => '?').join(',');
-      db.prepare(`DELETE FROM armstrong_manutencao WHERE id IN (${placeholders})`).run(...ids);
+      const { error } = await supabase
+        .from('armstrong_manutencao')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to batch delete armstrong manutencoes' });
     }
   });
 
-  app.get('/api/armstrong/pcm-areas', (req, res) => {
+  app.get('/api/armstrong/pcm-areas', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM armstrong_pcm_areas').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('armstrong_pcm_areas')
+        .select('*');
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch armstrong pcm areas' });
     }
   });
 
-  app.post('/api/armstrong/pcm-areas', (req, res) => {
+  app.post('/api/armstrong/pcm-areas', async (req, res) => {
     const { data, area } = req.body;
     try {
-      const info = db.prepare(`
-        INSERT INTO armstrong_pcm_areas (data, area)
-        VALUES (?, ?)
-      `).run(data, area);
-      res.json({ id: info.lastInsertRowid });
+      const { data: inserted, error } = await supabase
+        .from('armstrong_pcm_areas')
+        .insert([{ data, area }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
     } catch (error) {
       res.status(500).json({ error: 'Failed to create armstrong pcm area' });
     }
   });
 
-  app.delete('/api/armstrong/pcm-areas/:id', (req, res) => {
+  app.delete('/api/armstrong/pcm-areas/:id', async (req, res) => {
     const { id } = req.params;
     try {
-      db.prepare('DELETE FROM armstrong_pcm_areas WHERE id = ?').run(id);
+      const { error } = await supabase
+        .from('armstrong_pcm_areas')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete armstrong pcm area' });
     }
   });
 
-  app.get('/api/armstrong/backlog', (req, res) => {
+  app.get('/api/armstrong/backlog', async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM armstrong_backlog ORDER BY created_at DESC').all();
-      res.json(rows);
+      const { data, error } = await supabase
+        .from('armstrong_backlog')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch armstrong backlog' });
     }
   });
 
-  app.post('/api/armstrong/backlog', (req, res) => {
+  app.post('/api/armstrong/backlog', async (req, res) => {
     const { area, titulo, impacto_energetico, investimento_estimado, data_prevista, status } = req.body;
     try {
-      const info = db.prepare(`
-        INSERT INTO armstrong_backlog (area, titulo, impacto_energetico, investimento_estimado, data_prevista, status)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(area, titulo, impacto_energetico, investimento_estimado, data_prevista, status || 'Não planejada');
-      res.json({ id: info.lastInsertRowid });
+      const { data: inserted, error } = await supabase
+        .from('armstrong_backlog')
+        .insert([{ area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada' }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
     } catch (error) {
       res.status(500).json({ error: 'Failed to create armstrong backlog item' });
     }
   });
 
-  app.patch('/api/armstrong/backlog/:id', (req, res) => {
+  app.patch('/api/armstrong/backlog/:id', async (req, res) => {
     const { id } = req.params;
     const { password, ...updates } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-      const setClause = keys.map(k => `${k} = ?`).join(', ');
-      db.prepare(`UPDATE armstrong_backlog SET ${setClause} WHERE id = ?`).run(...values, id);
+      const { error } = await supabase
+        .from('armstrong_backlog')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update armstrong backlog item' });
     }
   });
 
-  app.post('/api/armstrong/backlog/:id/delete', (req, res) => {
+  app.post('/api/armstrong/backlog/:id/delete', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      db.prepare('DELETE FROM armstrong_backlog WHERE id = ?').run(id);
+      const { error } = await supabase
+        .from('armstrong_backlog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete armstrong backlog item' });
     }
   });
 
-  app.post('/api/armstrong/backlog/batch-delete', (req, res) => {
+  app.post('/api/armstrong/backlog/batch-delete', async (req, res) => {
     const { ids, password } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
-      const placeholders = ids.map(() => '?').join(',');
-      db.prepare(`DELETE FROM armstrong_backlog WHERE id IN (${placeholders})`).run(...ids);
+      const { error } = await supabase
+        .from('armstrong_backlog')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to batch delete armstrong backlog items' });
+    }
+  });
+
+  // API Routes for Refrigeracao
+  app.get('/api/refrigeracao/manutencoes', async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('refrigeracao_manutencao')
+        .select('*')
+        .order('data', { ascending: true })
+        .order('hora_inicio', { ascending: true });
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch refrigeracao manutencoes' });
+    }
+  });
+
+  app.post('/api/refrigeracao/manutencoes', async (req, res) => {
+    const { titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
+    try {
+      const { data: inserted, error } = await supabase
+        .from('refrigeracao_manutencao')
+        .insert([{ titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status: status || 'Planejada' }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create refrigeracao manutencao' });
+    }
+  });
+
+  app.patch('/api/refrigeracao/manutencoes/:id', async (req, res) => {
+    const { id } = req.params;
+    const { password, ...updates } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_manutencao')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update refrigeracao manutencao' });
+    }
+  });
+
+  app.post('/api/refrigeracao/manutencoes/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_manutencao')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete refrigeracao manutencao' });
+    }
+  });
+
+  app.post('/api/refrigeracao/manutencoes/batch-delete', async (req, res) => {
+    const { ids, password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_manutencao')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch delete refrigeracao manutencoes' });
+    }
+  });
+
+  app.get('/api/refrigeracao/pcm-areas', async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('refrigeracao_pcm_areas')
+        .select('*');
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch refrigeracao pcm areas' });
+    }
+  });
+
+  app.post('/api/refrigeracao/pcm-areas', async (req, res) => {
+    const { data, area } = req.body;
+    try {
+      const { data: inserted, error } = await supabase
+        .from('refrigeracao_pcm_areas')
+        .insert([{ data, area }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create refrigeracao pcm area' });
+    }
+  });
+
+  app.delete('/api/refrigeracao/pcm-areas/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_pcm_areas')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete refrigeracao pcm area' });
+    }
+  });
+
+  app.get('/api/refrigeracao/backlog', async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('refrigeracao_backlog')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch refrigeracao backlog' });
+    }
+  });
+
+  app.post('/api/refrigeracao/backlog', async (req, res) => {
+    const { area, titulo, impacto_energetico, investimento_estimado, data_prevista, status } = req.body;
+    try {
+      const { data: inserted, error } = await supabase
+        .from('refrigeracao_backlog')
+        .insert([{ area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada' }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create refrigeracao backlog item' });
+    }
+  });
+
+  app.patch('/api/refrigeracao/backlog/:id', async (req, res) => {
+    const { id } = req.params;
+    const { password, ...updates } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_backlog')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update refrigeracao backlog item' });
+    }
+  });
+
+  app.post('/api/refrigeracao/backlog/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_backlog')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete refrigeracao backlog item' });
+    }
+  });
+
+  app.post('/api/refrigeracao/backlog/batch-delete', async (req, res) => {
+    const { ids, password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    try {
+      const { error } = await supabase
+        .from('refrigeracao_backlog')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch delete refrigeracao backlog items' });
     }
   });
 
@@ -556,7 +781,11 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static('dist'));
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
