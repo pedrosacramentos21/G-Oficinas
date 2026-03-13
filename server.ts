@@ -21,6 +21,17 @@ async function startServer() {
   app.use(express.json());
   app.use(cors());
 
+  // API health check
+  app.get('/api/health', async (req, res) => {
+    try {
+      const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
+      if (error) throw error;
+      res.json({ status: 'ok' });
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Database connection failed' });
+    }
+  });
+
   // API Routes for Andaimes
   app.get('/api/andaimes', async (req, res) => {
     try {

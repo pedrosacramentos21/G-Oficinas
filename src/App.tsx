@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Construction, LayoutDashboard } from 'lucide-react';
+import { Construction, LayoutDashboard, AlertCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Andaimes from './pages/Andaimes';
 import PTAs from './pages/PTAs';
@@ -13,6 +13,24 @@ import { cn } from './lib/utils';
 export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [connectionError, setConnectionError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (data.status !== 'ok') {
+          setConnectionError('Erro de conexão com o banco de dados no servidor.');
+        } else {
+          setConnectionError(null);
+        }
+      } catch (err) {
+        setConnectionError('Não foi possível verificar a conexão com o servidor.');
+      }
+    };
+    checkConnection();
+  }, []);
 
   return (
     <Router>
@@ -38,6 +56,12 @@ export default function App() {
         </div>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {connectionError && (
+            <div className="bg-red-500 text-white px-4 py-2 flex items-center gap-2 text-sm font-medium animate-pulse">
+              <AlertCircle size={16} />
+              {connectionError}
+            </div>
+          )}
           {/* Mobile Header */}
           <div className="lg:hidden bg-[#1e293b] text-white p-4 flex items-center justify-between shadow-md">
             <h1 className="text-lg font-bold flex items-center gap-2">
