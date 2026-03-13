@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
-import { X, Layers, Lock, Unlock } from 'lucide-react';
+import { X, Layers, Lock, Unlock, Info, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import PasswordModal from './PasswordModal';
 
@@ -27,6 +27,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState('');
+  const [showNotice, setShowNotice] = useState(false);
   
   const initialFormState = {
     area: AREAS[0],
@@ -62,6 +63,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
       } else {
         setFormData(initialFormState);
         setIsUnlocked(true);
+        setShowNotice(true);
+        const timer = setTimeout(() => setShowNotice(false), 5000);
+        return () => clearTimeout(timer);
       }
     }
   }, [isOpen, andaime]);
@@ -87,7 +91,10 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
         await updateAndaime(andaime.id, formData, unlockPassword);
         onClose();
       } else {
-        await addAndaime(formData);
+        const res = await addAndaime(formData);
+        if (res.message) {
+          alert(res.message);
+        }
         setShowSuccess(true);
         setTimeout(() => {
           setShowSuccess(false);
@@ -101,11 +108,20 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
     }
   };
 
-  const handleUnlock = (password: string) => {
+  const handleUnlock = async (password: string) => {
     if (password === 'Itf2026') {
-      setIsUnlocked(true);
-      setUnlockPassword(password);
-      setShowPasswordModal(false);
+      if (andaime && andaime.status === 'pendente') {
+        try {
+          await useStore.getState().approveAndaime(andaime.id, password);
+          onClose();
+        } catch (err: any) {
+          alert(err.message);
+        }
+      } else {
+        setIsUnlocked(true);
+        setUnlockPassword(password);
+        setShowPasswordModal(false);
+      }
     } else {
       alert('Senha incorreta');
     }
@@ -139,19 +155,44 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
           </div>
         ) : (
           <>
-            <div className="p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/30 sticky top-0 z-10 backdrop-blur-sm">
+            {showNotice && (
+          <div className="bg-blue-600 text-white p-4 flex items-center gap-3 animate-in slide-in-from-top duration-300 z-20">
+            <Info size={20} className="shrink-0" />
+            <p className="text-xs font-black uppercase tracking-widest leading-tight">
+              Gentileza verificar com encarregado Solução Andaimes a respeito da quantidade de pontos antes de confirmar a solicitação.
+            </p>
+            <button onClick={() => setShowNotice(false)} className="ml-auto p-1 hover:bg-white/20 rounded-lg transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        <div className="p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/30 sticky top-0 z-10 backdrop-blur-sm">
               <div className="flex items-center gap-4">
                 <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
                   <Layers className="text-white" size={24} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Andaimes</h2>
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">G-Oficinas</h2>
                   <p className="text-sm font-bold text-gray-400 mt-1">
-                    {andaime ? (andaime.status === 'aprovado' ? 'Editar Solicitação Aprovada' : 'Editar Solicitação') : 'Nova Solicitação'}
+                    {andaime ? (andaime.status === 'aprovado' ? 'Editar Solicitação Aprovada' : 'Solicitação Pendente') : 'Nova Solicitação'}
                   </p>
+                  {andaime?.status === 'pendente' && (
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2 animate-pulse">
+                      Aguardar aprovação da solicitação por Pedro Sacramento - ITF
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {andaime?.status === 'pendente' && (
+                  <button 
+                    onClick={() => setShowPasswordModal(true)}
+                    className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
+                  >
+                    <CheckCircle2 size={14} />
+                    Aprovar Solicitação
+                  </button>
+                )}
                 {andaime?.status === 'aprovado' && !isUnlocked && (
                   <button 
                     onClick={() => setShowPasswordModal(true)}

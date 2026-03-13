@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
-import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info } from 'lucide-react';
 import { cn } from '../lib/utils';
 import PasswordModal from '../components/PasswordModal';
 
@@ -14,143 +14,296 @@ const EQUIPAMENTOS = [
   { id: 'tesoura', name: 'Plataforma tesoura 8 metros', color: '#a855f7' }
 ];
 
-const AREAS = [
-  'Processo cerveja',
-  'Packaging, Bblend e Xaroparia',
-  'Utilidades e Meio Ambiente'
-];
+const HORARIOS = Array.from({ length: 24 }, (_, i) => {
+  const hour = i.toString().padStart(2, '0');
+  return `${hour}:00`;
+});
 
 export default function PTAs() {
-  const { ptas, fetchPTAs, addPTA, approvePTA, deletePTA } = useStore();
+  const { ptas, fetchPTAs, addPTA, approvePTA, deletePTA, batchDeletePTAs } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedPTA, setSelectedPTA] = useState<any>(null);
+  const [passwordAction, setPasswordAction] = useState<'approve' | 'delete' | 'batch-delete'>('approve');
+  const [pendingIndex, setPendingIndex] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   
   const [formData, setFormData] = useState({
     equipamento: EQUIPAMENTOS[0].name,
-    area: AREAS[0],
+    area: '',
     responsavel: '',
     data: new Date().toISOString().split('T')[0],
+    data_fim: new Date().toISOString().split('T')[0],
     hora_inicio: '07:00',
     hora_fim: '08:00',
     descricao: '',
-    prioridade: 'Normal'
+    prioridade: 'Normal',
+    recorrente: false
   });
 
   useEffect(() => {
     fetchPTAs();
   }, [fetchPTAs]);
 
-  const events = ptas.map(p => ({
-    id: p.id.toString(),
-    title: `${p.equipamento} - ${p.responsavel}`,
-    start: `${p.data}T${p.hora_inicio}`,
-    end: `${p.data}T${p.hora_fim}`,
-    backgroundColor: p.status === 'aprovado' 
-      ? (EQUIPAMENTOS.find(e => e.name === p.equipamento)?.color || '#f25c05')
-      : '#eab308',
-    borderColor: 'transparent',
-    extendedProps: { ...p }
-  }));
+  const pendingPTAs = ptas.filter(p => p.status === 'pendente');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await addPTA(formData);
-    setIsModalOpen(false);
+  const navigateToNextPending = () => {
+    if (pendingPTAs.length === 0) return;
+    const nextIndex = (pendingIndex + 1) % pendingPTAs.length;
+    setPendingIndex(nextIndex);
+    const pta = pendingPTAs[nextIndex];
+    
+    // Find the event in the calendar and scroll to it
+    const calendarApi = (window as any).fullCalendarPTA?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(pta.data);
+      // We can't easily scroll to a specific time in FullCalendar without a ref, 
+      // but gotoDate gets us to the right day.
+    }
+    
+    setSelectedPTA(pta);
+    setIsDetailModalOpen(true);
   };
 
-  const handleEventClick = (info: any) => {
-    setSelectedEvent(info.event);
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    setPasswordAction('batch-delete');
     setIsPasswordModalOpen(true);
   };
 
+  const events = ptas.map(p => {
+    const equip = EQUIPAMENTOS.find(e => e.name === p.equipamento);
+    const isSelected = selectedIds.includes(p.id);
+    return {
+      id: p.id.toString(),
+      title: p.responsavel,
+      start: `${p.data}T${p.hora_inicio}`,
+      end: `${p.data}T${p.hora_fim}`,
+      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.id === 'articulada' ? '#eff6ff' : '#f5f3ff') : '#fef9c3'),
+      borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#eab308'),
+      textColor: isSelected ? '#ffffff' : '#1e293b',
+      extendedProps: { ...p }
+    };
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await addPTA(formData);
+    if (res.message) {
+      alert(res.message);
+    }
+    setIsModalOpen(false);
+    setFormData({
+      equipamento: EQUIPAMENTOS[0].name,
+      area: '',
+      responsavel: '',
+      data: new Date().toISOString().split('T')[0],
+      data_fim: new Date().toISOString().split('T')[0],
+      hora_inicio: '07:00',
+      hora_fim: '08:00',
+      descricao: '',
+      prioridade: 'Normal',
+      recorrente: false
+    });
+  };
+
+  const handleEventClick = (info: any) => {
+    if (isSelectionMode) {
+      toggleSelection(parseInt(info.event.id));
+      return;
+    }
+    setSelectedPTA(info.event.extendedProps);
+    setIsDetailModalOpen(true);
+  };
+
   const handlePasswordSubmit = async (password: string) => {
-    if (selectedEvent) {
+    if (passwordAction === 'batch-delete') {
       try {
-        await approvePTA(Number(selectedEvent.id), password);
+        await batchDeletePTAs(selectedIds, password);
+        setSelectedIds([]);
+        setIsSelectionMode(false);
         setIsPasswordModalOpen(false);
+      } catch (err: any) {
+        alert(err.message);
+      }
+      return;
+    }
+
+    if (selectedPTA) {
+      try {
+        if (passwordAction === 'approve') {
+          await approvePTA(selectedPTA.id, password);
+        } else {
+          await deletePTA(selectedPTA.id, password);
+        }
+        setIsPasswordModalOpen(false);
+        setIsDetailModalOpen(false);
       } catch (err: any) {
         alert(err.message);
       }
     }
   };
 
-  const handleDelete = async () => {
-    if (selectedEvent) {
-      // Password check happens in handlePasswordSubmit if we pass a flag, 
-      // but for simplicity here we just use the same modal
-    }
-  };
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">PTAs</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">Plataformas de Trabalho em Altura</p>
+    <div className="h-full flex flex-col gap-6 p-6 overflow-hidden relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="bg-blue-500 p-3 rounded-2xl shadow-lg shadow-blue-500/20">
+            <Truck className="text-white" size={24} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">PTAs</h1>
+            <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Plataformas de Trabalho em Altura</p>
+          </div>
         </div>
         
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
-        >
-          <Plus size={20} />
-          Nova Solicitação
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end">
+            <button 
+              onClick={navigateToNextPending}
+              className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all active:scale-95"
+            >
+              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Solicitações pendentes:</span>
+              <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                {pendingPTAs.length}
+              </span>
+            </button>
+          </div>
+
+          <button 
+            onClick={() => setIsSelectionMode(!isSelectionMode)}
+            className={cn(
+              "font-black px-4 py-3 rounded-xl transition-all flex items-center gap-2 uppercase tracking-widest text-xs border",
+              isSelectionMode ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            {isSelectionMode ? 'Sair da Seleção' : 'Selecionar Vários'}
+          </button>
+
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-xs"
+          >
+            <Plus size={18} />
+            Nova Solicitação
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <div className="xl:col-span-3 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
-            locale={ptBrLocale}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            events={events}
-            eventClick={handleEventClick}
-            height="calc(100vh - 300px)"
-            slotMinTime="06:00:00"
-            slotMaxTime="22:00:00"
-            allDaySlot={false}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Legenda Equipamentos</h3>
-            <div className="space-y-3">
-              {EQUIPAMENTOS.map(e => (
-                <div key={e.id} className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: e.color }} />
-                  <span className="text-xs font-bold text-gray-700">{e.name}</span>
+      <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 p-4 overflow-hidden flex flex-col custom-calendar">
+        <FullCalendar
+          ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          locale={ptBrLocale}
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay'
+          }}
+          events={events}
+          slotMinTime="00:00:00"
+          slotMaxTime="23:59:59"
+          initialScrollTime="08:00:00"
+          allDaySlot={false}
+          height="100%"
+          expandRows={true}
+          stickyHeaderDates={true}
+          slotDuration="01:00:00"
+          eventClick={handleEventClick}
+          eventContent={(eventInfo) => {
+            const data = eventInfo.event.extendedProps;
+            const equip = EQUIPAMENTOS.find(e => e.name === data.equipamento);
+            const isSelected = selectedIds.includes(data.id);
+            
+            return (
+              <div className="p-2 h-full flex flex-col justify-between overflow-hidden relative">
+                {isSelectionMode && (
+                  <div className="absolute top-1 right-1 z-10">
+                    <div className={cn(
+                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                      isSelected ? "bg-white border-white" : "bg-white/50 border-slate-300"
+                    )}>
+                      {isSelected && <CheckCircle2 size={12} className="text-blue-600" />}
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className={cn(
+                      "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                      data.status === 'aprovado' ? (isSelected ? "bg-white/20 text-white" : "bg-green-500 text-white") : (isSelected ? "bg-white/20 text-white" : "bg-yellow-500 text-white")
+                    )}>
+                      {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className={cn(
+                      "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                      isSelected ? "bg-white/20 text-white" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
+                    )}>
+                      {data.equipamento.split(' ')[1]}
+                    </span>
+                    <span className={cn("text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
+                      {data.prioridade}
+                    </span>
+                  </div>
+                  <div className={cn("font-black text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
+                    {data.responsavel}
+                  </div>
                 </div>
-              ))}
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-yellow-500" />
-                <span className="text-xs font-bold text-gray-700">Pendente de Aprovação</span>
+                
+                <div className={cn("mt-auto pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
+                  <div className={cn("text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-blue-600")}>
+                    {data.area}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          }}
+        />
+      </div>
 
-          <div className="bg-orange-500 p-6 rounded-[2rem] shadow-xl shadow-orange-500/20 text-white">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Total de Reservas</h3>
-            <p className="text-4xl font-black">{ptas.length}</p>
-            <div className="mt-4 pt-4 border-t border-white/20 flex justify-between items-center">
-              <span className="text-[10px] font-bold uppercase">Aprovadas</span>
-              <span className="font-black">{ptas.filter(p => p.status === 'aprovado').length}</span>
-            </div>
+      {/* Batch Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-8 z-[150] animate-in slide-in-from-bottom-8 duration-300">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Selecionados</span>
+            <span className="text-xl font-black leading-none mt-1">{selectedIds.length}</span>
+          </div>
+          
+          <div className="h-8 w-px bg-slate-700" />
+          
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={handleBatchDelete}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95"
+            >
+              <Trash2 size={14} />
+              Excluir Lote
+            </button>
+            <button 
+              onClick={() => setSelectedIds([])}
+              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
                 <h2 className="text-2xl font-black text-gray-900 tracking-tight">NOVA SOLICITAÇÃO PTA</h2>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Agendamento de Equipamento</p>
@@ -160,78 +313,118 @@ export default function PTAs() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Equipamento</label>
-                  <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={formData.equipamento}
-                    onChange={e => setFormData({...formData, equipamento: e.target.value})}
-                  >
-                    {EQUIPAMENTOS.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
-                  </select>
-                </div>
+            <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Equipamento</label>
+                    <select 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                      value={formData.equipamento}
+                      onChange={e => setFormData({...formData, equipamento: e.target.value})}
+                    >
+                      {EQUIPAMENTOS.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                    </select>
+                  </div>
 
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área</label>
-                  <select 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={formData.area}
-                    onChange={e => setFormData({...formData, area: e.target.value})}
-                  >
-                    {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
-                  <input 
-                    type="text"
-                    required
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    placeholder="Nome do operador/responsável"
-                    value={formData.responsavel}
-                    onChange={e => setFormData({...formData, responsavel: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
-                  <input 
-                    type="date"
-                    required
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={formData.data}
-                    onChange={e => setFormData({...formData, data: e.target.value})}
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Início</label>
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área e Sub-área:</label>
                     <input 
-                      type="time"
+                      type="text"
                       required
                       className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                      value={formData.hora_inicio}
-                      onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
+                      placeholder="Ex: Processo - Brassagem"
+                      value={formData.area}
+                      onChange={e => setFormData({...formData, area: e.target.value})}
                     />
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fim</label>
+
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
                     <input 
-                      type="time"
+                      type="text"
                       required
                       className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                      value={formData.hora_fim}
-                      onChange={e => setFormData({...formData, hora_fim: e.target.value})}
+                      placeholder="Nome do operador/responsável"
+                      value={formData.responsavel}
+                      onChange={e => setFormData({...formData, responsavel: e.target.value})}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
+                    <input 
+                      type="date"
+                      required
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      value={formData.data}
+                      onChange={e => setFormData({...formData, data: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        className="w-5 h-5 rounded-lg border-blue-300 text-blue-500 focus:ring-blue-500"
+                        checked={formData.recorrente}
+                        onChange={e => setFormData({...formData, recorrente: e.target.checked})}
+                      />
+                      <span className="text-xs font-black text-blue-700 uppercase tracking-widest">O agendamento se repete por mais de um dia?</span>
+                    </label>
+                  </div>
+
+                  {formData.recorrente && (
+                    <div className="col-span-2 grid grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Inicial</label>
+                        <input 
+                          type="date"
+                          required
+                          className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                          value={formData.data}
+                          onChange={e => setFormData({...formData, data: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Final</label>
+                        <input 
+                          type="date"
+                          required
+                          className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                          value={formData.data_fim}
+                          onChange={e => setFormData({...formData, data_fim: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="col-span-2 grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Início</label>
+                      <select 
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        value={formData.hora_inicio}
+                        onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
+                      >
+                        {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fim</label>
+                      <select 
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        value={formData.hora_fim}
+                        onChange={e => setFormData({...formData, hora_fim: e.target.value})}
+                      >
+                        {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -251,24 +444,193 @@ export default function PTAs() {
         </div>
       )}
 
+      {isDetailModalOpen && selectedPTA && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA SOLICITAÇÃO</h2>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Informações do Agendamento</p>
+              </div>
+              <button onClick={() => setIsDetailModalOpen(false)} className="p-3 hover:bg-gray-200 rounded-2xl transition-colors">
+                <Plus size={24} className="text-gray-400 rotate-45" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2 bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className={cn(
+                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                      selectedPTA.status === 'aprovado' ? "bg-green-500 text-white" : "bg-yellow-500 text-white"
+                    )}>
+                      {selectedPTA.status === 'aprovado' ? 'APROVADO' : 'AGUARDANDO APROVAÇÃO'}
+                    </span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: #{selectedPTA.id}</span>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-black text-slate-900 uppercase">{selectedPTA.responsavel}</h3>
+                    <p className="text-sm font-bold text-blue-600 uppercase tracking-wider">{selectedPTA.equipamento}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
+                  <p className="font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
+                  <p className="font-bold text-slate-700 uppercase">{selectedPTA.prioridade}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
+                  <div className="flex items-center gap-2 font-bold text-slate-700">
+                    <CalendarIcon size={16} className="text-slate-400" />
+                    {new Date(selectedPTA.data).toLocaleDateString('pt-BR')}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</label>
+                  <div className="flex items-center gap-2 font-bold text-slate-700">
+                    <Clock size={16} className="text-slate-400" />
+                    {selectedPTA.hora_inicio} - {selectedPTA.hora_fim}
+                  </div>
+                </div>
+
+                {selectedPTA.descricao && (
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</label>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm font-medium text-slate-600 italic">
+                      "{selectedPTA.descricao}"
+                    </div>
+                  </div>
+                )}
+
+                {selectedPTA.status === 'pendente' && (
+                  <div className="col-span-2 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 flex items-start gap-3">
+                    <Info className="text-yellow-600 shrink-0" size={20} />
+                    <p className="text-xs font-bold text-yellow-700 leading-relaxed uppercase">
+                      Já existe um agendamento para este período. Gentileza negociar priorização com o solicitante responsável e alinhar com Pedro Sacramento - ITF.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/50 shrink-0">
+              <button 
+                onClick={() => {
+                  setPasswordAction('delete');
+                  setIsPasswordModalOpen(true);
+                }}
+                className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 size={18} />
+                EXCLUIR
+              </button>
+              
+              {selectedPTA.status === 'pendente' && (
+                <button 
+                  onClick={() => {
+                    setPasswordAction('approve');
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  APROVAR
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <PasswordModal 
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onConfirm={handlePasswordSubmit}
-        onDelete={async () => {
-          if (selectedEvent) {
-            const password = prompt('Digite a senha para excluir:');
-            if (password) {
-              try {
-                await deletePTA(Number(selectedEvent.id), password);
-                setIsPasswordModalOpen(false);
-              } catch (err: any) {
-                alert(err.message);
-              }
-            }
-          }
-        }}
       />
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-calendar .fc {
+          --fc-border-color: #f1f5f9;
+          --fc-today-bg-color: #eff6ff;
+          font-family: 'Inter', sans-serif;
+        }
+        .custom-calendar .fc-col-header-cell {
+          padding: 16px 0;
+          background: #fff;
+          border: none !important;
+          border-bottom: 2px solid #f1f5f9 !important;
+        }
+        .custom-calendar .fc-col-header-cell-cushion {
+          text-transform: uppercase;
+          font-weight: 900;
+          font-size: 11px;
+          letter-spacing: 0.1em;
+          color: #64748b;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        .custom-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+          color: #3b82f6;
+        }
+        .custom-calendar .fc-timegrid-slot {
+          height: 45px !important;
+          border-bottom: 1px solid #f1f5f9 !important;
+        }
+        .custom-calendar .fc-timegrid-slot-label-cushion {
+          font-weight: 700;
+          font-size: 12px;
+          color: #94a3b8;
+        }
+        .custom-calendar .fc-event {
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+          transition: all 0.2s;
+          border-width: 0 0 0 4px !important;
+          margin: 2px !important;
+        }
+        .custom-calendar .fc-event:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.12);
+          z-index: 50;
+        }
+        .custom-calendar .fc-toolbar-title {
+          font-weight: 900 !important;
+          text-transform: uppercase;
+          letter-spacing: -0.02em;
+          color: #1e293b;
+          font-size: 1.25rem !important;
+        }
+        .custom-calendar .fc-button {
+          background: #fff !important;
+          border: 1px solid #e2e8f0 !important;
+          color: #64748b !important;
+          font-weight: 800 !important;
+          text-transform: uppercase !important;
+          font-size: 10px !important;
+          border-radius: 12px !important;
+          padding: 10px 20px !important;
+          box-shadow: none !important;
+        }
+        .custom-calendar .fc-button-active {
+          background: #3b82f6 !important;
+          border-color: #3b82f6 !important;
+          color: #fff !important;
+        }
+        .custom-calendar .fc-theme-standard td, .custom-calendar .fc-theme-standard th {
+          border-color: #f1f5f9;
+        }
+      `}} />
     </div>
   );
 }

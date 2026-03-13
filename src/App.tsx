@@ -5,6 +5,7 @@ import Andaimes from './pages/Andaimes';
 import PTAs from './pages/PTAs';
 import SalaMotores from './pages/SalaMotores';
 import Oficina from './pages/Oficina';
+import Armstrong from './pages/Armstrong';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/ptas" element={<PTAs />} />
             <Route path="/sala-motores" element={<SalaMotores />} />
             <Route path="/oficina" element={<Oficina />} />
+            <Route path="/armstrong" element={<Armstrong />} />
             <Route path="/" element={<Navigate to="/andaimes" replace />} />
             <Route path="*" element={<div className="flex items-center justify-center h-full text-gray-400 font-bold uppercase tracking-widest">Módulo em desenvolvimento</div>} />
           </Routes>

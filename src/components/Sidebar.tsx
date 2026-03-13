@@ -5,7 +5,7 @@ import {
   Wrench, 
   Cpu, 
   Thermometer, 
-  Wind, 
+  Flame, 
   Zap, 
   Monitor, 
   ShieldCheck, 
@@ -19,14 +19,14 @@ const menuItems = [
   { group: 'OPERACIONAL', items: [
     { name: 'Oficina', path: '/oficina', icon: Wrench },
     { name: 'Andaimes', path: '/andaimes', icon: Construction },
+    { name: 'PTAs', path: '/ptas', icon: Truck },
     { name: 'REC (Usinagem)', path: '/rec', icon: Cpu },
   ]},
   { group: 'ESPECIALIDADES', items: [
     { name: 'Refrigeração', path: '/refrigeracao', icon: Thermometer },
-    { name: 'Armstrong (Vapor)', path: '/armstrong', icon: Wind },
+    { name: 'Armstrong (Vapor)', path: '/armstrong', icon: Flame },
     { name: 'Sala de Motores', path: '/sala-motores', icon: Zap },
     { name: 'Sala de Placas', path: '/sala-placas', icon: Monitor },
-    { name: 'PTAs', path: '/ptas', icon: Truck },
   ]},
   { group: 'SEGURANÇA (NRS)', items: [
     { name: 'Segurança NR10', path: '/nr10', icon: ShieldCheck },
@@ -40,7 +40,7 @@ export default function Sidebar() {
       <div className="p-6 border-b border-white/5">
         <h1 className="text-xl font-bold text-white flex items-center gap-2">
           <Construction className="text-orange-500" />
-          G-Offices
+          G-Oficinas
         </h1>
       </div>
 

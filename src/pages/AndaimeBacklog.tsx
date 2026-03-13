@@ -9,7 +9,18 @@ const COLUMNS = [
   'Utilidades e Meio Ambiente'
 ];
 
-export default function AndaimeBacklog() {
+const GET_LIMIT = (column: string) => {
+  if (column.includes('Processo')) return 10;
+  if (column.includes('Packaging')) return 4;
+  if (column.includes('Utilidades')) return 3;
+  return 999;
+};
+
+interface Props {
+  onCardClick?: (andaime: any) => void;
+}
+
+export default function AndaimeBacklog({ onCardClick }: Props) {
   const { andaimes, fetchAndaimes } = useStore();
 
   useEffect(() => {
@@ -17,49 +28,74 @@ export default function AndaimeBacklog() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 h-full flex flex-col">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
         <p className="text-sm text-gray-500 font-medium mt-1">Gestão de solicitações por área operacional</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {COLUMNS.map(column => {
           const points = andaimes
-            .filter(a => a.area === column && a.status === 'aprovado')
+            .filter(a => {
+              if (column === 'Packaging, Bblend e Xaroparia') {
+                return (a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia') && a.status === 'aprovado';
+              }
+              return a.area === column && a.status === 'aprovado';
+            })
             .reduce((sum, a) => sum + a.quantidade_pontos, 0);
+          
+          const limit = GET_LIMIT(column);
+          const isOverLimit = points >= limit;
           
           return (
             <div key={column} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex justify-between items-center">
               <div className="space-y-1">
-                <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{column}</h3>
-                <p className="text-2xl font-black text-slate-900 leading-none">{points}</p>
+                <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">{column}</h3>
+                <p className={cn(
+                  "text-2xl font-black leading-none",
+                  isOverLimit ? "text-red-600" : "text-slate-900"
+                )}>{points}</p>
               </div>
-              <div className="bg-orange-50 p-3 rounded-xl">
-                <MapPin className="text-orange-500" size={20} />
+              <div className={cn(
+                "p-3 rounded-xl",
+                isOverLimit ? "bg-red-50" : "bg-orange-50"
+              )}>
+                <MapPin className={isOverLimit ? "text-red-500" : "text-orange-500"} size={20} />
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {COLUMNS.map(column => (
-          <div key={column} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 overflow-hidden">
+          <div key={column} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 h-[600px]">
             <div className="flex items-center justify-between px-4 py-2">
               <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{column}</h2>
               <span className="bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
-                {andaimes.filter(a => a.area === column).length}
+                {andaimes.filter(a => {
+                  if (column === 'Packaging, Bblend e Xaroparia') {
+                    return a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia';
+                  }
+                  return a.area === column;
+                }).length}
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
               {andaimes
-                .filter(a => a.area === column)
+                .filter(a => {
+                  if (column === 'Packaging, Bblend e Xaroparia') {
+                    return a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia';
+                  }
+                  return a.area === column;
+                })
                 .map(item => (
                   <div 
                     key={item.id} 
-                    className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden"
+                    onClick={() => onCardClick?.(item)}
+                    className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden cursor-pointer active:scale-[0.98]"
                   >
                     <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1.5",
