@@ -348,11 +348,11 @@ async function startServer() {
   });
 
   app.post('/api/sala-motores', async (req, res) => {
-    const { titulo, responsavel, data, custo_evitado } = req.body;
+    const { titulo, responsavel, data, custo_evitado, causa_raiz, observacoes } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('atividades_sala_motores')
-        .insert([{ titulo, responsavel, data, custo_evitado }])
+        .insert([{ titulo, responsavel, data, custo_evitado, causa_raiz, observacoes }])
         .select();
       
       if (error) throw error;
@@ -364,17 +364,88 @@ async function startServer() {
 
   app.patch('/api/sala-motores/:id', async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, titulo, responsavel, data, custo_evitado, causa_raiz, observacoes, password } = req.body;
+    
+    // If it's just a status update, no password needed
+    if (status && Object.keys(req.body).length === 1) {
+      try {
+        const { error } = await supabase
+          .from('atividades_sala_motores')
+          .update({ status })
+          .eq('id', id);
+        
+        if (error) throw error;
+        return res.json({ success: true });
+      } catch (error) {
+        return res.status(500).json({ error: 'Failed to update activity status' });
+      }
+    }
+
+    // Otherwise, check password
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta' });
+    }
+
     try {
+      const updateData: any = {};
+      if (status) updateData.status = status;
+      if (titulo) updateData.titulo = titulo;
+      if (responsavel) updateData.responsavel = responsavel;
+      if (data) updateData.data = data;
+      if (custo_evitado !== undefined) updateData.custo_evitado = custo_evitado;
+      if (causa_raiz !== undefined) updateData.causa_raiz = causa_raiz;
+      if (observacoes !== undefined) updateData.observacoes = observacoes;
+
       const { error } = await supabase
         .from('atividades_sala_motores')
-        .update({ status })
+        .update(updateData)
         .eq('id', id);
       
       if (error) throw error;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update activity' });
+    }
+  });
+
+  app.post('/api/sala-motores/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta' });
+    }
+
+    try {
+      const { error } = await supabase
+        .from('atividades_sala_motores')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete activity' });
+    }
+  });
+
+  app.post('/api/sala-motores/batch-delete', async (req, res) => {
+    const { ids, password } = req.body;
+
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta' });
+    }
+
+    try {
+      const { error } = await supabase
+        .from('atividades_sala_motores')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch delete activities' });
     }
   });
 

@@ -117,26 +117,26 @@ export default function Andaimes() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-6 p-6 overflow-hidden">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
-            <Layers className="text-white" size={24} />
+    <div className="h-full flex flex-col gap-4 md:gap-6 p-2 md:p-4 lg:p-6 overflow-hidden">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20 shrink-0">
+            <Layers className="text-white w-5 h-5 md:w-6 md:h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Andaimes</h1>
-            <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Gestão de Montagem e Desmontagem de Andaimes</p>
+            <h1 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase leading-tight">Andaimes</h1>
+            <p className="text-slate-500 font-bold mt-0.5 md:mt-1 uppercase tracking-widest text-[7px] md:text-[10px]">Gestão de Montagem e Desmontagem de Andaimes</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full xl:w-auto">
+          <div className="flex flex-col items-end order-2 sm:order-1">
             <button 
               onClick={navigateToNextPending}
-              className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 hover:bg-orange-100 transition-all active:scale-95"
+              className="flex items-center gap-2 bg-orange-50 px-2 md:px-3 py-1.5 rounded-lg border border-orange-100 hover:bg-orange-100 transition-all active:scale-95"
             >
-              <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Solicitações pendentes:</span>
-              <span className="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+              <span className="text-[7px] md:text-[10px] font-black text-orange-500 uppercase tracking-widest">Solicitações pendentes:</span>
+              <span className="bg-orange-500 text-white text-[7px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 rounded-full">
                 {pendingAndaimes.length}
               </span>
             </button>
@@ -145,57 +145,57 @@ export default function Andaimes() {
           <button 
             onClick={() => setIsSelectionMode(!isSelectionMode)}
             className={cn(
-              "font-black px-4 py-3 rounded-xl transition-all flex items-center gap-2 uppercase tracking-widest text-xs border",
+              "font-black px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all flex items-center gap-2 uppercase tracking-widest text-[9px] md:text-xs border order-3 sm:order-2",
               isSelectionMode ? "bg-orange-600 text-white border-orange-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
             )}
           >
-            {isSelectionMode ? 'Sair da Seleção' : 'Selecionar Vários'}
+            {isSelectionMode ? 'Sair' : 'Selecionar'}
           </button>
 
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl border border-gray-200">
+          <div className="flex items-center gap-1 md:gap-2 bg-gray-100 p-1 rounded-xl border border-gray-200 order-1 sm:order-3">
             <button 
               onClick={() => setActiveTab('calendario')}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-black text-[10px] transition-all",
+                "flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-lg font-black text-[7px] md:text-[10px] transition-all",
                 activeTab === 'calendario' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
               )}
             >
-              <CalendarIcon size={14} />
+              <CalendarIcon size={12} className="md:w-[14px] md:h-[14px]" />
               CALENDÁRIO
             </button>
             <button 
               onClick={() => setActiveTab('backlog')}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-black text-[10px] transition-all",
+                "flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-lg font-black text-[7px] md:text-[10px] transition-all",
                 activeTab === 'backlog' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
               )}
             >
-              <LayoutGrid size={14} />
+              <LayoutGrid size={12} className="md:w-[14px] md:h-[14px]" />
               BACKLOG
             </button>
           </div>
 
           <button 
             onClick={openNewRequest}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-xs"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 md:px-6 py-2 md:py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-[9px] md:text-xs ml-auto xl:ml-0 order-4"
           >
-            <Plus size={18} />
+            <Plus size={16} className="md:w-[18px] md:h-[18px]" />
             Nova Solicitação
           </button>
         </div>
       </div>
 
       {activeTab === 'calendario' ? (
-        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 p-4 overflow-hidden flex flex-col custom-calendar">
+        <div className="flex-1 bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar">
           <FullCalendar
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
+            initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: 'timeGridWeek,timeGridDay'
+              right: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek,timeGridDay'
             }}
             events={events}
             slotMinTime="00:00:00"
@@ -220,21 +220,21 @@ export default function Andaimes() {
                 const isSelected = selectedIds.includes(data.id);
                 
                 return (
-                  <div className="p-2 h-full flex flex-col justify-between overflow-hidden relative">
+                  <div className="p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden relative">
                     {isSelectionMode && (
-                      <div className="absolute top-1 right-1 z-10">
+                      <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1 z-10">
                         <div className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                          "w-3 h-3 md:w-4 md:h-4 rounded border flex items-center justify-center transition-all",
                           isSelected ? "bg-white border-white" : "bg-white/50 border-slate-300"
                         )}>
-                          {isSelected && <CheckCircle2 size={12} className="text-orange-600" />}
+                          {isSelected && <CheckCircle2 size={10} className="text-orange-600 md:w-3 md:h-3" />}
                         </div>
                       </div>
                     )}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5 md:space-y-1">
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn(
-                          "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                          "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
                           data.status === 'aprovado' ? (isSelected ? "bg-white/20 text-white" : "bg-green-500 text-white") : (isSelected ? "bg-white/20 text-white" : "bg-yellow-500 text-white")
                         )}>
                           {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
@@ -242,25 +242,25 @@ export default function Andaimes() {
                       </div>
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn(
-                          "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                          "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
                           isSelected ? "bg-white/20 text-white" : (isMontagem ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600")
                         )}>
                           {data.tipo_servico}
                         </span>
-                        <span className={cn("text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
+                        <span className={cn("text-[6px] md:text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
                           {data.quantidade_pontos} PTS
                         </span>
                       </div>
-                      <div className={cn("font-black text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
+                      <div className={cn("font-black text-[9px] md:text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
                         {eventInfo.event.title}
                       </div>
                     </div>
                     
-                    <div className={cn("mt-auto pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
-                      <div className={cn("text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-orange-600")}>
+                    <div className={cn("mt-auto pt-0.5 md:pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
+                      <div className={cn("text-[7px] md:text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-orange-600")}>
                         {data.area}
                       </div>
-                      <div className={cn("text-[9px] font-bold uppercase truncate", isSelected ? "text-white/60" : "text-slate-700")}>
+                      <div className={cn("text-[7px] md:text-[9px] font-bold uppercase truncate", isSelected ? "text-white/60" : "text-slate-700")}>
                         {data.solicitante}
                       </div>
                     </div>
@@ -275,25 +275,26 @@ export default function Andaimes() {
 
       {/* Batch Action Bar */}
       {selectedIds.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-8 z-[150] animate-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl shadow-2xl flex items-center gap-4 md:gap-8 z-[150] animate-in slide-in-from-bottom-8 duration-300 w-[95%] md:w-auto justify-between md:justify-start">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Selecionados</span>
-            <span className="text-xl font-black leading-none mt-1">{selectedIds.length}</span>
+            <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Selecionados</span>
+            <span className="text-lg md:text-xl font-black leading-none mt-1">{selectedIds.length}</span>
           </div>
           
-          <div className="h-8 w-px bg-slate-700" />
+          <div className="h-8 w-px bg-slate-700 hidden md:block" />
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={handleBatchDelete}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95"
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all active:scale-95"
             >
               <Trash2 size={14} />
-              Excluir Lote
+              <span className="hidden sm:inline">Excluir Lote</span>
+              <span className="sm:hidden">Excluir</span>
             </button>
             <button 
               onClick={() => setSelectedIds([])}
-              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
+              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all px-2"
             >
               Cancelar
             </button>

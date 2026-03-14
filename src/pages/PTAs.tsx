@@ -152,27 +152,37 @@ export default function PTAs() {
     }
   };
 
+  const [calendarView, setCalendarView] = useState(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCalendarView(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="h-full flex flex-col gap-6 p-6 overflow-hidden relative">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-blue-500 p-3 rounded-2xl shadow-lg shadow-blue-500/20">
-            <Truck className="text-white" size={24} />
+    <div className="h-full flex flex-col gap-4 md:gap-6 p-3 md:p-6 overflow-hidden relative">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="bg-blue-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-blue-500/20">
+            <Truck className="text-white md:w-6 md:h-6" size={20} />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">PTAs</h1>
-            <p className="text-slate-500 font-bold mt-1 uppercase tracking-widest text-[10px]">Plataformas de Trabalho em Altura</p>
+            <h1 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">PTAs</h1>
+            <p className="text-slate-500 font-bold mt-0.5 md:mt-1 uppercase tracking-widest text-[8px] md:text-[10px]">Plataformas de Trabalho em Altura</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full lg:w-auto">
+          <div className="flex flex-col items-end flex-1 lg:flex-none">
             <button 
               onClick={navigateToNextPending}
-              className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all active:scale-95"
+              className="w-full lg:w-auto flex items-center justify-center gap-2 bg-blue-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all active:scale-95"
             >
-              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Solicitações pendentes:</span>
-              <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+              <span className="text-[7px] md:text-[10px] font-black text-blue-500 uppercase tracking-widest">Solicitações pendentes:</span>
+              <span className="bg-blue-500 text-white text-[7px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 rounded-full">
                 {pendingPTAs.length}
               </span>
             </button>
@@ -181,7 +191,7 @@ export default function PTAs() {
           <button 
             onClick={() => setIsSelectionMode(!isSelectionMode)}
             className={cn(
-              "font-black px-4 py-3 rounded-xl transition-all flex items-center gap-2 uppercase tracking-widest text-xs border",
+              "flex-1 lg:flex-none font-black px-2 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[8px] md:text-xs border",
               isSelectionMode ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
             )}
           >
@@ -190,24 +200,25 @@ export default function PTAs() {
 
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-xs"
+            className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white font-black px-3 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 active:scale-95 uppercase tracking-widest text-[8px] md:text-xs"
           >
-            <Plus size={18} />
+            <Plus size={14} className="md:w-[18px] md:h-[18px]" />
             Nova Solicitação
           </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 p-4 overflow-hidden flex flex-col custom-calendar">
+      <div className="flex-1 bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar">
         <FullCalendar
           ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
+          initialView={calendarView}
+          viewClassNames={calendarView}
           locale={ptBrLocale}
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'timeGridWeek,timeGridDay'
+            right: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek,timeGridDay'
           }}
           events={events}
           slotMinTime="00:00:00"
@@ -225,21 +236,21 @@ export default function PTAs() {
             const isSelected = selectedIds.includes(data.id);
             
             return (
-              <div className="p-2 h-full flex flex-col justify-between overflow-hidden relative">
+              <div className="p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden relative">
                 {isSelectionMode && (
-                  <div className="absolute top-1 right-1 z-10">
+                  <div className="absolute top-0.5 right-0.5 z-10">
                     <div className={cn(
-                      "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                      "w-3 h-3 md:w-4 md:h-4 rounded border flex items-center justify-center transition-all",
                       isSelected ? "bg-white border-white" : "bg-white/50 border-slate-300"
                     )}>
-                      {isSelected && <CheckCircle2 size={12} className="text-blue-600" />}
+                      {isSelected && <CheckCircle2 size={10} className="text-blue-600 md:w-3 md:h-3" />}
                     </div>
                   </div>
                 )}
-                <div className="space-y-1">
+                <div className="space-y-0.5 md:space-y-1">
                   <div className="flex items-center justify-between gap-1">
                     <span className={cn(
-                      "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                      "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
                       data.status === 'aprovado' ? (isSelected ? "bg-white/20 text-white" : "bg-green-500 text-white") : (isSelected ? "bg-white/20 text-white" : "bg-yellow-500 text-white")
                     )}>
                       {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
@@ -247,22 +258,22 @@ export default function PTAs() {
                   </div>
                   <div className="flex items-center justify-between gap-1">
                     <span className={cn(
-                      "text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                      "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
                       isSelected ? "bg-white/20 text-white" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
                     )}>
                       {data.equipamento.split(' ')[1]}
                     </span>
-                    <span className={cn("text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
+                    <span className={cn("text-[6px] md:text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
                       {data.prioridade}
                     </span>
                   </div>
-                  <div className={cn("font-black text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
+                  <div className={cn("font-black text-[9px] md:text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
                     {data.responsavel}
                   </div>
                 </div>
                 
-                <div className={cn("mt-auto pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
-                  <div className={cn("text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-blue-600")}>
+                <div className={cn("mt-auto pt-0.5 md:pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
+                  <div className={cn("text-[7px] md:text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-blue-600")}>
                     {data.area}
                   </div>
                 </div>
@@ -274,25 +285,25 @@ export default function PTAs() {
 
       {/* Batch Action Bar */}
       {selectedIds.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-8 z-[150] animate-in slide-in-from-bottom-8 duration-300">
+        <div className="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl shadow-2xl flex items-center gap-4 md:gap-8 z-[150] animate-in slide-in-from-bottom-8 duration-300 w-[90%] md:w-auto justify-between md:justify-start">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Selecionados</span>
-            <span className="text-xl font-black leading-none mt-1">{selectedIds.length}</span>
+            <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Selecionados</span>
+            <span className="text-lg md:text-xl font-black leading-none mt-1">{selectedIds.length}</span>
           </div>
           
-          <div className="h-8 w-px bg-slate-700" />
+          <div className="h-6 md:h-8 w-px bg-slate-700" />
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={handleBatchDelete}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95"
+              className="flex items-center gap-1.5 md:gap-2 bg-red-500 hover:bg-red-600 text-white px-3 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all active:scale-95"
             >
-              <Trash2 size={14} />
+              <Trash2 size={12} className="md:w-3.5 md:h-3.5" />
               Excluir Lote
             </button>
             <button 
               onClick={() => setSelectedIds([])}
-              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[10px] transition-all"
+              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all"
             >
               Cancelar
             </button>
@@ -301,25 +312,25 @@ export default function PTAs() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">NOVA SOLICITAÇÃO PTA</h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Agendamento de Equipamento</p>
+                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight">NOVA SOLICITAÇÃO PTA</h2>
+                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Agendamento de Equipamento</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-gray-200 rounded-2xl transition-colors">
-                <Plus size={24} className="text-gray-400 rotate-45" />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
+                <Plus size={20} className="text-gray-400 rotate-45 md:w-6 md:h-6" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Equipamento</label>
+              <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Equipamento</label>
                     <select 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
                       value={formData.equipamento}
                       onChange={e => setFormData({...formData, equipamento: e.target.value})}
                     >
@@ -327,71 +338,71 @@ export default function PTAs() {
                     </select>
                   </div>
 
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área e Sub-área:</label>
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Área e Sub-área:</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                       placeholder="Ex: Processo - Brassagem"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
                     />
                   </div>
 
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Responsável</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                       placeholder="Nome do operador/responsável"
                       value={formData.responsavel}
                       onChange={e => setFormData({...formData, responsavel: e.target.value})}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
+                  <div className="md:col-span-1">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data</label>
                     <input 
                       type="date"
                       required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                       value={formData.data}
                       onChange={e => setFormData({...formData, data: e.target.value})}
                     />
                   </div>
 
-                  <div className="col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                    <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="md:col-span-2 bg-blue-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-blue-100">
+                    <label className="flex items-center gap-2 md:gap-3 cursor-pointer">
                       <input 
                         type="checkbox"
-                        className="w-5 h-5 rounded-lg border-blue-300 text-blue-500 focus:ring-blue-500"
+                        className="w-4 h-4 md:w-5 md:h-5 rounded-lg border-blue-300 text-blue-500 focus:ring-blue-500"
                         checked={formData.recorrente}
                         onChange={e => setFormData({...formData, recorrente: e.target.checked})}
                       />
-                      <span className="text-xs font-black text-blue-700 uppercase tracking-widest">O agendamento se repete por mais de um dia?</span>
+                      <span className="text-[10px] md:text-xs font-black text-blue-700 uppercase tracking-widest">O agendamento se repete por mais de um dia?</span>
                     </label>
                   </div>
 
                   {formData.recorrente && (
-                    <div className="col-span-2 grid grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
+                    <div className="md:col-span-2 grid grid-cols-2 gap-4 md:gap-6 animate-in slide-in-from-top-2 duration-200">
                       <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Inicial</label>
+                        <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data Inicial</label>
                         <input 
                           type="date"
                           required
-                          className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                          className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                           value={formData.data}
                           onChange={e => setFormData({...formData, data: e.target.value})}
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Final</label>
+                        <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data Final</label>
                         <input 
                           type="date"
                           required
-                          className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                          className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                           value={formData.data_fim}
                           onChange={e => setFormData({...formData, data_fim: e.target.value})}
                         />
@@ -399,11 +410,11 @@ export default function PTAs() {
                     </div>
                   )}
 
-                  <div className="col-span-2 grid grid-cols-2 gap-6">
+                  <div className="md:col-span-2 grid grid-cols-2 gap-4 md:gap-6">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Início</label>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Início</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
                         value={formData.hora_inicio}
                         onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
                       >
@@ -411,9 +422,9 @@ export default function PTAs() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fim</label>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Fim</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
                         value={formData.hora_fim}
                         onChange={e => setFormData({...formData, hora_fim: e.target.value})}
                       >
@@ -424,17 +435,17 @@ export default function PTAs() {
                 </div>
               </div>
 
-              <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/50 shrink-0">
+              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-2xl transition-all"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
                 >
                   CANCELAR
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm"
                 >
                   SALVAR
                 </button>
@@ -445,76 +456,76 @@ export default function PTAs() {
       )}
 
       {isDetailModalOpen && selectedPTA && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA SOLICITAÇÃO</h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Informações do Agendamento</p>
+                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA SOLICITAÇÃO</h2>
+                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Informações do Agendamento</p>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="p-3 hover:bg-gray-200 rounded-2xl transition-colors">
-                <Plus size={24} className="text-gray-400 rotate-45" />
+              <button onClick={() => setIsDetailModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
+                <Plus size={20} className="text-gray-400 rotate-45 md:w-6 md:h-6" />
               </button>
             </div>
 
-            <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2 bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+            <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div className="md:col-span-2 bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 space-y-3 md:space-y-4">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                      "px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest",
                       selectedPTA.status === 'aprovado' ? "bg-green-500 text-white" : "bg-yellow-500 text-white"
                     )}>
                       {selectedPTA.status === 'aprovado' ? 'APROVADO' : 'AGUARDANDO APROVAÇÃO'}
                     </span>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: #{selectedPTA.id}</span>
+                    <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: #{selectedPTA.id}</span>
                   </div>
                   
                   <div className="space-y-1">
-                    <h3 className="text-xl font-black text-slate-900 uppercase">{selectedPTA.responsavel}</h3>
-                    <p className="text-sm font-bold text-blue-600 uppercase tracking-wider">{selectedPTA.equipamento}</p>
+                    <h3 className="text-lg md:text-xl font-black text-slate-900 uppercase">{selectedPTA.responsavel}</h3>
+                    <p className="text-xs md:text-sm font-bold text-blue-600 uppercase tracking-wider">{selectedPTA.equipamento}</p>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
-                  <p className="font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
+                <div className="space-y-0.5 md:space-y-1">
+                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
+                  <p className="text-sm md:text-base font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
-                  <p className="font-bold text-slate-700 uppercase">{selectedPTA.prioridade}</p>
+                <div className="space-y-0.5 md:space-y-1">
+                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
+                  <p className="text-sm md:text-base font-bold text-slate-700 uppercase">{selectedPTA.prioridade}</p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
-                  <div className="flex items-center gap-2 font-bold text-slate-700">
-                    <CalendarIcon size={16} className="text-slate-400" />
+                <div className="space-y-0.5 md:space-y-1">
+                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
+                  <div className="flex items-center gap-2 text-sm md:text-base font-bold text-slate-700">
+                    <CalendarIcon size={14} className="text-slate-400 md:w-4 md:h-4" />
                     {new Date(selectedPTA.data).toLocaleDateString('pt-BR')}
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</label>
-                  <div className="flex items-center gap-2 font-bold text-slate-700">
-                    <Clock size={16} className="text-slate-400" />
+                <div className="space-y-0.5 md:space-y-1">
+                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</label>
+                  <div className="flex items-center gap-2 text-sm md:text-base font-bold text-slate-700">
+                    <Clock size={14} className="text-slate-400 md:w-4 md:h-4" />
                     {selectedPTA.hora_inicio} - {selectedPTA.hora_fim}
                   </div>
                 </div>
 
                 {selectedPTA.descricao && (
-                  <div className="col-span-2 space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</label>
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm font-medium text-slate-600 italic">
+                  <div className="md:col-span-2 space-y-0.5 md:space-y-1">
+                    <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</label>
+                    <div className="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-100 text-xs md:text-sm font-medium text-slate-600 italic">
                       "{selectedPTA.descricao}"
                     </div>
                   </div>
                 )}
 
                 {selectedPTA.status === 'pendente' && (
-                  <div className="col-span-2 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 flex items-start gap-3">
-                    <Info className="text-yellow-600 shrink-0" size={20} />
-                    <p className="text-xs font-bold text-yellow-700 leading-relaxed uppercase">
+                  <div className="md:col-span-2 bg-yellow-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-yellow-100 flex items-start gap-2 md:gap-3">
+                    <Info className="text-yellow-600 shrink-0 md:w-5 md:h-5" size={16} />
+                    <p className="text-[10px] md:text-xs font-bold text-yellow-700 leading-relaxed uppercase">
                       Já existe um agendamento para este período. Gentileza negociar priorização com o solicitante responsável e alinhar com Pedro Sacramento - ITF.
                     </p>
                   </div>
@@ -522,15 +533,15 @@ export default function PTAs() {
               </div>
             </div>
 
-            <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/50 shrink-0">
+            <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
               <button 
                 onClick={() => {
                   setPasswordAction('delete');
                   setIsPasswordModalOpen(true);
                 }}
-                className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
               >
-                <Trash2 size={18} />
+                <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
                 EXCLUIR
               </button>
               
@@ -540,9 +551,9 @@ export default function PTAs() {
                     setPasswordAction('approve');
                     setIsPasswordModalOpen(true);
                   }}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
                 >
-                  <CheckCircle2 size={18} />
+                  <CheckCircle2 size={16} className="md:w-[18px] md:h-[18px]" />
                   APROVAR
                 </button>
               )}

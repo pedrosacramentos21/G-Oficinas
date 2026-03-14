@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS atividades_sala_motores (
     data TEXT NOT NULL,
     status TEXT DEFAULT 'pendente',
     custo_evitado DOUBLE PRECISION DEFAULT 0,
+    causa_raiz TEXT,
+    observacoes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

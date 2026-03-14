@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { Plus, Zap, User, Calendar, DollarSign, CheckCircle2, Clock, Play } from 'lucide-react';
+import { 
+  Plus, Zap, User, Calendar, DollarSign, CheckCircle2, Clock, Play, 
+  CheckSquare, Square, Trash2, Info, Edit3, X, AlertCircle 
+} from 'lucide-react';
 import { cn } from '../lib/utils';
+import PasswordModal from '../components/PasswordModal';
 
 const COLUMNS = [
   { id: 'pendente', name: 'Pendente', color: 'bg-yellow-500' },
@@ -10,13 +14,27 @@ const COLUMNS = [
 ];
 
 export default function SalaMotores() {
-  const { salaMotores, fetchSalaMotores, addAtividadeSalaMotores, updateStatusSalaMotores } = useStore();
+  const { 
+    salaMotores, fetchSalaMotores, addAtividadeSalaMotores, 
+    updateStatusSalaMotores, updateAtividadeSalaMotores, 
+    deleteAtividadeSalaMotores, batchDeleteSalaMotores 
+  } = useStore();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
+  const [passwordAction, setPasswordAction] = useState<{ type: 'delete' | 'edit' | 'batch-delete', id?: number | null }>({ type: 'delete' });
+
   const [formData, setFormData] = useState({
     titulo: '',
     responsavel: '',
     data: new Date().toISOString().split('T')[0],
-    custo_evitado: 0
+    custo_evitado: 0,
+    causa_raiz: '',
+    observacoes: ''
   });
 
   useEffect(() => {
@@ -31,196 +49,336 @@ export default function SalaMotores() {
     e.preventDefault();
     await addAtividadeSalaMotores(formData);
     setIsModalOpen(false);
+    setFormData({
+      titulo: '',
+      responsavel: '',
+      data: new Date().toISOString().split('T')[0],
+      custo_evitado: 0,
+      causa_raiz: '',
+      observacoes: ''
+    });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordAction({ type: 'edit', id: selectedActivity.id });
+    setIsPasswordModalOpen(true);
+  };
+
+  const handlePasswordConfirm = async (password: string) => {
+    try {
+      if (passwordAction.type === 'delete' && passwordAction.id) {
+        await deleteAtividadeSalaMotores(passwordAction.id, password);
+        setIsDetailsModalOpen(false);
+      } else if (passwordAction.type === 'edit' && passwordAction.id) {
+        await updateAtividadeSalaMotores(passwordAction.id, selectedActivity, password);
+        setIsDetailsModalOpen(false);
+      } else if (passwordAction.type === 'batch-delete') {
+        await batchDeleteSalaMotores(selectedIds, password);
+        setSelectionMode(false);
+        setSelectedIds([]);
+      }
+      setIsPasswordModalOpen(false);
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleCardClick = (activity: any) => {
+    if (selectionMode) {
+      toggleSelection(activity.id);
+    } else {
+      setSelectedActivity({ ...activity });
+      setIsDetailsModalOpen(true);
+    }
   };
 
   return (
-    <div className="h-full flex flex-col gap-8 animate-in fade-in duration-500 overflow-hidden">
-      <div className="shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">SALA DE MOTORES</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">Gestão de intervenções e atividades</p>
+    <div className="h-full flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-hidden relative">
+      <div className="shrink-0 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
+            <Zap className="text-white md:w-6 md:h-6" size={20} />
+          </div>
+          <div>
+            <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight uppercase">SALA DE MOTORES</h1>
+            <p className="text-[10px] md:text-sm text-gray-500 font-medium mt-0.5 md:mt-1 uppercase tracking-widest">Gestão de intervenções e atividades</p>
+          </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-4 md:gap-6">
-          <div className="bg-white px-4 md:px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div className="bg-green-50 p-2 rounded-lg">
-              <DollarSign className="text-green-500" size={20} />
+        <div className="flex flex-wrap items-center gap-3 md:gap-6 w-full lg:w-auto">
+          <div className="bg-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 flex-1 lg:flex-none">
+            <div className="bg-green-50 p-1.5 md:p-2 rounded-lg">
+              <DollarSign className="text-green-500 md:w-5 md:h-5" size={16} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Custo evitado no mês</p>
-              <p className="text-lg font-black text-gray-900">R$ {totalCustoEvitadoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Custo evitado no mês</p>
+              <p className="text-sm md:text-lg font-black text-gray-900">R$ {totalCustoEvitadoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
           </div>
 
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95 whitespace-nowrap"
-          >
-            <Plus size={20} />
-            Nova Atividade
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {selectionMode ? (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button 
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedIds([]);
+                  }}
+                  className="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 text-slate-600 font-black px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-[8px] md:text-[10px] uppercase tracking-widest"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    setPasswordAction({ type: 'batch-delete' });
+                    setIsPasswordModalOpen(true);
+                  }}
+                  disabled={selectedIds.length === 0}
+                  className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white font-black px-3 md:px-4 py-2 md:py-3 rounded-xl shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-[8px] md:text-[10px] uppercase tracking-widest"
+                >
+                  <Trash2 size={12} />
+                  Excluir ({selectedIds.length})
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setSelectionMode(true)}
+                className="flex-1 sm:flex-none bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-[8px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-1.5 md:gap-2"
+              >
+                <CheckSquare size={12} className="md:w-[14px] md:h-[14px]" />
+                Selecionar
+              </button>
+            )}
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95 whitespace-nowrap text-[10px] md:text-base uppercase tracking-widest"
+            >
+              <Plus size={16} className="md:w-5 md:h-5" />
+              Nova Atividade
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-hidden">
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 overflow-y-auto lg:overflow-hidden p-1 custom-scrollbar">
         {COLUMNS.map(column => (
-          <div key={column.id} className="flex flex-col gap-4 bg-gray-100/50 p-4 rounded-[2rem] border border-gray-200/50 min-h-0">
-            <div className="flex items-center justify-between px-4 py-2 shrink-0">
+          <div key={column.id} className="flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-200/50 min-h-[300px] lg:min-h-0">
+            <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
               <div className="flex items-center gap-2">
-                <div className={cn("w-2 h-2 rounded-full", column.color)} />
-                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{column.name}</h2>
+                <div className={cn("w-1.5 h-1.5 md:w-2 md:h-2 rounded-full", column.color)} />
+                <h2 className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-[0.15em] md:tracking-[0.2em]">{column.name}</h2>
               </div>
-              <span className="bg-white text-gray-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
+              <span className="bg-white text-gray-900 text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-full shadow-sm">
                 {salaMotores.filter(a => a.status === column.id).length}
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+            <div className="flex-1 lg:overflow-y-auto space-y-3 md:space-y-4 pr-1 md:pr-2 custom-scrollbar">
               {salaMotores
                 .filter(a => a.status === column.id)
-                .map(item => (
-                  <div 
-                    key={item.id} 
-                    className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden"
-                  >
-                    <div className={cn("absolute left-0 top-0 bottom-0 w-1.5", column.color)} />
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-black text-gray-900 text-sm leading-tight group-hover:text-orange-500 transition-colors">
-                          {item.titulo}
-                        </h3>
-                        {item.status === 'concluido' ? (
-                          <CheckCircle2 size={16} className="text-green-500 shrink-0" />
-                        ) : item.status === 'em_andamento' ? (
-                          <Play size={16} className="text-blue-500 shrink-0" />
-                        ) : (
-                          <Clock size={16} className="text-yellow-500 shrink-0" />
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                          <User size={12} />
-                          <span className="truncate">{item.responsavel}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                          <Calendar size={12} />
-                          <span>{item.data}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-                        <div className="flex items-center gap-1 text-green-600 font-black text-[10px]">
-                          <DollarSign size={10} />
-                          {item.custo_evitado.toLocaleString('pt-BR')}
-                        </div>
-                        
-                        <div className="flex gap-1">
-                          {column.id !== 'pendente' && (
-                            <button 
-                              onClick={() => updateStatusSalaMotores(item.id, 'pendente')}
-                              className="p-1.5 hover:bg-yellow-50 text-yellow-500 rounded-lg transition-colors"
-                            >
-                              <Clock size={14} />
-                            </button>
+                .map(item => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                    <div 
+                      key={item.id} 
+                      onClick={() => handleCardClick(item)}
+                      className={cn(
+                        "bg-white p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden cursor-pointer",
+                        isSelected && "ring-2 ring-orange-500 ring-offset-2 shadow-lg"
+                      )}
+                    >
+                      <div className={cn("absolute left-0 top-0 bottom-0 w-1 md:w-1.5", column.color)} />
+                      
+                      {selectionMode && (
+                        <div className="absolute top-2 right-2 z-10">
+                          {isSelected ? (
+                            <CheckSquare size={16} className="text-orange-500" />
+                          ) : (
+                            <Square size={16} className="text-slate-300" />
                           )}
-                          {column.id !== 'em_andamento' && (
-                            <button 
-                              onClick={() => updateStatusSalaMotores(item.id, 'em_andamento')}
-                              className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors"
-                            >
-                              <Play size={14} />
-                            </button>
+                        </div>
+                      )}
+
+                      <div className="space-y-3 md:space-y-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-orange-500 transition-colors uppercase pr-6">
+                            {item.titulo}
+                          </h3>
+                          {!selectionMode && (
+                            item.status === 'concluido' ? (
+                              <CheckCircle2 size={14} className="text-green-500 shrink-0 md:w-4 md:h-4" />
+                            ) : item.status === 'em_andamento' ? (
+                              <Play size={14} className="text-blue-500 shrink-0 md:w-4 md:h-4" />
+                            ) : (
+                              <Clock size={14} className="text-yellow-500 shrink-0 md:w-4 md:h-4" />
+                            )
                           )}
-                          {column.id !== 'concluido' && (
-                            <button 
-                              onClick={() => updateStatusSalaMotores(item.id, 'concluido')}
-                              className="p-1.5 hover:bg-green-50 text-green-500 rounded-lg transition-colors"
-                            >
-                              <CheckCircle2 size={14} />
-                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 md:gap-3">
+                          <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] font-bold text-gray-400">
+                            <User size={10} className="md:w-3 md:h-3" />
+                            <span className="truncate uppercase">{item.responsavel}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] font-bold text-gray-400">
+                            <Calendar size={10} className="md:w-3 md:h-3" />
+                            <span>{item.data}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                          <div className="flex items-center gap-1 text-green-600 font-black text-[9px] md:text-[10px]">
+                            <DollarSign size={10} className="md:w-3 md:h-3" />
+                            {item.custo_evitado.toLocaleString('pt-BR')}
+                          </div>
+                          
+                          {!selectionMode && (
+                            <div className="flex gap-1">
+                              {column.id !== 'pendente' && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateStatusSalaMotores(item.id, 'pendente');
+                                  }}
+                                  className="p-1 md:p-1.5 hover:bg-yellow-50 text-yellow-500 rounded-lg transition-colors"
+                                  title="Mover para Pendente"
+                                >
+                                  <Clock size={12} className="md:w-3.5 md:h-3.5" />
+                                </button>
+                              )}
+                              {column.id !== 'em_andamento' && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateStatusSalaMotores(item.id, 'em_andamento');
+                                  }}
+                                  className="p-1 md:p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors"
+                                  title="Mover para Em Andamento"
+                                >
+                                  <Play size={12} className="md:w-3.5 md:h-3.5" />
+                                </button>
+                              )}
+                              {column.id !== 'concluido' && (
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateStatusSalaMotores(item.id, 'concluido');
+                                  }}
+                                  className="p-1 md:p-1.5 hover:bg-green-50 text-green-500 rounded-lg transition-colors"
+                                  title="Mover para Concluído"
+                                >
+                                  <CheckCircle2 size={12} className="md:w-3.5 md:h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         ))}
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tight">NOVA ATIVIDADE</h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Sala de Motores</p>
+                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight text-orange-500">NOVA ATIVIDADE</h2>
+                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Sala de Motores</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-3 hover:bg-gray-200 rounded-2xl transition-colors">
-                <Plus size={24} className="text-gray-400 rotate-45" />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
+                <X size={20} className="text-gray-400 md:w-6 md:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Título da Atividade</label>
-                  <input 
-                    type="text"
-                    required
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={formData.titulo}
-                    onChange={e => setFormData({...formData, titulo: e.target.value})}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Título da Atividade</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                      value={formData.responsavel}
-                      onChange={e => setFormData({...formData, responsavel: e.target.value})}
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      value={formData.titulo}
+                      onChange={e => setFormData({...formData, titulo: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Responsável</label>
+                      <input 
+                        type="text"
+                        required
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        value={formData.responsavel}
+                        onChange={e => setFormData({...formData, responsavel: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data</label>
+                      <input 
+                        type="date"
+                        required
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        value={formData.data}
+                        onChange={e => setFormData({...formData, data: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Custo Evitado (R$)</label>
+                    <input 
+                      type="number"
+                      required
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      value={formData.custo_evitado}
+                      onChange={e => setFormData({...formData, custo_evitado: Number(e.target.value)})}
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
-                    <input 
-                      type="date"
-                      required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                      value={formData.data}
-                      onChange={e => setFormData({...formData, data: e.target.value})}
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Causa Raiz da Falha</label>
+                    <textarea 
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[80px]"
+                      value={formData.causa_raiz}
+                      onChange={e => setFormData({...formData, causa_raiz: e.target.value})}
+                      placeholder="Descreva a causa raiz..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Observações</label>
+                    <textarea 
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[80px]"
+                      value={formData.observacoes}
+                      onChange={e => setFormData({...formData, observacoes: e.target.value})}
+                      placeholder="Observações adicionais..."
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Custo Evitado (R$)</label>
-                  <input 
-                    type="number"
-                    required
-                    className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all"
-                    value={formData.custo_evitado}
-                    onChange={e => setFormData({...formData, custo_evitado: Number(e.target.value)})}
-                  />
-                </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-2xl transition-all"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
                 >
                   CANCELAR
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm"
                 >
                   SALVAR
                 </button>
@@ -229,6 +387,162 @@ export default function SalaMotores() {
           </div>
         </div>
       )}
+
+      {isDetailsModalOpen && selectedActivity && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
+            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
+                  <Zap className="text-white" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA ATIVIDADE</h2>
+                  <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Sala de Motores</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    setPasswordAction({ type: 'delete', id: selectedActivity.id });
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="p-2 md:p-3 hover:bg-red-50 text-red-500 rounded-xl md:rounded-2xl transition-colors"
+                  title="Excluir Atividade"
+                >
+                  <Trash2 size={20} className="md:w-6 md:h-6" />
+                </button>
+                <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
+                  <X size={20} className="text-gray-400 md:w-6 md:h-6" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Título da Atividade</label>
+                    <input 
+                      type="text"
+                      required
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                      value={selectedActivity.titulo}
+                      onChange={e => setSelectedActivity({...selectedActivity, titulo: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="text"
+                        required
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                        value={selectedActivity.responsavel}
+                        onChange={e => setSelectedActivity({...selectedActivity, responsavel: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="date"
+                        required
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        value={selectedActivity.data}
+                        onChange={e => setSelectedActivity({...selectedActivity, data: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Custo Evitado (R$)</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                      <input 
+                        type="number"
+                        required
+                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        value={selectedActivity.custo_evitado}
+                        onChange={e => setSelectedActivity({...selectedActivity, custo_evitado: Number(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+                    <select 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      value={selectedActivity.status}
+                      onChange={e => setSelectedActivity({...selectedActivity, status: e.target.value})}
+                    >
+                      <option value="pendente">PENDENTE</option>
+                      <option value="em_andamento">EM ANDAMENTO</option>
+                      <option value="concluido">CONCLUÍDO</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Causa Raiz da Falha</label>
+                    <textarea 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[100px]"
+                      value={selectedActivity.causa_raiz || ''}
+                      onChange={e => setSelectedActivity({...selectedActivity, causa_raiz: e.target.value})}
+                      placeholder="Descreva a causa raiz..."
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
+                    <textarea 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[100px]"
+                      value={selectedActivity.observacoes || ''}
+                      onChange={e => setSelectedActivity({...selectedActivity, observacoes: e.target.value})}
+                      placeholder="Observações adicionais..."
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-blue-100 flex items-start gap-3 md:gap-4">
+                  <Info className="text-blue-500 shrink-0 mt-1" size={20} />
+                  <p className="text-[10px] md:text-xs font-bold text-blue-700 leading-relaxed uppercase">
+                    A edição de informações requer autorização via senha mestre para garantir a integridade dos dados registrados.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
+                <button 
+                  type="button"
+                  onClick={() => setIsDetailsModalOpen(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
+                >
+                  FECHAR
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm flex items-center justify-center gap-2"
+                >
+                  <Edit3 size={16} />
+                  SALVAR ALTERAÇÕES
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <PasswordModal 
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onConfirm={handlePasswordConfirm}
+        onDelete={passwordAction.type === 'delete' ? () => handlePasswordConfirm('Itf2026') : undefined}
+      />
     </div>
   );
 }

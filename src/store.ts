@@ -35,6 +35,8 @@ interface AtividadeSalaMotores {
   data: string;
   status: 'pendente' | 'em_andamento' | 'concluido';
   custo_evitado: number;
+  causa_raiz?: string;
+  observacoes?: string;
 }
 
 interface ArmstrongManutencao {
@@ -93,6 +95,9 @@ interface StoreState {
   fetchSalaMotores: () => Promise<void>;
   addAtividadeSalaMotores: (atividade: Omit<AtividadeSalaMotores, 'id' | 'status'>) => Promise<void>;
   updateStatusSalaMotores: (id: number, status: AtividadeSalaMotores['status']) => Promise<void>;
+  updateAtividadeSalaMotores: (id: number, updates: Partial<AtividadeSalaMotores>, password?: string) => Promise<void>;
+  deleteAtividadeSalaMotores: (id: number, password: string) => Promise<void>;
+  batchDeleteSalaMotores: (ids: number[], password: string) => Promise<void>;
   fetchArmstrong: () => Promise<void>;
   addArmstrongManutencao: (manutencao: Omit<ArmstrongManutencao, 'id'>) => Promise<void>;
   updateArmstrongManutencao: (id: number, updates: Partial<ArmstrongManutencao>, password?: string) => Promise<void>;
@@ -308,6 +313,45 @@ export const useStore = create<StoreState>((set, get) => ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
+    get().fetchSalaMotores();
+  },
+
+  updateAtividadeSalaMotores: async (id, updates, password) => {
+    const res = await fetch(`/api/sala-motores/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updates, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchSalaMotores();
+  },
+
+  deleteAtividadeSalaMotores: async (id, password) => {
+    const res = await fetch(`/api/sala-motores/${id}/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchSalaMotores();
+  },
+
+  batchDeleteSalaMotores: async (ids, password) => {
+    const res = await fetch('/api/sala-motores/batch-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
     get().fetchSalaMotores();
   },
 

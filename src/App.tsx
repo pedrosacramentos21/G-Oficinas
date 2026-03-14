@@ -18,7 +18,13 @@ export default function App() {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        const res = await fetch('/api/health');
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const res = await fetch(`${apiUrl}/api/health`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setConnectionError(data.message || `Erro de conexão: ${res.status} ${res.statusText}`);
+          return;
+        }
         const data = await res.json();
         if (data.status !== 'ok') {
           setConnectionError('Erro de conexão com o banco de dados no servidor.');
@@ -26,7 +32,7 @@ export default function App() {
           setConnectionError(null);
         }
       } catch (err) {
-        setConnectionError('Não foi possível verificar a conexão com o servidor.');
+        setConnectionError('Não foi possível verificar a conexão com o servidor. Verifique se o backend está rodando.');
       }
     };
     checkConnection();
@@ -76,17 +82,19 @@ export default function App() {
             </button>
           </div>
 
-          <main className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
-            <Routes>
-              <Route path="/andaimes/*" element={<Andaimes />} />
-              <Route path="/ptas" element={<PTAs />} />
-              <Route path="/sala-motores" element={<SalaMotores />} />
-              <Route path="/oficina" element={<Oficina />} />
-              <Route path="/armstrong" element={<Armstrong />} />
-              <Route path="/refrigeracao" element={<Refrigeracao />} />
-              <Route path="/" element={<Navigate to="/andaimes" replace />} />
-              <Route path="*" element={<div className="flex items-center justify-center h-full text-gray-400 font-bold uppercase tracking-widest">Módulo em desenvolvimento</div>} />
-            </Routes>
+          <main className="flex-1 overflow-y-auto p-3 md:p-6 lg:p-8 custom-scrollbar">
+            <div className="max-w-[1920px] mx-auto h-full">
+              <Routes>
+                <Route path="/andaimes/*" element={<Andaimes />} />
+                <Route path="/ptas" element={<PTAs />} />
+                <Route path="/sala-motores" element={<SalaMotores />} />
+                <Route path="/oficina" element={<Oficina />} />
+                <Route path="/armstrong" element={<Armstrong />} />
+                <Route path="/refrigeracao" element={<Refrigeracao />} />
+                <Route path="/" element={<Navigate to="/andaimes" replace />} />
+                <Route path="*" element={<div className="flex items-center justify-center h-full text-gray-400 font-bold uppercase tracking-widest text-center p-4">Módulo em desenvolvimento</div>} />
+              </Routes>
+            </div>
           </main>
         </div>
       </div>
