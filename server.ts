@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
@@ -14,23 +13,22 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const MASTER_PASSWORD = 'Itf2026';
 ;
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
+const PORT = 3000;
 
-  app.use(express.json());
-  app.use(cors());
+app.use(express.json());
+app.use(cors());
 
-  // API health check
-  app.get('/api/health', async (req, res) => {
-    try {
-      const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
-      if (error) throw error;
-      res.json({ status: 'ok' });
-    } catch (error) {
-      res.status(500).json({ status: 'error', message: 'Database connection failed' });
-    }
-  });
+// API health check
+app.get('/api/health', async (req, res) => {
+  try {
+    const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
+    if (error) throw error;
+    res.json({ status: 'ok' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Database connection failed' });
+  }
+});
 
   // API Routes for Andaimes
   app.get('/api/andaimes', async (req, res) => {
@@ -857,6 +855,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -870,9 +869,10 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
+  if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 
-startServer();
+export default app;
