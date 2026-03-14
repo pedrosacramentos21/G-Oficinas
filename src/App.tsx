@@ -18,8 +18,7 @@ export default function App() {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || '';
-        const res = await fetch(`${apiUrl}/api/health`);
+        const res = await fetch('/api/health');
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           setConnectionError(data.message || `Erro de conexão: ${res.status} ${res.statusText}`);
