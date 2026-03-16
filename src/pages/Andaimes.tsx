@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2 } from 'lucide-react';
@@ -93,6 +94,7 @@ export default function Andaimes() {
       backgroundColor: isSelected ? '#f97316' : (a.status === 'aprovado' ? '#dcfce7' : '#fef9c3'),
       borderColor: isSelected ? '#ea580c' : (a.status === 'aprovado' ? '#22c55e' : '#eab308'),
       textColor: isSelected ? '#ffffff' : '#1e293b',
+      className: `event-status-${a.status}`,
       extendedProps: a
     };
   });
@@ -189,14 +191,18 @@ export default function Andaimes() {
         <div className="flex-1 bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar">
           <FullCalendar
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
             initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek,timeGridDay'
+              right: window.innerWidth < 768 ? 'multiMonthYear,timeGridDay' : 'multiMonthYear,timeGridWeek,timeGridDay'
             }}
+            buttonText={{
+              multiMonthYear: 'Mês'
+            }}
+            multiMonthMaxColumns={window.innerWidth < 1024 ? 1 : (window.innerWidth < 1400 ? 2 : 3)}
             events={events}
             slotMinTime="00:00:00"
             slotMaxTime="23:59:59"
@@ -383,6 +389,103 @@ export default function Andaimes() {
           background: #f25c05 !important;
           border-color: #f25c05 !important;
           color: #fff !important;
+        }
+        .fc-multimonth {
+          border: none !important;
+          background: transparent !important;
+        }
+        .fc-multimonth-month {
+          border: 1px solid #f1f5f9 !important;
+          border-radius: 16px !important;
+          margin: 4px !important;
+          padding: 8px !important;
+          background: #fff !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+          flex: 1 1 300px !important;
+          min-width: 280px !important;
+        }
+        .fc-multimonth-title {
+          font-weight: 900 !important;
+          text-transform: uppercase !important;
+          font-size: 11px !important;
+          color: #1e293b !important;
+          margin-bottom: 4px !important;
+          text-align: center !important;
+        }
+        .fc-multimonth-daygrid-table {
+          font-size: 9px !important;
+        }
+        .fc-multimonth-daygrid-table th {
+          font-weight: 800 !important;
+          color: #94a3b8 !important;
+          text-transform: uppercase !important;
+          font-size: 7px !important;
+          padding: 4px 0 !important;
+        }
+        /* Dot styles for Year View */
+        .fc-multimonth .fc-daygrid-event {
+          padding: 0 !important;
+          margin: 0 !important;
+          width: 9px !important;
+          height: 9px !important;
+          border-radius: 50% !important;
+          border: none !important;
+          font-size: 0 !important;
+          display: inline-block !important;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+        }
+        .fc-multimonth .event-status-aprovado {
+          background-color: #22c55e !important;
+        }
+        .fc-multimonth .event-status-pendente {
+          background-color: #eab308 !important;
+        }
+        .fc-multimonth .fc-event-title {
+          display: none !important;
+        }
+        .fc-multimonth .fc-daygrid-event-h-hook {
+          background: transparent !important;
+        }
+        .fc-multimonth .fc-daygrid-day-events {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 4px !important;
+          justify-content: center !important;
+          padding-bottom: 6px !important;
+          margin-top: auto !important;
+          width: 100% !important;
+        }
+        .fc-multimonth .fc-daygrid-day-frame {
+          min-height: 52px !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          padding: 4px 0 !important;
+        }
+        .fc-multimonth .fc-daygrid-day-top {
+          flex-direction: row !important;
+          justify-content: center !important;
+          margin-bottom: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+        }
+        .fc-multimonth .fc-daygrid-day-number {
+          font-weight: 800 !important;
+          font-size: 13px !important;
+          padding: 4px 8px !important;
+          position: relative !important;
+          z-index: 1 !important;
+          color: #1e293b !important;
+          line-height: 1 !important;
+        }
+        .fc-multimonth .fc-day-today {
+          background: #fff7ed !important;
+        }
+        .fc-multimonth .fc-day-today .fc-daygrid-day-number {
+          color: #f25c05 !important;
+          background: #ffedd5 !important;
+          border-radius: 4px !important;
         }
         .custom-calendar .fc-theme-standard td, .custom-calendar .fc-theme-standard th {
           border-color: #f1f5f9;
