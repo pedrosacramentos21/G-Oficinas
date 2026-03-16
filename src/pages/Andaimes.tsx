@@ -102,7 +102,7 @@ export default function Andaimes() {
   const pointsPerArea = AREAS.map(area => ({
     name: area,
     points: andaimes
-      .filter(a => a.area === area && a.status === 'aprovado')
+      .filter(a => a.area === area && a.status === 'aprovado' && a.tipo_servico !== 'Desmontagem')
       .reduce((sum, a) => sum + a.quantidade_pontos, 0)
   }));
 

@@ -21,28 +21,31 @@ const HORARIOS = Array.from({ length: 24 }, (_, i) => {
 });
 
 export default function PTAs() {
-  const { ptas, fetchPTAs, addPTA, approvePTA, deletePTA, batchDeletePTAs } = useStore();
+  const { ptas, fetchPTAs, addPTA, approvePTA, updatePTA, deletePTA, batchDeletePTAs } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [selectedPTA, setSelectedPTA] = useState<any>(null);
-  const [passwordAction, setPasswordAction] = useState<'approve' | 'delete' | 'batch-delete'>('approve');
+  const [passwordAction, setPasswordAction] = useState<'approve' | 'delete' | 'batch-delete' | 'edit'>('approve');
+  const [isEditing, setIsEditing] = useState(false);
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  
-  const [formData, setFormData] = useState({
+
+  const INITIAL_FORM_DATA = {
     equipamento: EQUIPAMENTOS[0].name,
     area: '',
     responsavel: '',
     data: new Date().toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
-    hora_inicio: '07:00',
-    hora_fim: '08:00',
+    hora_inicio: '08:00',
+    hora_fim: '17:00',
     descricao: '',
     prioridade: 'Normal',
     recorrente: false
-  });
+  };
+  
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   useEffect(() => {
     fetchPTAs();
@@ -96,27 +99,6 @@ export default function PTAs() {
     };
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const res = await addPTA(formData);
-    if (res.message) {
-      alert(res.message);
-    }
-    setIsModalOpen(false);
-    setFormData({
-      equipamento: EQUIPAMENTOS[0].name,
-      area: '',
-      responsavel: '',
-      data: new Date().toISOString().split('T')[0],
-      data_fim: new Date().toISOString().split('T')[0],
-      hora_inicio: '07:00',
-      hora_fim: '08:00',
-      descricao: '',
-      prioridade: 'Normal',
-      recorrente: false
-    });
-  };
-
   const handleEventClick = (info: any) => {
     if (isSelectionMode) {
       toggleSelection(parseInt(info.event.id));
@@ -125,6 +107,8 @@ export default function PTAs() {
     setSelectedPTA(info.event.extendedProps);
     setIsDetailModalOpen(true);
   };
+
+  const [tempPassword, setTempPassword] = useState('');
 
   const handlePasswordSubmit = async (password: string) => {
     if (passwordAction === 'batch-delete') {
@@ -143,14 +127,54 @@ export default function PTAs() {
       try {
         if (passwordAction === 'approve') {
           await approvePTA(selectedPTA.id, password);
-        } else {
+          setIsPasswordModalOpen(false);
+          setIsDetailModalOpen(false);
+        } else if (passwordAction === 'delete') {
           await deletePTA(selectedPTA.id, password);
+          setIsPasswordModalOpen(false);
+          setIsDetailModalOpen(false);
+        } else if (passwordAction === 'edit') {
+          setTempPassword(password);
+          setIsEditing(true);
+          setFormData({
+            equipamento: selectedPTA.equipamento,
+            area: selectedPTA.area,
+            responsavel: selectedPTA.responsavel,
+            data: selectedPTA.data,
+            data_fim: selectedPTA.data_fim || selectedPTA.data,
+            hora_inicio: selectedPTA.hora_inicio,
+            hora_fim: selectedPTA.hora_fim,
+            descricao: selectedPTA.descricao || '',
+            prioridade: selectedPTA.prioridade,
+            recorrente: !!selectedPTA.data_fim && selectedPTA.data_fim !== selectedPTA.data
+          });
+          setIsPasswordModalOpen(false);
+          setIsDetailModalOpen(false);
+          setIsModalOpen(true);
         }
-        setIsPasswordModalOpen(false);
-        setIsDetailModalOpen(false);
       } catch (err: any) {
         alert(err.message);
       }
+    }
+  };
+
+  const handleActualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isEditing && selectedPTA) {
+        await updatePTA(selectedPTA.id, formData, tempPassword);
+      } else {
+        const res = await addPTA(formData);
+        if (res.message) {
+          alert(res.message);
+        }
+      }
+      setIsModalOpen(false);
+      setIsEditing(false);
+      setFormData(INITIAL_FORM_DATA);
+      setTempPassword('');
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -201,7 +225,11 @@ export default function PTAs() {
           </button>
 
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setIsEditing(false);
+              setFormData(INITIAL_FORM_DATA);
+              setIsModalOpen(true);
+            }}
             className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white font-black px-3 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 active:scale-95 uppercase tracking-widest text-[8px] md:text-xs"
           >
             <Plus size={14} className="md:w-[18px] md:h-[18px]" />
@@ -322,15 +350,19 @@ export default function PTAs() {
           <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
             <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight">NOVA SOLICITAÇÃO PTA</h2>
-                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Agendamento de Equipamento</p>
+                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight">{isEditing ? 'EDITAR SOLICITAÇÃO PTA' : 'NOVA SOLICITAÇÃO PTA'}</h2>
+                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">{isEditing ? 'Alterar Agendamento' : 'Agendamento de Equipamento'}</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
+              <button onClick={() => {
+                setIsModalOpen(false);
+                setIsEditing(false);
+                setFormData(INITIAL_FORM_DATA);
+              }} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
                 <Plus size={20} className="text-gray-400 rotate-45 md:w-6 md:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+            <form onSubmit={handleActualSubmit} className="flex-1 overflow-hidden flex flex-col">
               <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="md:col-span-2">
@@ -549,6 +581,17 @@ export default function PTAs() {
               >
                 <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
                 EXCLUIR
+              </button>
+
+              <button 
+                onClick={() => {
+                  setPasswordAction('edit');
+                  setIsPasswordModalOpen(true);
+                }}
+                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+              >
+                <Plus size={16} className="md:w-[18px] md:h-[18px]" />
+                EDITAR
               </button>
               
               {selectedPTA.status === 'pendente' && (

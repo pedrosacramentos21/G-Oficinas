@@ -90,6 +90,7 @@ interface StoreState {
   fetchPTAs: () => Promise<void>;
   addPTA: (pta: any) => Promise<any>;
   approvePTA: (id: number, password: string) => Promise<void>;
+  updatePTA: (id: number, updates: any, password: string) => Promise<void>;
   deletePTA: (id: number, password: string) => Promise<void>;
   batchDeletePTAs: (ids: number[], password: string) => Promise<void>;
   fetchSalaMotores: () => Promise<void>;
@@ -248,6 +249,19 @@ export const useStore = create<StoreState>((set, get) => ({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchPTAs();
+  },
+
+  updatePTA: async (id, updates, password) => {
+    const res = await fetch(`/api/ptas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates, password }),
     });
     if (!res.ok) {
       const error = await res.json();

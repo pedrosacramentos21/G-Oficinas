@@ -285,6 +285,27 @@ app.get('/api/health', async (req, res) => {
     }
   });
 
+  app.patch('/api/ptas/:id', async (req, res) => {
+    const { id } = req.params;
+    const { updates, password } = req.body;
+
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    }
+
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_pta')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update pta' });
+    }
+  });
+
   app.post('/api/ptas/:id/delete', async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;

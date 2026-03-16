@@ -38,6 +38,9 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
         {COLUMNS.map(column => {
           const points = andaimes
             .filter(a => {
+              const isDesmontagem = a.tipo_servico === 'Desmontagem';
+              if (isDesmontagem) return false;
+              
               if (column === 'Packaging, Bblend e Xaroparia') {
                 return (a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia') && a.status === 'aprovado';
               }

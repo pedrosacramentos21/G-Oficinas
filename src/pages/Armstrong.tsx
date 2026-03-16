@@ -157,10 +157,10 @@ export default function Armstrong() {
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
         // This was a backlog item being scheduled
-        await updateArmstrongBacklog(selectedItem.id, { status: formData.status }, 'Itf2026');
+        await updateArmstrongBacklog(selectedItem.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
       } else if (existingBacklog) {
-        // Update existing backlog item status
-        await updateArmstrongBacklog(existingBacklog.id, { status: formData.status }, 'Itf2026');
+        // Update existing backlog item status and date
+        await updateArmstrongBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
       }
 
       setIsModalOpen(false);

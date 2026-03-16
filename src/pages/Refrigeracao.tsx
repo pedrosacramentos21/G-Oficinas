@@ -153,9 +153,9 @@ export default function Refrigeracao() {
           status: formData.status
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
-        await updateRefrigeracaoBacklog(selectedItem.id, { status: formData.status }, 'Itf2026');
+        await updateRefrigeracaoBacklog(selectedItem.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
       } else if (existingBacklog) {
-        await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status }, 'Itf2026');
+        await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
       }
 
       setIsModalOpen(false);
