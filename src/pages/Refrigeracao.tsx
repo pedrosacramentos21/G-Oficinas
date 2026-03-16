@@ -168,8 +168,10 @@ export default function Refrigeracao() {
 
   const handlePasswordConfirm = async (password: string) => {
     try {
+      const { id: _, created_at: __, ...updates } = formData;
+      
       if (passwordModal.action === 'edit') {
-        await updateRefrigeracaoManutencao(passwordModal.id!, formData, password);
+        await updateRefrigeracaoManutencao(passwordModal.id!, updates, password);
         const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
         if (existingBacklog) {
           await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status }, password);
@@ -177,7 +179,7 @@ export default function Refrigeracao() {
       } else if (passwordModal.action === 'delete') {
         await deleteRefrigeracaoManutencao(passwordModal.id!, password);
       } else if (passwordModal.action === 'backlog-edit') {
-        await updateRefrigeracaoBacklog(passwordModal.id!, formData, password);
+        await updateRefrigeracaoBacklog(passwordModal.id!, updates, password);
         const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
         if (existingManutencao) {
           await updateRefrigeracaoManutencao(existingManutencao.id, { status: formData.status }, password);
@@ -193,6 +195,8 @@ export default function Refrigeracao() {
         setSelectionMode(false);
         setSelectedIds([]);
       }
+      
+      await fetchRefrigeracao();
       setPasswordModal({ ...passwordModal, isOpen: false });
       setIsModalOpen(false);
     } catch (err: any) {
@@ -862,7 +866,11 @@ export default function Refrigeracao() {
                     <>
                       <button 
                         type="button"
-                        onClick={() => setPasswordModal({ isOpen: true, id: selectedItem.id, action: 'delete' })}
+                        onClick={() => setPasswordModal({ 
+                          isOpen: true, 
+                          id: selectedItem.id, 
+                          action: selectedItem.equipamento ? 'delete' : 'backlog-delete' 
+                        })}
                         className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100 text-[10px] md:text-xs uppercase tracking-widest"
                       >
                         <Trash2 size={18} />
@@ -870,7 +878,11 @@ export default function Refrigeracao() {
                       </button>
                       <button 
                         type="button"
-                        onClick={() => setPasswordModal({ isOpen: true, id: selectedItem.id, action: 'edit' })}
+                        onClick={() => setPasswordModal({ 
+                          isOpen: true, 
+                          id: selectedItem.id, 
+                          action: selectedItem.equipamento ? 'edit' : 'backlog-edit' 
+                        })}
                         className="flex-1 bg-sky-500 hover:bg-sky-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-[10px] md:text-xs uppercase tracking-widest"
                       >
                         <CheckCircle2 size={18} />
