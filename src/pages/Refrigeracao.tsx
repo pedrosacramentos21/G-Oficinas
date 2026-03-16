@@ -174,15 +174,23 @@ export default function Refrigeracao() {
         await updateRefrigeracaoManutencao(passwordModal.id!, updates, password);
         const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
         if (existingBacklog) {
-          await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status }, password);
+          await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, password);
         }
       } else if (passwordModal.action === 'delete') {
         await deleteRefrigeracaoManutencao(passwordModal.id!, password);
       } else if (passwordModal.action === 'backlog-edit') {
-        await updateRefrigeracaoBacklog(passwordModal.id!, updates, password);
+        const backlogUpdates = {
+          titulo: formData.titulo,
+          area: formData.area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          data_prevista: formData.data,
+          status: formData.status
+        };
+        await updateRefrigeracaoBacklog(passwordModal.id!, backlogUpdates, password);
         const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
         if (existingManutencao) {
-          await updateRefrigeracaoManutencao(existingManutencao.id, { status: formData.status }, password);
+          await updateRefrigeracaoManutencao(existingManutencao.id, { status: formData.status, data: formData.data }, password);
         }
       } else if (passwordModal.action === 'backlog-delete') {
         await deleteRefrigeracaoBacklog(passwordModal.id!, password);

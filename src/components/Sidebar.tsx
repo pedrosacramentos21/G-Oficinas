@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useStore } from '../store';
 import { 
   Construction, 
   Wrench, 
@@ -43,6 +44,44 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarProps) {
+  const { 
+    andaimes, 
+    ptas, 
+    salaMotores, 
+    refrigeracaoBacklog, 
+    armstrongBacklog,
+    fetchAndaimes,
+    fetchPTAs,
+    fetchSalaMotores,
+    fetchRefrigeracao,
+    fetchArmstrong
+  } = useStore();
+
+  useEffect(() => {
+    fetchAndaimes();
+    fetchPTAs();
+    fetchSalaMotores();
+    fetchRefrigeracao();
+    fetchArmstrong();
+  }, [fetchAndaimes, fetchPTAs, fetchSalaMotores, fetchRefrigeracao, fetchArmstrong]);
+
+  const getPendingCount = (path: string) => {
+    switch (path) {
+      case '/andaimes':
+        return andaimes.filter(a => a.status === 'pendente').length;
+      case '/ptas':
+        return ptas.filter(p => p.status === 'pendente').length;
+      case '/sala-motores':
+        return salaMotores.filter(s => s.status === 'pendente').length;
+      case '/refrigeracao':
+        return refrigeracaoBacklog.filter(b => b.status !== 'Concluída').length;
+      case '/armstrong':
+        return armstrongBacklog.filter(b => b.status !== 'Concluída').length;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <div className={cn(
       "h-screen bg-[#1e293b] text-white flex flex-col shadow-2xl transition-all duration-300 relative",
@@ -111,6 +150,14 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
                   )}>
                     {item.name}
                   </span>
+                  {getPendingCount(item.path) > 0 && (
+                    <span className={cn(
+                      "absolute bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-red-500/20 transition-all duration-300",
+                      collapsed ? "right-2 top-2" : "right-4"
+                    )}>
+                      {getPendingCount(item.path)}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>

@@ -173,21 +173,31 @@ export default function Armstrong() {
 
   const handlePasswordConfirm = async (password: string) => {
     try {
+      const { id: _, created_at: __, ...updates } = formData;
+      
       if (passwordModal.action === 'edit') {
-        await updateArmstrongManutencao(passwordModal.id!, formData, password);
+        await updateArmstrongManutencao(passwordModal.id!, updates, password);
         // Sync with backlog
         const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
         if (existingBacklog) {
-          await updateArmstrongBacklog(existingBacklog.id, { status: formData.status }, password);
+          await updateArmstrongBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, password);
         }
       } else if (passwordModal.action === 'delete') {
         await deleteArmstrongManutencao(passwordModal.id!, password);
       } else if (passwordModal.action === 'backlog-edit') {
-        await updateArmstrongBacklog(passwordModal.id!, formData, password);
+        const backlogUpdates = {
+          titulo: formData.titulo,
+          area: formData.area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          data_prevista: formData.data,
+          status: formData.status
+        };
+        await updateArmstrongBacklog(passwordModal.id!, backlogUpdates, password);
         // Sync with calendar
         const existingManutencao = armstrongManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
         if (existingManutencao) {
-          await updateArmstrongManutencao(existingManutencao.id, { status: formData.status }, password);
+          await updateArmstrongManutencao(existingManutencao.id, { status: formData.status, data: formData.data }, password);
         }
       } else if (passwordModal.action === 'backlog-delete') {
         await deleteArmstrongBacklog(passwordModal.id!, password);
@@ -200,6 +210,8 @@ export default function Armstrong() {
         setSelectionMode(false);
         setSelectedIds([]);
       }
+      
+      await fetchArmstrong();
       setPasswordModal({ ...passwordModal, isOpen: false });
       setIsModalOpen(false);
     } catch (err: any) {
