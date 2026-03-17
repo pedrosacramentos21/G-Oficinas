@@ -37,6 +37,9 @@ interface AtividadeSalaMotores {
   custo_evitado: number;
   causa_raiz?: string;
   observacoes?: string;
+  area?: string;
+  sub_area?: string;
+  tag_motor?: string;
   data_inicio?: string;
   data_conclusao?: string;
   data_entrega?: string;

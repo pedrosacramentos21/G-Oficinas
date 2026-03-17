@@ -367,7 +367,7 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/sala-motores', async (req, res) => {
-    const { titulo, responsavel, data, custo_evitado, causa_raiz, observacoes } = req.body;
+    const { titulo, responsavel, data, custo_evitado, causa_raiz, observacoes, area, sub_area, tag_motor } = req.body;
     try {
       const now = new Date().toISOString();
       const historico_status = [{ status: 'pendente', data: now }];
@@ -380,6 +380,9 @@ app.get('/api/health', async (req, res) => {
           custo_evitado, 
           causa_raiz, 
           observacoes,
+          area,
+          sub_area,
+          tag_motor,
           status: 'pendente',
           historico_status
         }])
@@ -395,7 +398,7 @@ app.get('/api/health', async (req, res) => {
 
   app.patch('/api/sala-motores/:id', async (req, res) => {
     const { id } = req.params;
-    const { status, titulo, responsavel, data, custo_evitado, causa_raiz, observacoes, password } = req.body;
+    const { status, titulo, responsavel, data, custo_evitado, causa_raiz, observacoes, area, sub_area, tag_motor, password } = req.body;
     
     try {
       // Fetch current activity to update history
@@ -421,6 +424,9 @@ app.get('/api/health', async (req, res) => {
       if (custo_evitado !== undefined) updateData.custo_evitado = custo_evitado;
       if (causa_raiz !== undefined) updateData.causa_raiz = causa_raiz;
       if (observacoes !== undefined) updateData.observacoes = observacoes;
+      if (area !== undefined) updateData.area = area;
+      if (sub_area !== undefined) updateData.sub_area = sub_area;
+      if (tag_motor !== undefined) updateData.tag_motor = tag_motor;
 
       if (status && status !== current.status) {
         updateData.status = status;

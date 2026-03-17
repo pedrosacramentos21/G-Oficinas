@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS atividades_sala_motores (
     data_conclusao TIMESTAMPTZ,
     data_entrega TIMESTAMPTZ,
     historico_status JSONB DEFAULT '[]',
+    area TEXT,
+    sub_area TEXT,
+    tag_motor TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

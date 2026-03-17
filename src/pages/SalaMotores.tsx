@@ -34,6 +34,24 @@ const MONTHS = [
   { value: 11, label: 'Dezembro' }
 ];
 
+const AREAS_MOTORES = [
+  'Packaging',
+  'Processo Refri',
+  'Processo Cerveja',
+  'Meio ambiente',
+  'Utilidades',
+  'Subprodutos'
+];
+
+const SUB_AREAS_MOTORES = [
+  '', '501', '502', '503', '511', '512', '561', '562', 'Xaroparia', 'Dep. Açúcar',
+  'Xaroparia Simples', 'Xaroparia Composta', 'ETA Refri', 'Brassagem 1',
+  'Brassagem 2', 'Adegas', 'Adega de fermento', 'Adega de pressão',
+  'Ferm. e maturação 01', 'Ferm. e maturação 02', 'Filtração 1', 'Filtração 2',
+  'Resfriador de mosto 1', 'Resfriador de mosto 2', 'ETA', 'ETEI',
+  'Usina de CO2', 'Secador de fermento'
+];
+
 export default function SalaMotores() {
   const { 
     salaMotores, fetchSalaMotores, addAtividadeSalaMotores, 
@@ -55,7 +73,10 @@ export default function SalaMotores() {
     data: new Date().toISOString().split('T')[0],
     custo_evitado: 0,
     causa_raiz: '',
-    observacoes: ''
+    observacoes: '',
+    area: AREAS_MOTORES[0],
+    sub_area: '',
+    tag_motor: ''
   });
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -124,7 +145,10 @@ export default function SalaMotores() {
         data: new Date().toISOString().split('T')[0],
         custo_evitado: 0,
         causa_raiz: '',
-        observacoes: ''
+        observacoes: '',
+        area: AREAS_MOTORES[0],
+        sub_area: '',
+        tag_motor: ''
       });
     } catch (error: any) {
       alert(error.message);
@@ -317,9 +341,16 @@ export default function SalaMotores() {
 
                                 <div className="space-y-3 md:space-y-4">
                                   <div className="flex items-start justify-between gap-2">
-                                    <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-orange-500 transition-colors uppercase pr-6">
-                                      {item.titulo}
-                                    </h3>
+                                    <div className="flex flex-col gap-1">
+                                      <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-orange-500 transition-colors uppercase pr-6">
+                                        {item.titulo}
+                                      </h3>
+                                      {item.tag_motor && (
+                                        <span className="text-[7px] md:text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 px-1.5 py-0.5 rounded w-fit">
+                                          TAG: {item.tag_motor}
+                                        </span>
+                                      )}
+                                    </div>
                                     {!selectionMode && (
                                       item.status === 'entregue' ? (
                                         <PackageCheck size={14} className="text-purple-500 shrink-0 md:w-4 md:h-4" />
@@ -461,6 +492,38 @@ export default function SalaMotores() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Área</label>
+                      <select 
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                        value={formData.area}
+                        onChange={e => setFormData({...formData, area: e.target.value})}
+                      >
+                        {AREAS_MOTORES.map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Sub-Área</label>
+                      <select 
+                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                        value={formData.sub_area}
+                        onChange={e => setFormData({...formData, sub_area: e.target.value})}
+                      >
+                        {SUB_AREAS_MOTORES.map(s => <option key={s} value={s}>{s || 'NÃO DEFINIDA'}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">TAG do Motor</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      value={formData.tag_motor}
+                      onChange={e => setFormData({...formData, tag_motor: e.target.value})}
+                      placeholder="Ex: MTR-01"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                       <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Responsável</label>
                       <input 
                         type="text"
@@ -573,6 +636,39 @@ export default function SalaMotores() {
                       className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
                       value={selectedActivity.titulo}
                       onChange={e => setSelectedActivity({...selectedActivity, titulo: e.target.value})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área</label>
+                    <select 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      value={selectedActivity.area || AREAS_MOTORES[0]}
+                      onChange={e => setSelectedActivity({...selectedActivity, area: e.target.value})}
+                    >
+                      {AREAS_MOTORES.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sub-Área</label>
+                    <select 
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      value={selectedActivity.sub_area || ''}
+                      onChange={e => setSelectedActivity({...selectedActivity, sub_area: e.target.value})}
+                    >
+                      {SUB_AREAS_MOTORES.map(s => <option key={s} value={s}>{s || 'NÃO DEFINIDA'}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TAG do Motor</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                      value={selectedActivity.tag_motor || ''}
+                      onChange={e => setSelectedActivity({...selectedActivity, tag_motor: e.target.value})}
+                      placeholder="Ex: MTR-01"
                     />
                   </div>
                   
