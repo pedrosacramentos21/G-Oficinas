@@ -33,10 +33,14 @@ interface AtividadeSalaMotores {
   titulo: string;
   responsavel: string;
   data: string;
-  status: 'pendente' | 'em_andamento' | 'concluido';
+  status: 'pendente' | 'em_andamento' | 'concluido' | 'entregue';
   custo_evitado: number;
   causa_raiz?: string;
   observacoes?: string;
+  data_inicio?: string;
+  data_conclusao?: string;
+  data_entrega?: string;
+  historico_status?: { status: string; data: string }[];
 }
 
 interface ArmstrongManutencao {
@@ -300,33 +304,45 @@ export const useStore = create<StoreState>((set, get) => ({
     try {
       const res = await fetch('/api/sala-motores');
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao buscar atividades da sala de motores');
+      }
       if (Array.isArray(data)) {
         set({ salaMotores: data });
       } else {
         console.error('Sala Motores data is not an array:', data);
         set({ salaMotores: [] });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch sala de motores:', error);
       set({ salaMotores: [] });
+      // Don't show alert here to avoid spamming on initial load, but log it
     }
   },
 
   addAtividadeSalaMotores: async (atividade) => {
-    await fetch('/api/sala-motores', {
+    const res = await fetch('/api/sala-motores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(atividade),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Erro desconhecido ao salvar atividade' }));
+      throw new Error(error.error || 'Falha ao salvar atividade');
+    }
     get().fetchSalaMotores();
   },
 
   updateStatusSalaMotores: async (id, status) => {
-    await fetch(`/api/sala-motores/${id}`, {
+    const res = await fetch(`/api/sala-motores/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Erro desconhecido ao atualizar status' }));
+      throw new Error(error.error || 'Falha ao atualizar status');
+    }
     get().fetchSalaMotores();
   },
 

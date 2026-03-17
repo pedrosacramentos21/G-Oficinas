@@ -369,15 +369,27 @@ app.get('/api/health', async (req, res) => {
   app.post('/api/sala-motores', async (req, res) => {
     const { titulo, responsavel, data, custo_evitado, causa_raiz, observacoes } = req.body;
     try {
+      const now = new Date().toISOString();
+      const historico_status = [{ status: 'pendente', data: now }];
       const { data: inserted, error } = await supabase
         .from('atividades_sala_motores')
-        .insert([{ titulo, responsavel, data, custo_evitado, causa_raiz, observacoes }])
+        .insert([{ 
+          titulo, 
+          responsavel, 
+          data, 
+          custo_evitado, 
+          causa_raiz, 
+          observacoes,
+          status: 'pendente',
+          historico_status
+        }])
         .select();
       
       if (error) throw error;
       res.json({ id: inserted[0].id });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to create activity' });
+    } catch (error: any) {
+      console.error('Error creating activity:', error);
+      res.status(500).json({ error: error.message || 'Failed to create activity' });
     }
   });
 
@@ -385,35 +397,45 @@ app.get('/api/health', async (req, res) => {
     const { id } = req.params;
     const { status, titulo, responsavel, data, custo_evitado, causa_raiz, observacoes, password } = req.body;
     
-    // If it's just a status update, no password needed
-    if (status && Object.keys(req.body).length === 1) {
-      try {
-        const { error } = await supabase
-          .from('atividades_sala_motores')
-          .update({ status })
-          .eq('id', id);
-        
-        if (error) throw error;
-        return res.json({ success: true });
-      } catch (error) {
-        return res.status(500).json({ error: 'Failed to update activity status' });
-      }
-    }
-
-    // Otherwise, check password
-    if (password !== MASTER_PASSWORD) {
-      return res.status(401).json({ error: 'Senha mestre incorreta' });
-    }
-
     try {
+      // Fetch current activity to update history
+      const { data: current, error: fetchError } = await supabase
+        .from('atividades_sala_motores')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !current) return res.status(404).json({ error: 'Activity not found' });
+
+      // If it's just a status update, no password needed
+      const isStatusOnly = status && Object.keys(req.body).length === 1;
+
+      if (!isStatusOnly && password !== MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Senha mestre incorreta' });
+      }
+
       const updateData: any = {};
-      if (status) updateData.status = status;
       if (titulo) updateData.titulo = titulo;
       if (responsavel) updateData.responsavel = responsavel;
       if (data) updateData.data = data;
       if (custo_evitado !== undefined) updateData.custo_evitado = custo_evitado;
       if (causa_raiz !== undefined) updateData.causa_raiz = causa_raiz;
       if (observacoes !== undefined) updateData.observacoes = observacoes;
+
+      if (status && status !== current.status) {
+        updateData.status = status;
+        const now = new Date().toISOString();
+        const newHistory = [...(current.historico_status || []), { status, data: now }];
+        updateData.historico_status = newHistory;
+
+        if (status === 'em_andamento' && !current.data_inicio) {
+          updateData.data_inicio = now;
+        } else if (status === 'concluido' && !current.data_conclusao) {
+          updateData.data_conclusao = now;
+        } else if (status === 'entregue' && !current.data_entrega) {
+          updateData.data_entrega = now;
+        }
+      }
 
       const { error } = await supabase
         .from('atividades_sala_motores')
@@ -422,8 +444,9 @@ app.get('/api/health', async (req, res) => {
       
       if (error) throw error;
       res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update activity' });
+    } catch (error: any) {
+      console.error('Error updating activity:', error);
+      res.status(500).json({ error: error.message || 'Failed to update activity' });
     }
   });
 

@@ -42,6 +42,10 @@ CREATE TABLE IF NOT EXISTS atividades_sala_motores (
     custo_evitado DOUBLE PRECISION DEFAULT 0,
     causa_raiz TEXT,
     observacoes TEXT,
+    data_inicio TIMESTAMPTZ,
+    data_conclusao TIMESTAMPTZ,
+    data_entrega TIMESTAMPTZ,
+    historico_status JSONB DEFAULT '[]',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
