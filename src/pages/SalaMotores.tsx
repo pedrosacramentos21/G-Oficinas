@@ -66,8 +66,30 @@ export default function SalaMotores() {
   }, [fetchSalaMotores]);
 
   const filteredActivities = salaMotores.filter(a => {
-    if (!a.data) return false;
-    const [year, month] = a.data.split('-').map(Number);
+    // Atividades Pendentes e Em Andamento sempre aparecem, pois podem transitar entre meses
+    if (a.status === 'pendente' || a.status === 'em_andamento') return true;
+
+    // Para Concluído e Entregue, filtramos pelo mês em que a ação foi finalizada
+    // Priorizamos as datas de conclusão/entrega automáticas, senão usamos a data de registro
+    const dateToFilter = a.status === 'entregue' 
+      ? (a.data_entrega || a.data) 
+      : (a.status === 'concluido' ? (a.data_conclusao || a.data) : a.data);
+
+    if (!dateToFilter) return false;
+    
+    let year, month;
+    if (dateToFilter.includes('T')) {
+      // Formato ISO (TIMESTAMPTZ do banco)
+      const d = new Date(dateToFilter);
+      year = d.getFullYear();
+      month = d.getMonth() + 1;
+    } else {
+      // Formato YYYY-MM-DD (Input date)
+      const parts = dateToFilter.split('-').map(Number);
+      year = parts[0];
+      month = parts[1];
+    }
+    
     return (month - 1) === selectedMonth && year === selectedYear;
   });
 
