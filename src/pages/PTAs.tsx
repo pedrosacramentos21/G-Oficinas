@@ -86,11 +86,16 @@ export default function PTAs() {
   const events = ptas.map(p => {
     const equip = EQUIPAMENTOS.find(e => e.name === p.equipamento);
     const isSelected = selectedIds.includes(p.id);
+    
+    // Fallback for missing time fields
+    const horaInicio = p.hora_inicio || '08:00';
+    const horaFim = p.hora_fim || '17:00';
+    
     return {
       id: p.id.toString(),
       title: p.responsavel,
-      start: `${p.data}T${p.hora_inicio}`,
-      end: `${p.data}T${p.hora_fim}`,
+      start: `${p.data}T${horaInicio}`,
+      end: `${p.data}T${horaFim}`,
       backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.id === 'articulada' ? '#eff6ff' : '#f5f3ff') : '#fef9c3'),
       borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#eab308'),
       textColor: isSelected ? '#ffffff' : '#1e293b',
