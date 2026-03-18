@@ -180,12 +180,33 @@ export default function Refrigeracao() {
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           data_prevista: formData.data,
-          status: formData.status
+          status: formData.status,
+          observacoes: formData.observacoes
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
-        await updateRefrigeracaoBacklog(selectedItem.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
+        // This was a backlog item being scheduled
+        await updateRefrigeracaoBacklog(selectedItem.id, { 
+          titulo: formData.titulo,
+          area: formData.area,
+          sub_area: formData.sub_area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          status: formData.status, 
+          data_prevista: formData.data,
+          observacoes: formData.observacoes
+        }, 'Itf2026');
       } else if (existingBacklog) {
-        await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
+        // Update existing backlog item status and date
+        await updateRefrigeracaoBacklog(existingBacklog.id, { 
+          titulo: formData.titulo,
+          area: formData.area,
+          sub_area: formData.sub_area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          status: formData.status, 
+          data_prevista: formData.data,
+          observacoes: formData.observacoes
+        }, 'Itf2026');
       }
 
       setIsModalOpen(false);
@@ -216,8 +237,21 @@ export default function Refrigeracao() {
             impacto_energetico: formData.impacto_energetico,
             investimento_estimado: formData.investimento_estimado,
             status: formData.status, 
-            data_prevista: formData.data 
+            data_prevista: formData.data,
+            observacoes: formData.observacoes
           }, password);
+        } else {
+          // Create backlog item if it doesn't exist
+          await addRefrigeracaoBacklog({
+            area: formData.area,
+            sub_area: formData.sub_area,
+            titulo: formData.titulo,
+            impacto_energetico: formData.impacto_energetico,
+            investimento_estimado: formData.investimento_estimado,
+            data_prevista: formData.data,
+            status: formData.status,
+            observacoes: formData.observacoes
+          });
         }
       } else if (passwordModal.action === 'delete') {
         const currentItem = refrigeracaoManutencoes.find(m => m.id === passwordModal.id);
@@ -250,6 +284,12 @@ export default function Refrigeracao() {
             ...updates,
             data: formData.data 
           }, password);
+        } else if (formData.status === 'Planejada') {
+          // Create calendar item if it doesn't exist and status is Planejada
+          await addRefrigeracaoManutencao({
+            ...updates,
+            data: formData.data
+          });
         }
       } else if (passwordModal.action === 'backlog-delete') {
         const currentBacklog = refrigeracaoBacklog.find(b => b.id === passwordModal.id);

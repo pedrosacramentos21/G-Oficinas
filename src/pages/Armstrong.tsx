@@ -186,10 +186,28 @@ export default function Armstrong() {
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
         // This was a backlog item being scheduled
-        await updateArmstrongBacklog(selectedItem.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
+        await updateArmstrongBacklog(selectedItem.id, { 
+          titulo: formData.titulo,
+          area: formData.area,
+          sub_area: formData.sub_area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          status: formData.status, 
+          data_prevista: formData.data,
+          observacoes: formData.observacoes
+        }, 'Itf2026');
       } else if (existingBacklog) {
         // Update existing backlog item status and date
-        await updateArmstrongBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, 'Itf2026');
+        await updateArmstrongBacklog(existingBacklog.id, { 
+          titulo: formData.titulo,
+          area: formData.area,
+          sub_area: formData.sub_area,
+          impacto_energetico: formData.impacto_energetico,
+          investimento_estimado: formData.investimento_estimado,
+          status: formData.status, 
+          data_prevista: formData.data,
+          observacoes: formData.observacoes
+        }, 'Itf2026');
       }
 
       setIsModalOpen(false);
@@ -220,8 +238,21 @@ export default function Armstrong() {
             impacto_energetico: formData.impacto_energetico,
             investimento_estimado: formData.investimento_estimado,
             status: formData.status, 
-            data_prevista: formData.data 
+            data_prevista: formData.data,
+            observacoes: formData.observacoes
           }, password);
+        } else {
+          // Create backlog item if it doesn't exist
+          await addArmstrongBacklog({
+            area: formData.area,
+            sub_area: formData.sub_area,
+            titulo: formData.titulo,
+            impacto_energetico: formData.impacto_energetico,
+            investimento_estimado: formData.investimento_estimado,
+            data_prevista: formData.data,
+            status: formData.status,
+            observacoes: formData.observacoes
+          });
         }
       } else if (passwordModal.action === 'delete') {
         const currentItem = armstrongManutencoes.find(m => m.id === passwordModal.id);
@@ -254,6 +285,12 @@ export default function Armstrong() {
             ...updates,
             data: formData.data 
           }, password);
+        } else if (formData.status === 'Planejada') {
+          // Create calendar item if it doesn't exist and status is Planejada
+          await addArmstrongManutencao({
+            ...updates,
+            data: formData.data
+          });
         }
       } else if (passwordModal.action === 'backlog-delete') {
         const currentBacklog = armstrongBacklog.find(b => b.id === passwordModal.id);
