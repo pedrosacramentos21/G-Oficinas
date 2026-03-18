@@ -43,6 +43,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  const [passwordModalAction, setPasswordModalAction] = useState<'unlock' | 'delete'>('unlock');
 
   useEffect(() => {
     if (isOpen) {
@@ -134,8 +135,6 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
       alert('Senha incorreta');
     }
   };
-
-  const [passwordModalAction, setPasswordModalAction] = useState<'unlock' | 'delete'>('unlock');
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
