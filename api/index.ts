@@ -202,32 +202,40 @@ app.get('/api/health', async (req, res) => {
         .order('data', { ascending: false })
         .order('hora_inicio', { ascending: true });
       
-      if (error) throw error;
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch ptas' });
+      if (error) {
+        console.error('Supabase error fetching PTAs:', error);
+        throw error;
+      }
+      res.json(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch ptas:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch ptas' });
     }
   });
 
   app.post('/api/ptas', async (req, res) => {
-    const { equipamento, area, responsavel, data, data_fim, hora_inicio, hora_fim, descricao, prioridade, recorrente } = req.body;
-    
-    const dates = [];
-    if (recorrente && data && data_fim) {
-      let current = new Date(data);
-      const end = new Date(data_fim);
-      while (current <= end) {
-        dates.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 1);
-      }
-    } else {
-      dates.push(data);
-    }
-
     try {
+      const { equipamento, area, responsavel, data, data_fim, hora_inicio, hora_fim, descricao, prioridade, recorrente } = req.body;
+      
+      if (!equipamento || !area || !responsavel || !data || !hora_inicio || !hora_fim) {
+        return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+      }
+
+      const dates = [];
+      if (recorrente && data && data_fim) {
+        let current = new Date(data);
+        const end = new Date(data_fim);
+        while (current <= end) {
+          dates.push(current.toISOString().split('T')[0]);
+          current.setDate(current.getDate() + 1);
+        }
+      } else {
+        dates.push(data);
+      }
+
       const results = [];
       for (const d of dates) {
-        // Conflict Detection
+        // Conflict Detection - check if there's an approved request for the same equipment and time
         const { data: conflicts, error: conflictError } = await supabase
           .from('solicitacoes_pta')
           .select('*')
@@ -236,16 +244,37 @@ app.get('/api/health', async (req, res) => {
           .eq('status', 'aprovado')
           .or(`and(hora_inicio.lt.${hora_fim},hora_fim.gt.${hora_inicio})`);
 
-        if (conflictError) throw conflictError;
+        if (conflictError) {
+          console.error('Conflict detection error:', conflictError);
+          throw conflictError;
+        }
 
         const status = (conflicts && conflicts.length > 0) ? 'pendente' : 'aprovado';
         
         const { data: inserted, error } = await supabase
           .from('solicitacoes_pta')
-          .insert([{ equipamento, area, responsavel, data: d, hora_inicio, hora_fim, descricao, prioridade, status }])
+          .insert([{ 
+            equipamento, 
+            area, 
+            responsavel, 
+            data: d, 
+            hora_inicio, 
+            hora_fim, 
+            descricao: descricao || '', 
+            prioridade: prioridade || 'Normal', 
+            status 
+          }])
           .select();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+
+        if (!inserted || inserted.length === 0) {
+          throw new Error('Falha ao inserir registro (verifique as permissões RLS no Supabase)');
+        }
+
         results.push({ id: inserted[0].id, data: d, status, conflict: conflicts && conflicts.length > 0 });
       }
       
@@ -259,8 +288,9 @@ app.get('/api/health', async (req, res) => {
       } else {
         res.json({ success: true, results });
       }
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to create pta request' });
+    } catch (error: any) {
+      console.error('Failed to create pta request:', error);
+      res.status(500).json({ error: error.message || 'Failed to create pta request' });
     }
   });
 

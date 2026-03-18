@@ -250,6 +250,9 @@ export const useStore = create<StoreState>((set, get) => ({
       body: JSON.stringify(pta),
     });
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Falha ao salvar solicitação');
+    }
     get().fetchPTAs();
     return data;
   },

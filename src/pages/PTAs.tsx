@@ -96,13 +96,16 @@ export default function PTAs() {
       title: p.responsavel,
       start: `${p.data}T${horaInicio}`,
       end: `${p.data}T${horaFim}`,
-      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.id === 'articulada' ? '#eff6ff' : '#f5f3ff') : '#fef9c3'),
+      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#facc15'),
       borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#eab308'),
-      textColor: isSelected ? '#ffffff' : '#1e293b',
+      textColor: (p.status === 'aprovado' || isSelected) ? '#ffffff' : '#1e293b',
       className: `event-status-${p.status}`,
       extendedProps: { ...p }
     };
   });
+
+  console.log('PTAs state:', ptas);
+  console.log('Generated events:', events);
 
   const handleEventClick = (info: any) => {
     if (isSelectionMode) {
@@ -290,7 +293,7 @@ export default function PTAs() {
                   <div className="flex items-center justify-between gap-1">
                     <span className={cn(
                       "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
-                      data.status === 'aprovado' ? (isSelected ? "bg-white/20 text-white" : "bg-green-500 text-white") : (isSelected ? "bg-white/20 text-white" : "bg-yellow-500 text-white")
+                      data.status === 'aprovado' ? "bg-white/20 text-white" : "bg-yellow-500 text-white"
                     )}>
                       {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
                     </span>
@@ -298,21 +301,21 @@ export default function PTAs() {
                   <div className="flex items-center justify-between gap-1">
                     <span className={cn(
                       "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
-                      isSelected ? "bg-white/20 text-white" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
+                      isSelected ? "bg-white/20 text-white" : "bg-black/10 text-black/60"
                     )}>
-                      {data.equipamento.split(' ')[1]}
+                      {data.equipamento ? data.equipamento.split(' ')[1] : 'PTA'}
                     </span>
-                    <span className={cn("text-[6px] md:text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
+                    <span className={cn("text-[6px] md:text-[8px] font-black uppercase", (isSelected || data.status === 'aprovado') ? "text-white/80" : "text-slate-600")}>
                       {data.prioridade}
                     </span>
                   </div>
-                  <div className={cn("font-black text-[9px] md:text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
+                  <div className={cn("font-black text-[9px] md:text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", (isSelected || data.status === 'aprovado') ? "text-white" : "text-slate-900")}>
                     {data.responsavel}
                   </div>
                 </div>
                 
-                <div className={cn("mt-auto pt-0.5 md:pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
-                  <div className={cn("text-[7px] md:text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-blue-600")}>
+                <div className={cn("mt-auto pt-0.5 md:pt-1 border-t", (isSelected || data.status === 'aprovado') ? "border-white/20" : "border-slate-200")}>
+                  <div className={cn("text-[7px] md:text-[9px] font-black uppercase truncate", (isSelected || data.status === 'aprovado') ? "text-white/80" : "text-blue-600")}>
                     {data.area}
                   </div>
                 </div>
