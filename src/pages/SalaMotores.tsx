@@ -40,7 +40,9 @@ const AREAS_MOTORES = [
   'Processo Cerveja',
   'Meio ambiente',
   'Utilidades',
-  'Subprodutos'
+  'Subprodutos',
+  'ADM',
+  'Outras áreas'
 ];
 
 const SUB_AREAS_MOTORES = [

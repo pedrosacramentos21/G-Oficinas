@@ -37,7 +37,9 @@ const AREAS_MOTORES = [
   'Processo Cerveja',
   'Meio ambiente',
   'Utilidades',
-  'Subprodutos'
+  'Subprodutos',
+  'ADM',
+  'Outras áreas'
 ];
 
 const SUB_AREAS_MOTORES = [
@@ -158,7 +160,11 @@ export default function Armstrong() {
     e.preventDefault();
     try {
       if (selectedItem && modalType === 'details') {
-        // This is handled via password modal for existing interventions
+        setPasswordModal({ 
+          isOpen: true, 
+          id: selectedItem.id, 
+          action: selectedItem.hora_inicio ? 'edit' : 'backlog-edit' 
+        });
         return;
       }
       

@@ -37,7 +37,9 @@ const AREAS_MOTORES = [
   'Processo Cerveja',
   'Meio ambiente',
   'Utilidades',
-  'Subprodutos'
+  'Subprodutos',
+  'ADM',
+  'Outras áreas'
 ];
 
 const SUB_AREAS_MOTORES = [
@@ -158,6 +160,11 @@ export default function Refrigeracao() {
     e.preventDefault();
     try {
       if (selectedItem && modalType === 'details') {
+        setPasswordModal({ 
+          isOpen: true, 
+          id: selectedItem.id, 
+          action: selectedItem.hora_inicio ? 'edit' : 'backlog-edit' 
+        });
         return;
       }
       
