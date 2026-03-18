@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS armstrong_manutencao (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     titulo TEXT,
     area TEXT NOT NULL,
+    sub_area TEXT,
     equipamento TEXT NOT NULL,
     responsavel TEXT NOT NULL,
     data TEXT NOT NULL,
@@ -92,11 +93,13 @@ CREATE TABLE IF NOT EXISTS armstrong_pcm_areas (
 CREATE TABLE IF NOT EXISTS armstrong_backlog (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     area TEXT NOT NULL,
+    sub_area TEXT,
     titulo TEXT NOT NULL,
     impacto_energetico TEXT,
     investimento_estimado TEXT,
     data_prevista TEXT,
     status TEXT DEFAULT 'Não planejada',
+    observacoes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -105,6 +108,7 @@ CREATE TABLE IF NOT EXISTS refrigeracao_manutencao (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     titulo TEXT,
     area TEXT NOT NULL,
+    sub_area TEXT,
     equipamento TEXT NOT NULL,
     responsavel TEXT NOT NULL,
     data TEXT NOT NULL,
@@ -130,11 +134,13 @@ CREATE TABLE IF NOT EXISTS refrigeracao_pcm_areas (
 CREATE TABLE IF NOT EXISTS refrigeracao_backlog (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     area TEXT NOT NULL,
+    sub_area TEXT,
     titulo TEXT NOT NULL,
     impacto_energetico TEXT,
     investimento_estimado TEXT,
     data_prevista TEXT,
     status TEXT DEFAULT 'Não planejada',
+    observacoes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -784,6 +784,17 @@ export default function SalaMotores() {
               <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
+                  onClick={() => {
+                    setPasswordAction({ type: 'delete', id: selectedActivity.id });
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm flex items-center justify-center gap-2 border border-red-100"
+                >
+                  <Trash2 size={16} />
+                  EXCLUIR
+                </button>
+                <button 
+                  type="button"
                   onClick={() => setIsDetailsModalOpen(false)}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
                 >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
-import { X, Layers, Lock, Unlock, Info, CheckCircle2 } from 'lucide-react';
+import { X, Layers, Lock, Unlock, Info, CheckCircle2, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import PasswordModal from './PasswordModal';
 
@@ -111,7 +111,14 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
 
   const handleUnlock = async (password: string) => {
     if (password === 'Itf2026') {
-      if (andaime && andaime.status === 'pendente') {
+      if (showPasswordModal && passwordModalAction === 'delete') {
+        try {
+          await useStore.getState().deleteAndaime(andaime.id, password);
+          onClose();
+        } catch (err: any) {
+          alert(err.message);
+        }
+      } else if (andaime && andaime.status === 'pendente') {
         try {
           await useStore.getState().approveAndaime(andaime.id, password);
           onClose();
@@ -127,6 +134,8 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
       alert('Senha incorreta');
     }
   };
+
+  const [passwordModalAction, setPasswordModalAction] = useState<'unlock' | 'delete'>('unlock');
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
@@ -332,6 +341,19 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
               </div>
 
               <div className="flex gap-4 pt-4">
+                {andaime && (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setPasswordModalAction('delete');
+                      setShowPasswordModal(true);
+                    }}
+                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2 border border-red-100"
+                  >
+                    <Trash2 size={18} />
+                    Excluir
+                  </button>
+                )}
                 <button 
                   type="button"
                   onClick={onClose}

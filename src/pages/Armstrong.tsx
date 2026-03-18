@@ -31,6 +31,24 @@ import PasswordModal from '../components/PasswordModal';
 
 const STATUS_OPTIONS = ['Não planejada', 'Planejada', 'Concluída'];
 
+const AREAS_MOTORES = [
+  'Packaging',
+  'Processo Refri',
+  'Processo Cerveja',
+  'Meio ambiente',
+  'Utilidades',
+  'Subprodutos'
+];
+
+const SUB_AREAS_MOTORES = [
+  '', '501', '502', '503', '511', '512', '561', '562', 'Xaroparia', 'Dep. Açúcar',
+  'Xaroparia Simples', 'Xaroparia Composta', 'ETA Refri', 'Brassagem 1',
+  'Brassagem 2', 'Adegas', 'Adega de fermento', 'Adega de pressão',
+  'Ferm. e maturação 01', 'Ferm. e maturação 02', 'Filtração 1', 'Filtração 2',
+  'Resfriador de mosto 1', 'Resfriador de mosto 2', 'ETA', 'ETEI',
+  'Usina de CO2', 'Secador de fermento'
+];
+
 export default function Armstrong() {
   const { 
     armstrongManutencoes, 
@@ -60,6 +78,8 @@ export default function Armstrong() {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [filterArea, setFilterArea] = useState('');
+  const [filterSubArea, setFilterSubArea] = useState('');
 
   const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete' }>({
     isOpen: false,
@@ -69,7 +89,8 @@ export default function Armstrong() {
 
   const [formData, setFormData] = useState({
     titulo: '',
-    area: '',
+    area: AREAS_MOTORES[0],
+    sub_area: '',
     equipamento: '',
     responsavel: '',
     data: '',
@@ -107,7 +128,8 @@ export default function Armstrong() {
     setModalType('manutencao');
     setFormData({
       titulo: '',
-      area: '',
+      area: AREAS_MOTORES[0],
+      sub_area: '',
       equipamento: '',
       responsavel: '',
       data: new Date().toISOString().split('T')[0],
@@ -144,11 +166,12 @@ export default function Armstrong() {
       await addArmstrongManutencao(formData);
       
       // Sync with backlog
-      const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+      const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area && b.sub_area === formData.sub_area);
       
       if (!selectedItem && !existingBacklog) {
         await addArmstrongBacklog({
           area: formData.area,
+          sub_area: formData.sub_area,
           titulo: formData.titulo,
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
@@ -178,35 +201,84 @@ export default function Armstrong() {
       if (passwordModal.action === 'edit') {
         await updateArmstrongManutencao(passwordModal.id!, updates, password);
         // Sync with backlog
-        const existingBacklog = armstrongBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+        const currentItem = armstrongManutencoes.find(m => m.id === passwordModal.id);
+        const existingBacklog = armstrongBacklog.find(b => 
+          (b.titulo === currentItem?.titulo && b.area === currentItem?.area) || 
+          (b.titulo === formData.titulo && b.area === formData.area)
+        );
         if (existingBacklog) {
-          await updateArmstrongBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, password);
+          await updateArmstrongBacklog(existingBacklog.id, { 
+            titulo: formData.titulo,
+            area: formData.area,
+            sub_area: formData.sub_area,
+            impacto_energetico: formData.impacto_energetico,
+            investimento_estimado: formData.investimento_estimado,
+            status: formData.status, 
+            data_prevista: formData.data 
+          }, password);
         }
       } else if (passwordModal.action === 'delete') {
+        const currentItem = armstrongManutencoes.find(m => m.id === passwordModal.id);
         await deleteArmstrongManutencao(passwordModal.id!, password);
+        // Sync with backlog
+        const existingBacklog = armstrongBacklog.find(b => b.titulo === currentItem?.titulo && b.area === currentItem?.area);
+        if (existingBacklog) {
+          await deleteArmstrongBacklog(existingBacklog.id, password);
+        }
       } else if (passwordModal.action === 'backlog-edit') {
         const backlogUpdates = {
           titulo: formData.titulo,
           area: formData.area,
+          sub_area: formData.sub_area,
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           data_prevista: formData.data,
-          status: formData.status
+          status: formData.status,
+          observacoes: formData.observacoes
         };
         await updateArmstrongBacklog(passwordModal.id!, backlogUpdates, password);
         // Sync with calendar
-        const existingManutencao = armstrongManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
+        const currentBacklog = armstrongBacklog.find(b => b.id === passwordModal.id);
+        const existingManutencao = armstrongManutencoes.find(m => 
+          (m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area) ||
+          (m.titulo === formData.titulo && m.area === formData.area)
+        );
         if (existingManutencao) {
-          await updateArmstrongManutencao(existingManutencao.id, { status: formData.status, data: formData.data }, password);
+          await updateArmstrongManutencao(existingManutencao.id, { 
+            ...updates,
+            data: formData.data 
+          }, password);
         }
       } else if (passwordModal.action === 'backlog-delete') {
+        const currentBacklog = armstrongBacklog.find(b => b.id === passwordModal.id);
         await deleteArmstrongBacklog(passwordModal.id!, password);
+        // Sync with calendar
+        const existingManutencao = armstrongManutencoes.find(m => m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area);
+        if (existingManutencao) {
+          await deleteArmstrongManutencao(existingManutencao.id, password);
+        }
       } else if (passwordModal.action === 'batch-delete') {
+        const itemsToDelete = armstrongManutencoes.filter(m => passwordModal.ids?.includes(m.id));
         await batchDeleteArmstrongManutencoes(passwordModal.ids!, password);
+        // Sync with backlog
+        for (const item of itemsToDelete) {
+          const existingBacklog = armstrongBacklog.find(b => b.titulo === item.titulo && b.area === item.area);
+          if (existingBacklog) {
+            await deleteArmstrongBacklog(existingBacklog.id, password);
+          }
+        }
         setSelectionMode(false);
         setSelectedIds([]);
       } else if (passwordModal.action === 'backlog-batch-delete') {
+        const itemsToDelete = armstrongBacklog.filter(b => passwordModal.ids?.includes(b.id));
         await batchDeleteArmstrongBacklog(passwordModal.ids!, password);
+        // Sync with calendar
+        for (const item of itemsToDelete) {
+          const existingManutencao = armstrongManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
+          if (existingManutencao) {
+            await deleteArmstrongManutencao(existingManutencao.id, password);
+          }
+        }
         setSelectionMode(false);
         setSelectedIds([]);
       }
@@ -294,9 +366,15 @@ export default function Armstrong() {
   };
 
   // Backlog Indicators
-  const pendingBacklog = armstrongBacklog.filter(b => b.status !== 'Concluída');
-  const totalGain = armstrongBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
-  const totalInvestment = armstrongBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
+  const filteredBacklog = armstrongBacklog.filter(b => {
+    const matchArea = !filterArea || b.area === filterArea;
+    const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
+    return matchArea && matchSubArea;
+  });
+
+  const pendingBacklog = filteredBacklog.filter(b => b.status !== 'Concluída');
+  const totalGain = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
     <div className="h-full flex flex-col gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
@@ -542,6 +620,47 @@ export default function Armstrong() {
         </div>
       ) : (
         <div className="flex-1 flex flex-col gap-4 md:gap-8 overflow-hidden">
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área:</label>
+              <select 
+                value={filterArea}
+                onChange={(e) => setFilterArea(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                <option value="">TODAS</option>
+                {AREAS_MOTORES.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Área:</label>
+              <select 
+                value={filterSubArea}
+                onChange={(e) => setFilterSubArea(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                <option value="">TODAS</option>
+                {SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+            {(filterArea || filterSubArea) && (
+              <button 
+                onClick={() => {
+                  setFilterArea('');
+                  setFilterSubArea('');
+                }}
+                className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+
           {/* Indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
             <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
@@ -587,12 +706,12 @@ export default function Armstrong() {
                       <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
                         <h2 className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{status}</h2>
                         <span className="bg-white text-slate-900 text-[9px] md:text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
-                          {armstrongBacklog.filter(b => b.status === status).length}
+                          {filteredBacklog.filter(b => b.status === status).length}
                         </span>
                       </div>
 
                       <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-3 md:space-y-4">
-                        {armstrongBacklog
+                        {filteredBacklog
                           .filter(b => b.status === status)
                           .map((item, index) => (
                             // @ts-ignore
@@ -753,14 +872,28 @@ export default function Armstrong() {
                   </div>
                   <div className="space-y-1.5 md:space-y-2">
                     <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
-                    <input 
-                      type="text"
+                    <select 
                       required
                       className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
-                      placeholder="Ex: Brassagem 1"
-                    />
+                    >
+                      {AREAS_MOTORES.map(a => (
+                        <option key={a} value={a}>{a}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5 md:space-y-2">
+                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub-Área</label>
+                    <select 
+                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      value={formData.sub_area}
+                      onChange={e => setFormData({...formData, sub_area: e.target.value})}
+                    >
+                      {SUB_AREAS_MOTORES.map(s => (
+                        <option key={s} value={s}>{s || 'NÃO DEFINIDA'}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-1.5 md:space-y-2">
                     <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipamento</label>
@@ -884,7 +1017,11 @@ export default function Armstrong() {
                     <>
                       <button 
                         type="button"
-                        onClick={() => setPasswordModal({ isOpen: true, id: selectedItem.id, action: 'delete' })}
+                        onClick={() => setPasswordModal({ 
+                          isOpen: true, 
+                          id: selectedItem.id, 
+                          action: selectedItem.hora_inicio ? 'delete' : 'backlog-delete' 
+                        })}
                         className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100"
                       >
                         <Trash2 size={18} />
@@ -892,7 +1029,11 @@ export default function Armstrong() {
                       </button>
                       <button 
                         type="button"
-                        onClick={() => setPasswordModal({ isOpen: true, id: selectedItem.id, action: 'edit' })}
+                        onClick={() => setPasswordModal({ 
+                          isOpen: true, 
+                          id: selectedItem.id, 
+                          action: selectedItem.hora_inicio ? 'edit' : 'backlog-edit' 
+                        })}
                         className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
                       >
                         <CheckCircle2 size={18} />

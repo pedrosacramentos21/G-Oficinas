@@ -514,17 +514,33 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/armstrong/manutencoes', async (req, res) => {
-    const { titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
+    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('armstrong_manutencao')
-        .insert([{ titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status: status || 'Planejada' }])
+        .insert([{ 
+          titulo, 
+          area, 
+          sub_area: sub_area || '', 
+          equipamento, 
+          responsavel, 
+          data, 
+          hora_inicio, 
+          hora_fim, 
+          descricao, 
+          observacoes: observacoes || '', 
+          impacto_energetico, 
+          investimento_estimado, 
+          status: status || 'Planejada' 
+        }])
         .select();
       
       if (error) throw error;
+      if (!inserted || inserted.length === 0) throw new Error('Nenhum dado retornado após a inserção.');
       res.json({ id: inserted[0].id });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to create armstrong manutencao' });
+    } catch (error: any) {
+      console.error('Erro ao criar manutenção Armstrong:', error);
+      res.status(500).json({ error: error.message || 'Failed to create armstrong manutencao' });
     }
   });
 
@@ -636,11 +652,11 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/armstrong/backlog', async (req, res) => {
-    const { area, titulo, impacto_energetico, investimento_estimado, data_prevista, status } = req.body;
+    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('armstrong_backlog')
-        .insert([{ area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada' }])
+        .insert([{ area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada', observacoes }])
         .select();
       
       if (error) throw error;
@@ -717,17 +733,33 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/refrigeracao/manutencoes', async (req, res) => {
-    const { titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
+    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('refrigeracao_manutencao')
-        .insert([{ titulo, area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status: status || 'Planejada' }])
+        .insert([{ 
+          titulo, 
+          area, 
+          sub_area: sub_area || '', 
+          equipamento, 
+          responsavel, 
+          data, 
+          hora_inicio, 
+          hora_fim, 
+          descricao, 
+          observacoes: observacoes || '', 
+          impacto_energetico, 
+          investimento_estimado, 
+          status: status || 'Planejada' 
+        }])
         .select();
       
       if (error) throw error;
+      if (!inserted || inserted.length === 0) throw new Error('Nenhum dado retornado após a inserção.');
       res.json({ id: inserted[0].id });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to create refrigeracao manutencao' });
+    } catch (error: any) {
+      console.error('Erro ao criar manutenção Refrigeração:', error);
+      res.status(500).json({ error: error.message || 'Failed to create refrigeracao manutencao' });
     }
   });
 
@@ -839,11 +871,11 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/refrigeracao/backlog', async (req, res) => {
-    const { area, titulo, impacto_energetico, investimento_estimado, data_prevista, status } = req.body;
+    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('refrigeracao_backlog')
-        .insert([{ area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada' }])
+        .insert([{ area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada', observacoes }])
         .select();
       
       if (error) throw error;

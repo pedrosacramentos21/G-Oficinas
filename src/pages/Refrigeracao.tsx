@@ -31,6 +31,24 @@ import PasswordModal from '../components/PasswordModal';
 
 const STATUS_OPTIONS = ['Não planejada', 'Planejada', 'Concluída'];
 
+const AREAS_MOTORES = [
+  'Packaging',
+  'Processo Refri',
+  'Processo Cerveja',
+  'Meio ambiente',
+  'Utilidades',
+  'Subprodutos'
+];
+
+const SUB_AREAS_MOTORES = [
+  '', '501', '502', '503', '511', '512', '561', '562', 'Xaroparia', 'Dep. Açúcar',
+  'Xaroparia Simples', 'Xaroparia Composta', 'ETA Refri', 'Brassagem 1',
+  'Brassagem 2', 'Adegas', 'Adega de fermento', 'Adega de pressão',
+  'Ferm. e maturação 01', 'Ferm. e maturação 02', 'Filtração 1', 'Filtração 2',
+  'Resfriador de mosto 1', 'Resfriador de mosto 2', 'ETA', 'ETEI',
+  'Usina de CO2', 'Secador de fermento'
+];
+
 export default function Refrigeracao() {
   const { 
     refrigeracaoManutencoes, 
@@ -60,6 +78,8 @@ export default function Refrigeracao() {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [filterArea, setFilterArea] = useState('');
+  const [filterSubArea, setFilterSubArea] = useState('');
 
   const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete' }>({
     isOpen: false,
@@ -69,7 +89,8 @@ export default function Refrigeracao() {
 
   const [formData, setFormData] = useState({
     titulo: '',
-    area: '',
+    area: AREAS_MOTORES[0],
+    sub_area: '',
     equipamento: '',
     responsavel: '',
     data: '',
@@ -107,7 +128,8 @@ export default function Refrigeracao() {
     setModalType('manutencao');
     setFormData({
       titulo: '',
-      area: '',
+      area: AREAS_MOTORES[0],
+      sub_area: '',
       equipamento: '',
       responsavel: '',
       data: new Date().toISOString().split('T')[0],
@@ -141,11 +163,12 @@ export default function Refrigeracao() {
       
       await addRefrigeracaoManutencao(formData);
       
-      const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+      const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area && b.sub_area === formData.sub_area);
       
       if (!selectedItem && !existingBacklog) {
         await addRefrigeracaoBacklog({
           area: formData.area,
+          sub_area: formData.sub_area,
           titulo: formData.titulo,
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
@@ -172,34 +195,85 @@ export default function Refrigeracao() {
       
       if (passwordModal.action === 'edit') {
         await updateRefrigeracaoManutencao(passwordModal.id!, updates, password);
-        const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === formData.titulo && b.area === formData.area);
+        // Sync with backlog
+        const currentItem = refrigeracaoManutencoes.find(m => m.id === passwordModal.id);
+        const existingBacklog = refrigeracaoBacklog.find(b => 
+          (b.titulo === currentItem?.titulo && b.area === currentItem?.area) ||
+          (b.titulo === formData.titulo && b.area === formData.area)
+        );
         if (existingBacklog) {
-          await updateRefrigeracaoBacklog(existingBacklog.id, { status: formData.status, data_prevista: formData.data }, password);
+          await updateRefrigeracaoBacklog(existingBacklog.id, { 
+            titulo: formData.titulo,
+            area: formData.area,
+            sub_area: formData.sub_area,
+            impacto_energetico: formData.impacto_energetico,
+            investimento_estimado: formData.investimento_estimado,
+            status: formData.status, 
+            data_prevista: formData.data 
+          }, password);
         }
       } else if (passwordModal.action === 'delete') {
+        const currentItem = refrigeracaoManutencoes.find(m => m.id === passwordModal.id);
         await deleteRefrigeracaoManutencao(passwordModal.id!, password);
+        // Sync with backlog
+        const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === currentItem?.titulo && b.area === currentItem?.area);
+        if (existingBacklog) {
+          await deleteRefrigeracaoBacklog(existingBacklog.id, password);
+        }
       } else if (passwordModal.action === 'backlog-edit') {
         const backlogUpdates = {
           titulo: formData.titulo,
           area: formData.area,
+          sub_area: formData.sub_area,
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           data_prevista: formData.data,
-          status: formData.status
+          status: formData.status,
+          observacoes: formData.observacoes
         };
         await updateRefrigeracaoBacklog(passwordModal.id!, backlogUpdates, password);
-        const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === formData.titulo && m.area === formData.area);
+        // Sync with calendar
+        const currentBacklog = refrigeracaoBacklog.find(b => b.id === passwordModal.id);
+        const existingManutencao = refrigeracaoManutencoes.find(m => 
+          (m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area) ||
+          (m.titulo === formData.titulo && m.area === formData.area)
+        );
         if (existingManutencao) {
-          await updateRefrigeracaoManutencao(existingManutencao.id, { status: formData.status, data: formData.data }, password);
+          await updateRefrigeracaoManutencao(existingManutencao.id, { 
+            ...updates,
+            data: formData.data 
+          }, password);
         }
       } else if (passwordModal.action === 'backlog-delete') {
+        const currentBacklog = refrigeracaoBacklog.find(b => b.id === passwordModal.id);
         await deleteRefrigeracaoBacklog(passwordModal.id!, password);
+        // Sync with calendar
+        const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area);
+        if (existingManutencao) {
+          await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+        }
       } else if (passwordModal.action === 'batch-delete') {
+        const itemsToDelete = refrigeracaoManutencoes.filter(m => passwordModal.ids?.includes(m.id));
         await batchDeleteRefrigeracaoManutencoes(passwordModal.ids!, password);
+        // Sync with backlog
+        for (const item of itemsToDelete) {
+          const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === item.titulo && b.area === item.area);
+          if (existingBacklog) {
+            await deleteRefrigeracaoBacklog(existingBacklog.id, password);
+          }
+        }
         setSelectionMode(false);
         setSelectedIds([]);
       } else if (passwordModal.action === 'backlog-batch-delete') {
+        const itemsToDelete = refrigeracaoBacklog.filter(b => passwordModal.ids?.includes(b.id));
         await batchDeleteRefrigeracaoBacklog(passwordModal.ids!, password);
+        // Sync with calendar
+        for (const item of itemsToDelete) {
+          const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
+          if (existingManutencao) {
+            await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+          }
+        }
         setSelectionMode(false);
         setSelectedIds([]);
       }
@@ -283,9 +357,16 @@ export default function Refrigeracao() {
     }
   };
 
-  const pendingBacklog = refrigeracaoBacklog.filter(b => b.status !== 'Concluída');
-  const totalGain = refrigeracaoBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
-  const totalInvestment = refrigeracaoBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
+  // Backlog Indicators
+  const filteredBacklog = refrigeracaoBacklog.filter(b => {
+    const matchArea = !filterArea || b.area === filterArea;
+    const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
+    return matchArea && matchSubArea;
+  });
+
+  const pendingBacklog = filteredBacklog.filter(b => b.status !== 'Concluída');
+  const totalGain = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
     <div className="h-full flex flex-col gap-4 md:gap-6 p-3 md:p-6 overflow-hidden">
@@ -532,6 +613,47 @@ export default function Refrigeracao() {
         </div>
       ) : (
         <div className="flex-1 flex flex-col gap-4 md:gap-8 overflow-hidden">
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área:</label>
+              <select 
+                value={filterArea}
+                onChange={(e) => setFilterArea(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                <option value="">TODAS</option>
+                {AREAS_MOTORES.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Área:</label>
+              <select 
+                value={filterSubArea}
+                onChange={(e) => setFilterSubArea(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                <option value="">TODAS</option>
+                {SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+            {(filterArea || filterSubArea) && (
+              <button 
+                onClick={() => {
+                  setFilterArea('');
+                  setFilterSubArea('');
+                }}
+                className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+
           {/* Indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 shrink-0">
             <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
@@ -577,12 +699,12 @@ export default function Refrigeracao() {
                       <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
                         <h2 className="text-[8px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{status}</h2>
                         <span className="bg-white text-slate-900 text-[8px] md:text-[10px] font-black px-2 py-1 rounded-full shadow-sm">
-                          {refrigeracaoBacklog.filter(b => b.status === status).length}
+                          {filteredBacklog.filter(b => b.status === status).length}
                         </span>
                       </div>
 
                       <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-3 md:space-y-4">
-                        {refrigeracaoBacklog
+                        {filteredBacklog
                           .filter(b => b.status === status)
                           .map((item, index) => (
                             // @ts-ignore
@@ -743,14 +865,28 @@ export default function Refrigeracao() {
                   </div>
                   <div className="space-y-1.5 md:space-y-2">
                     <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
-                    <input 
-                      type="text"
+                    <select 
                       required
                       className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all text-sm md:text-base"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
-                      placeholder="Ex: Escritório Central"
-                    />
+                    >
+                      {AREAS_MOTORES.map(a => (
+                        <option key={a} value={a}>{a}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5 md:space-y-2">
+                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub-Área</label>
+                    <select 
+                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all text-sm md:text-base"
+                      value={formData.sub_area}
+                      onChange={e => setFormData({...formData, sub_area: e.target.value})}
+                    >
+                      {SUB_AREAS_MOTORES.map(s => (
+                        <option key={s} value={s}>{s || 'NÃO DEFINIDA'}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-1.5 md:space-y-2">
                     <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipamento</label>

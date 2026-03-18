@@ -50,6 +50,7 @@ interface ArmstrongManutencao {
   id: number;
   titulo: string;
   area: string;
+  sub_area?: string;
   equipamento: string;
   responsavel: string;
   data: string;
@@ -71,11 +72,13 @@ interface ArmstrongPCMArea {
 interface ArmstrongBacklog {
   id: number;
   area: string;
+  sub_area?: string;
   titulo: string;
   impacto_energetico: string;
   investimento_estimado: string;
   data_prevista: string;
   status: string;
+  observacoes?: string;
 }
 
 interface StoreState {
