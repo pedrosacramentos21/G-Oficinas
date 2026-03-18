@@ -48,6 +48,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
   useEffect(() => {
     if (isOpen) {
       setShowPasswordModal(false);
+      setPasswordModalAction('unlock');
       if (andaime) {
         setFormData({
           area: andaime.area,
