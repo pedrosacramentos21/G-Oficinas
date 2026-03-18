@@ -484,14 +484,14 @@ export default function Armstrong() {
               <AlertCircle size={12} className="text-orange-500" />
               Áreas em PCM (Parada de Manutenção)
             </h2>
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 md:gap-3">
+            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 sm:grid sm:grid-cols-7 sm:mx-0 sm:px-0 gap-2 md:gap-3 custom-scrollbar">
               {weekDays.map((day, idx) => {
                 const dateStr = day.toISOString().split('T')[0];
                 const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
                 const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
                 
                 return (
-                  <div key={idx} className={cn("flex flex-col gap-1 md:gap-1.5", idx >= 4 && "hidden sm:flex")}>
+                  <div key={idx} className="flex flex-col gap-1 md:gap-1.5 min-w-[100px] sm:min-w-0">
                     <div className="text-center py-0.5 md:py-1 bg-slate-50 rounded-lg">
                       <span className="text-[8px] md:text-[9px] font-black text-slate-500">{dayName}</span>
                     </div>
@@ -835,46 +835,53 @@ export default function Armstrong() {
 
       {/* Main Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[150] p-2 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
-            <div className="p-4 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
-                  {modalType === 'manutencao' ? <Plus className="text-white w-5 h-5 md:w-6 md:h-6" /> : <Info className="text-white w-5 h-5 md:w-6 md:h-6" />}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[150] p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="p-4 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
+                  {modalType === 'manutencao' ? <Plus className="text-white w-5 h-5 sm:w-6 sm:h-6" /> : <Info className="text-white w-5 h-5 sm:w-6 sm:h-6" />}
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-2xl font-black text-slate-900 tracking-tight leading-none">
-                    {modalType === 'manutencao' ? 'Nova Manutenção' : 'Detalhes da Intervenção'}
+                  <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                    {modalType === 'manutencao' ? (selectedItem ? 'Editar' : 'Nova') : 'Detalhes'}
                   </h2>
-                  <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 md:mt-1">
+                  <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 sm:mt-1">
                     {modalType === 'manutencao' ? 'Planejamento de Sistema de Vapor' : 'Informações Completas'}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-                <X size={20} className="text-slate-400" />
+              <button 
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setSelectedItem(null);
+                }} 
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+              >
+                <X size={20} className="text-slate-400 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-              <form onSubmit={handleSave} className="space-y-4 md:space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="md:col-span-2 space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título da Intervenção</label>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+              <form id="armstrong-form" onSubmit={handleSave} className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título da Intervenção</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.titulo}
                       onChange={e => setFormData({...formData, titulo: e.target.value})}
                       placeholder="Ex: Troca de Purgador"
                     />
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
+                  
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Área</label>
                     <select 
                       required
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
                     >
@@ -883,10 +890,11 @@ export default function Armstrong() {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub-Área</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sub-Área</label>
                     <select 
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                       value={formData.sub_area}
                       onChange={e => setFormData({...formData, sub_area: e.target.value})}
                     >
@@ -895,93 +903,102 @@ export default function Armstrong() {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipamento</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Equipamento / TAG</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.equipamento}
                       onChange={e => setFormData({...formData, equipamento: e.target.value})}
                       placeholder="Ex: Purgador P12"
                     />
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Responsável</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Responsável</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.responsavel}
                       onChange={e => setFormData({...formData, responsavel: e.target.value})}
                     />
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data</label>
                     <input 
                       type="date"
                       required
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.data}
                       onChange={e => setFormData({...formData, data: e.target.value})}
                     />
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário Início</label>
-                    <select 
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
-                      value={formData.hora_inicio}
-                      onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
-                    >
-                      {Array.from({ length: 13 }, (_, i) => {
-                        const h = String(i + 7).padStart(2, '0');
-                        return <option key={h} value={`${h}:00`}>{h}:00</option>;
-                      })}
-                    </select>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Início</label>
+                      <select 
+                        className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
+                        value={formData.hora_inicio}
+                        onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
+                      >
+                        {Array.from({ length: 13 }, (_, i) => {
+                          const h = String(i + 7).padStart(2, '0');
+                          return <option key={h} value={`${h}:00`}>{h}:00</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Término</label>
+                      <select 
+                        className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
+                        value={formData.hora_fim}
+                        onChange={e => setFormData({...formData, hora_fim: e.target.value})}
+                      >
+                        {Array.from({ length: 13 }, (_, i) => {
+                          const h = String(i + 7).padStart(2, '0');
+                          return <option key={h} value={`${h}:00`}>{h}:00</option>;
+                        })}
+                      </select>
+                    </div>
                   </div>
-                  <div className="space-y-1.5 md:space-y-2">
-                    <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Horário Término</label>
-                    <select 
-                      className="w-full bg-slate-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
-                      value={formData.hora_fim}
-                      onChange={e => setFormData({...formData, hora_fim: e.target.value})}
-                    >
-                      {Array.from({ length: 13 }, (_, i) => {
-                        const h = String(i + 7).padStart(2, '0');
-                        return <option key={h} value={`${h}:00`}>{h}:00</option>;
-                      })}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto Energético (MJ/hL)</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto (MJ/hL)</label>
                     <input 
                       type="text"
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.impacto_energetico}
                       onChange={e => setFormData({...formData, impacto_energetico: e.target.value})}
                       placeholder="Ex: 1000"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Investimento Estimado (R$)</label>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Investimento (R$)</label>
                     <input 
                       type="text"
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.investimento_estimado}
                       onChange={e => setFormData({...formData, investimento_estimado: e.target.value})}
                       placeholder="Ex: 25.000,00"
                     />
                   </div>
-                  <div className="col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
-                    <div className="flex gap-2">
+
+                  <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                    <div className="flex flex-wrap sm:flex-nowrap gap-2">
                       {STATUS_OPTIONS.map(s => (
                         <button
                           key={s}
                           type="button"
                           onClick={() => setFormData({...formData, status: s})}
                           className={cn(
-                            "flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all border",
+                            "flex-1 min-w-[100px] py-2.5 sm:py-3 rounded-xl font-black text-[8px] sm:text-[10px] uppercase tracking-widest transition-all border",
                             formData.status === s 
                               ? (s === 'Não planejada' ? "bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20" :
                                  s === 'Planejada' ? "bg-yellow-500 text-white border-yellow-500 shadow-lg shadow-yellow-500/20" :
@@ -994,63 +1011,62 @@ export default function Armstrong() {
                       ))}
                     </div>
                   </div>
-                  <div className="col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição da Intervenção</label>
+
+                  <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição da Intervenção</label>
                     <textarea 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-24 resize-none"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-20 sm:h-24 resize-none text-sm sm:text-base"
                       value={formData.descricao}
                       onChange={e => setFormData({...formData, descricao: e.target.value})}
                     />
                   </div>
-                  <div className="col-span-2 space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observações</label>
+
+                  <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Observações</label>
                     <textarea 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-20 resize-none"
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all h-16 sm:h-20 resize-none text-sm sm:text-base"
                       value={formData.observacoes}
                       onChange={e => setFormData({...formData, observacoes: e.target.value})}
                     />
                   </div>
                 </div>
-
-                <div className="flex gap-4 pt-4">
-                  {modalType === 'details' ? (
-                    <>
-                      <button 
-                        type="button"
-                        onClick={() => setPasswordModal({ 
-                          isOpen: true, 
-                          id: selectedItem.id, 
-                          action: selectedItem.hora_inicio ? 'delete' : 'backlog-delete' 
-                        })}
-                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100"
-                      >
-                        <Trash2 size={18} />
-                        EXCLUIR
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setPasswordModal({ 
-                          isOpen: true, 
-                          id: selectedItem.id, 
-                          action: selectedItem.hora_inicio ? 'edit' : 'backlog-edit' 
-                        })}
-                        className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 size={18} />
-                        SALVAR ALTERAÇÕES
-                      </button>
-                    </>
-                  ) : (
-                    <button 
-                      type="submit"
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-[0.2em]"
-                    >
-                      <CheckCircle2 size={20} />
-                      Salvar Intervenção
-                    </button>
-                  )}
-                </div>
               </form>
+            </div>
+
+            <div className="p-4 sm:p-8 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
+              {modalType === 'details' ? (
+                <>
+                  <button 
+                    type="button"
+                    onClick={() => setPasswordModal({ 
+                      isOpen: true, 
+                      id: selectedItem.id, 
+                      action: selectedItem.hora_inicio ? 'delete' : 'backlog-delete' 
+                    })}
+                    className="w-full sm:flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100 text-[10px] sm:text-xs uppercase tracking-widest order-2 sm:order-1"
+                  >
+                    <Trash2 size={18} />
+                    EXCLUIR
+                  </button>
+                  <button 
+                    form="armstrong-form"
+                    type="submit"
+                    className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest order-1 sm:order-2"
+                  >
+                    <CheckCircle2 size={18} />
+                    SALVAR ALTERAÇÕES
+                  </button>
+                </>
+              ) : (
+                <button 
+                  form="armstrong-form"
+                  type="submit"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.2em]"
+                >
+                  <CheckCircle2 size={20} />
+                  Salvar Intervenção
+                </button>
+              )}
             </div>
           </div>
         </div>

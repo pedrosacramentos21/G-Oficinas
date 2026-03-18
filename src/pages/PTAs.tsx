@@ -354,29 +354,29 @@ export default function PTAs() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
-            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="p-5 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight">{isEditing ? 'EDITAR SOLICITAÇÃO PTA' : 'NOVA SOLICITAÇÃO PTA'}</h2>
-                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">{isEditing ? 'Alterar Agendamento' : 'Agendamento de Equipamento'}</p>
+                <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight uppercase">{isEditing ? 'EDITAR SOLICITAÇÃO PTA' : 'NOVA SOLICITAÇÃO PTA'}</h2>
+                <p className="text-[8px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 sm:mt-1.5">{isEditing ? 'Alterar Agendamento' : 'Agendamento de Equipamento'}</p>
               </div>
               <button onClick={() => {
                 setIsModalOpen(false);
                 setIsEditing(false);
                 setFormData(INITIAL_FORM_DATA);
-              }} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
-                <Plus size={20} className="text-gray-400 rotate-45 md:w-6 md:h-6" />
+              }} className="p-2 sm:p-3 hover:bg-gray-200 rounded-xl sm:rounded-2xl transition-colors">
+                <Plus size={24} className="text-gray-400 rotate-45 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleActualSubmit} className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Equipamento</label>
+            <form id="pta-form" onSubmit={handleActualSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-5 sm:p-8 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Equipamento</label>
                     <select 
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm sm:text-base"
                       value={formData.equipamento}
                       onChange={e => setFormData({...formData, equipamento: e.target.value})}
                     >
@@ -384,71 +384,71 @@ export default function PTAs() {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Área e Sub-área:</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área e Sub-área:</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       placeholder="Ex: Processo - Brassagem"
                       value={formData.area}
                       onChange={e => setFormData({...formData, area: e.target.value})}
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Responsável</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       placeholder="Nome do operador/responsável"
                       value={formData.responsavel}
                       onChange={e => setFormData({...formData, responsavel: e.target.value})}
                     />
                   </div>
 
-                  <div className="md:col-span-1">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data</label>
+                  <div className="sm:col-span-1">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
                     <input 
                       type="date"
                       required
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.data}
                       onChange={e => setFormData({...formData, data: e.target.value})}
                     />
                   </div>
 
-                  <div className="md:col-span-2 bg-blue-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-blue-100">
-                    <label className="flex items-center gap-2 md:gap-3 cursor-pointer">
+                  <div className="sm:col-span-2 bg-blue-50 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-blue-100">
+                    <label className="flex items-center gap-3 sm:gap-4 cursor-pointer">
                       <input 
                         type="checkbox"
-                        className="w-4 h-4 md:w-5 md:h-5 rounded-lg border-blue-300 text-blue-500 focus:ring-blue-500"
+                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-blue-300 text-blue-500 focus:ring-blue-500"
                         checked={formData.recorrente}
                         onChange={e => setFormData({...formData, recorrente: e.target.checked})}
                       />
-                      <span className="text-[10px] md:text-xs font-black text-blue-700 uppercase tracking-widest">O agendamento se repete por mais de um dia?</span>
+                      <span className="text-[10px] sm:text-xs font-black text-blue-700 uppercase tracking-widest">O agendamento se repete por mais de um dia?</span>
                     </label>
                   </div>
 
                   {formData.recorrente && (
-                    <div className="md:col-span-2 grid grid-cols-2 gap-4 md:gap-6 animate-in slide-in-from-top-2 duration-200">
+                    <div className="sm:col-span-2 grid grid-cols-2 gap-4 sm:gap-6 animate-in slide-in-from-top-2 duration-200">
                       <div>
-                        <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data Inicial</label>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Inicial</label>
                         <input 
                           type="date"
                           required
-                          className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                          className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                           value={formData.data}
                           onChange={e => setFormData({...formData, data: e.target.value})}
                         />
                       </div>
                       <div>
-                        <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data Final</label>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data Final</label>
                         <input 
                           type="date"
                           required
-                          className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                          className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                           value={formData.data_fim}
                           onChange={e => setFormData({...formData, data_fim: e.target.value})}
                         />
@@ -456,11 +456,11 @@ export default function PTAs() {
                     </div>
                   )}
 
-                  <div className="md:col-span-2 grid grid-cols-2 gap-4 md:gap-6">
+                  <div className="sm:col-span-2 grid grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Início</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Início</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm sm:text-base"
                         value={formData.hora_inicio}
                         onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
                       >
@@ -468,9 +468,9 @@ export default function PTAs() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Fim</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Fim</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all appearance-none text-sm sm:text-base"
                         value={formData.hora_fim}
                         onChange={e => setFormData({...formData, hora_fim: e.target.value})}
                       >
@@ -481,17 +481,22 @@ export default function PTAs() {
                 </div>
               </div>
 
-              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
+              <div className="p-5 sm:p-8 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setIsEditing(false);
+                    setFormData(INITIAL_FORM_DATA);
+                  }}
+                  className="w-full sm:flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm order-2 sm:order-1"
                 >
                   CANCELAR
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm"
+                  form="pta-form"
+                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2"
                 >
                   SALVAR
                 </button>
@@ -502,76 +507,76 @@ export default function PTAs() {
       )}
 
       {isDetailModalOpen && selectedPTA && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
-            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="p-5 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA SOLICITAÇÃO</h2>
-                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Informações do Agendamento</p>
+                <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA SOLICITAÇÃO</h2>
+                <p className="text-[8px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 sm:mt-1.5">Informações do Agendamento</p>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
-                <Plus size={20} className="text-gray-400 rotate-45 md:w-6 md:h-6" />
+              <button onClick={() => setIsDetailModalOpen(false)} className="p-2 sm:p-3 hover:bg-gray-200 rounded-xl sm:rounded-2xl transition-colors">
+                <Plus size={24} className="text-gray-400 rotate-45 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="md:col-span-2 bg-slate-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-slate-100 space-y-3 md:space-y-4">
+            <div className="p-5 sm:p-8 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                <div className="sm:col-span-2 bg-slate-50 p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-100 space-y-4 sm:space-y-5">
                   <div className="flex items-center justify-between">
                     <span className={cn(
-                      "px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest",
+                      "px-3 py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest",
                       selectedPTA.status === 'aprovado' ? "bg-green-500 text-white" : "bg-yellow-500 text-white"
                     )}>
                       {selectedPTA.status === 'aprovado' ? 'APROVADO' : 'AGUARDANDO APROVAÇÃO'}
                     </span>
-                    <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: #{selectedPTA.id}</span>
+                    <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: #{selectedPTA.id}</span>
                   </div>
                   
-                  <div className="space-y-1">
-                    <h3 className="text-lg md:text-xl font-black text-slate-900 uppercase">{selectedPTA.responsavel}</h3>
-                    <p className="text-xs md:text-sm font-bold text-blue-600 uppercase tracking-wider">{selectedPTA.equipamento}</p>
+                  <div className="space-y-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 uppercase leading-tight">{selectedPTA.responsavel}</h3>
+                    <p className="text-sm sm:text-base font-bold text-blue-600 uppercase tracking-wider">{selectedPTA.equipamento}</p>
                   </div>
                 </div>
 
-                <div className="space-y-0.5 md:space-y-1">
-                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
-                  <p className="text-sm md:text-base font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
+                  <p className="text-sm sm:text-lg font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
                 </div>
 
-                <div className="space-y-0.5 md:space-y-1">
-                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
-                  <p className="text-sm md:text-base font-bold text-slate-700 uppercase">{selectedPTA.prioridade}</p>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
+                  <p className="text-sm sm:text-lg font-bold text-slate-700 uppercase">{selectedPTA.prioridade}</p>
                 </div>
 
-                <div className="space-y-0.5 md:space-y-1">
-                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
-                  <div className="flex items-center gap-2 text-sm md:text-base font-bold text-slate-700">
-                    <CalendarIcon size={14} className="text-slate-400 md:w-4 md:h-4" />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
+                  <div className="flex items-center gap-2 text-sm sm:text-lg font-bold text-slate-700">
+                    <CalendarIcon size={18} className="text-slate-400" />
                     {new Date(selectedPTA.data).toLocaleDateString('pt-BR')}
                   </div>
                 </div>
 
-                <div className="space-y-0.5 md:space-y-1">
-                  <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</label>
-                  <div className="flex items-center gap-2 text-sm md:text-base font-bold text-slate-700">
-                    <Clock size={14} className="text-slate-400 md:w-4 md:h-4" />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horário</label>
+                  <div className="flex items-center gap-2 text-sm sm:text-lg font-bold text-slate-700">
+                    <Clock size={18} className="text-slate-400" />
                     {selectedPTA.hora_inicio} - {selectedPTA.hora_fim}
                   </div>
                 </div>
 
                 {selectedPTA.descricao && (
-                  <div className="md:col-span-2 space-y-0.5 md:space-y-1">
-                    <label className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</label>
-                    <div className="bg-slate-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-slate-100 text-xs md:text-sm font-medium text-slate-600 italic">
+                  <div className="sm:col-span-2 space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</label>
+                    <div className="bg-slate-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-100 text-sm sm:text-base font-medium text-slate-600 italic">
                       "{selectedPTA.descricao}"
                     </div>
                   </div>
                 )}
 
                 {selectedPTA.status === 'pendente' && (
-                  <div className="md:col-span-2 bg-yellow-50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-yellow-100 flex items-start gap-2 md:gap-3">
-                    <Info className="text-yellow-600 shrink-0 md:w-5 md:h-5" size={16} />
-                    <p className="text-[10px] md:text-xs font-bold text-yellow-700 leading-relaxed uppercase">
+                  <div className="sm:col-span-2 bg-yellow-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-yellow-100 flex items-start gap-3 sm:gap-4">
+                    <Info className="text-yellow-600 shrink-0 sm:w-6 sm:h-6" size={20} />
+                    <p className="text-[10px] sm:text-xs font-bold text-yellow-700 leading-relaxed uppercase">
                       Já existe um agendamento para este período. Gentileza negociar priorização com o solicitante responsável e alinhar com Pedro Sacramento - ITF.
                     </p>
                   </div>
@@ -579,15 +584,15 @@ export default function PTAs() {
               </div>
             </div>
 
-            <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
+            <div className="p-5 sm:p-8 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-gray-50/50 shrink-0">
               <button 
                 onClick={() => {
                   setPasswordAction('delete');
                   setIsPasswordModalOpen(true);
                 }}
-                className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+                className="w-full sm:flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-black py-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm order-3 sm:order-1"
               >
-                <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
+                <Trash2 size={18} />
                 EXCLUIR
               </button>
 
@@ -596,9 +601,9 @@ export default function PTAs() {
                   setPasswordAction('edit');
                   setIsPasswordModalOpen(true);
                 }}
-                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+                className="w-full sm:flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-black py-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm order-2 sm:order-2"
               >
-                <Plus size={16} className="md:w-[18px] md:h-[18px]" />
+                <Plus size={18} />
                 EDITAR
               </button>
               
@@ -608,9 +613,9 @@ export default function PTAs() {
                     setPasswordAction('approve');
                     setIsPasswordModalOpen(true);
                   }}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-2 text-xs md:text-sm"
+                  className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-green-500/20 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm order-1 sm:order-3"
                 >
-                  <CheckCircle2 size={16} className="md:w-[18px] md:h-[18px]" />
+                  <CheckCircle2 size={18} />
                   APROVAR
                 </button>
               )}

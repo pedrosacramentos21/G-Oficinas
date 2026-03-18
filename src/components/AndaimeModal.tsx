@@ -138,8 +138,8 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-y-auto animate-in zoom-in-95 duration-200 relative custom-scrollbar">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[95vh] relative">
         {showSuccess ? (
           <div className="flex flex-col items-center justify-center p-12 text-center animate-in zoom-in duration-300 min-h-[400px]">
             <div className="bg-green-100 p-6 rounded-full mb-6 shadow-inner">
@@ -176,62 +176,42 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
             </button>
           </div>
         )}
-        <div className="p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/30 sticky top-0 z-10 backdrop-blur-sm">
-              <div className="flex items-center gap-4">
-                <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
-                  <Layers className="text-white" size={24} />
+        <div className="p-4 sm:p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/30 sticky top-0 z-10 backdrop-blur-sm">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
+                  <Layers className="text-white w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">G-Oficinas</h2>
-                  <p className="text-sm font-bold text-gray-400 mt-1">
-                    {andaime ? (andaime.status === 'aprovado' ? 'Editar Solicitação Aprovada' : 'Solicitação Pendente') : 'Nova Solicitação'}
+                  <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none uppercase">Andaimes</h2>
+                  <p className="text-[10px] sm:text-sm font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                    {andaime ? (andaime.status === 'aprovado' ? 'Editar Solicitação' : 'Pendente') : 'Nova Solicitação'}
                   </p>
-                  {andaime?.status === 'pendente' && (
-                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-2 animate-pulse">
-                      Aguardar aprovação da solicitação por Pedro Sacramento - ITF
-                    </p>
-                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {andaime?.status === 'pendente' && (
-                  <button 
-                    onClick={() => setShowPasswordModal(true)}
-                    className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
-                  >
-                    <CheckCircle2 size={14} />
-                    Aprovar Solicitação
-                  </button>
-                )}
-                {andaime?.status === 'aprovado' && !isUnlocked && (
-                  <button 
-                    onClick={() => setShowPasswordModal(true)}
-                    className="flex items-center gap-2 bg-orange-100 text-orange-600 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-orange-200 transition-all"
-                  >
-                    <Lock size={14} />
-                    Desbloquear para Editar
-                  </button>
-                )}
-                {andaime?.status === 'aprovado' && isUnlocked && (
-                  <div className="flex items-center gap-2 bg-green-100 text-green-600 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px]">
-                    <Unlock size={14} />
-                    Edição Liberada
-                  </div>
-                )}
                 <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                  <X size={24} className="text-gray-400" />
+                  <X size={20} className="text-gray-400 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className={cn("p-8 space-y-6", !isUnlocked && "opacity-50 pointer-events-none")}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {andaime?.status === 'pendente' && (
+                <div className="px-6 pt-4">
+                  <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest animate-pulse bg-orange-50 p-3 rounded-xl border border-orange-100 text-center">
+                    Aguardar aprovação por Pedro Sacramento - ITF
+                  </p>
+                </div>
+              )}
+
+              <form id="andaime-form" onSubmit={handleSubmit} className={cn("p-6 sm:p-8 space-y-6", !isUnlocked && "opacity-50 pointer-events-none")}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Local / Setor</label>
                   <input 
                     type="text"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                     placeholder="Ex: Torre de Resfriar"
                     value={formData.local_setor}
                     onChange={e => setFormData({...formData, local_setor: e.target.value})}
@@ -241,7 +221,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                 <div>
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Área</label>
                   <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
                     value={formData.area}
                     onChange={e => setFormData({...formData, area: e.target.value})}
                   >
@@ -252,7 +232,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                 <div>
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Tipo de Serviço</label>
                   <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
                     value={formData.tipo_servico}
                     onChange={e => setFormData({...formData, tipo_servico: e.target.value})}
                   >
@@ -266,7 +246,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                     type="number"
                     min="1"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                     value={formData.quantidade_pontos}
                     onChange={e => setFormData({...formData, quantidade_pontos: parseInt(e.target.value)})}
                   />
@@ -277,7 +257,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                   <input 
                     type="date"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                     value={formData.data_montagem}
                     onChange={e => setFormData({...formData, data_montagem: e.target.value})}
                   />
@@ -290,86 +270,122 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                   <input 
                     type="date"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                     value={formData.data_desmontagem}
                     onChange={e => setFormData({...formData, data_desmontagem: e.target.value})}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Início</label>
-                  <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
-                    value={formData.hora_inicio}
-                    onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
-                  >
-                    {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Início</label>
+                    <select 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                      value={formData.hora_inicio}
+                      onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
+                    >
+                      {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Fim</label>
+                    <select 
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                      value={formData.hora_fim}
+                      onChange={e => setFormData({...formData, hora_fim: e.target.value})}
+                    >
+                      {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Fim</label>
-                  <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
-                    value={formData.hora_fim}
-                    onChange={e => setFormData({...formData, hora_fim: e.target.value})}
-                  >
-                    {HORARIOS.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
-                </div>
-
-                <div className="col-span-1 md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Solicitante</label>
                   <input 
                     type="text"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
                     value={formData.solicitante}
                     onChange={e => setFormData({...formData, solicitante: e.target.value})}
                   />
                 </div>
 
-                <div className="col-span-1 md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Descrição do Local</label>
                   <textarea 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none min-h-[80px]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none min-h-[80px]"
                     placeholder="Detalhes adicionais sobre o local..."
                     value={formData.descricao_local}
                     onChange={e => setFormData({...formData, descricao_local: e.target.value})}
                   />
                 </div>
               </div>
+            </form>
+          </div>
 
-              <div className="flex gap-4 pt-4">
-                {andaime && (
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setPasswordModalAction('delete');
-                      setShowPasswordModal(true);
-                    }}
-                    className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2 border border-red-100"
-                  >
-                    <Trash2 size={18} />
-                    Excluir
-                  </button>
-                )}
+          <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row gap-3">
+            {andaime && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setPasswordModalAction('delete');
+                  setShowPasswordModal(true);
+                }}
+                className="w-full sm:w-auto px-6 py-3.5 sm:py-3 bg-red-50 hover:bg-red-100 text-red-500 font-black rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-red-100 order-3 sm:order-1"
+              >
+                <Trash2 size={16} />
+                Excluir
+              </button>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:ml-auto order-1 sm:order-2">
+              {andaime?.status === 'pendente' && (
                 <button 
                   type="button"
-                  onClick={onClose}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-xl transition-all uppercase tracking-widest text-sm"
+                  onClick={() => {
+                    setPasswordModalAction('unlock');
+                    setShowPasswordModal(true);
+                  }}
+                  className="flex-1 px-6 py-3.5 sm:py-3 bg-green-500 text-white font-black rounded-xl shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
                 >
-                  Cancelar
+                  <CheckCircle2 size={16} />
+                  Aprovar
                 </button>
+              )}
+
+              {andaime?.status === 'aprovado' && !isUnlocked && (
                 <button 
-                  type="submit"
-                  disabled={isSubmitting || !isUnlocked}
-                  className="flex-[2] bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-sm"
+                  type="button"
+                  onClick={() => {
+                    setPasswordModalAction('unlock');
+                    setShowPasswordModal(true);
+                  }}
+                  className="flex-1 px-6 py-3.5 sm:py-3 bg-orange-100 text-orange-600 font-black rounded-xl hover:bg-orange-200 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
                 >
-                  {isSubmitting ? 'Processando...' : (andaime ? 'Salvar Alterações' : 'Solicitar Agendamento')}
+                  <Lock size={16} />
+                  Desbloquear
                 </button>
-              </div>
-            </form>
+              )}
+
+              <button 
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-6 py-3.5 sm:py-3 bg-gray-200 text-gray-600 font-black rounded-xl hover:bg-gray-300 transition-all uppercase tracking-widest text-xs order-2 sm:order-1"
+              >
+                Cancelar
+              </button>
+              
+              <button 
+                form="andaime-form"
+                type="submit"
+                disabled={isSubmitting || !isUnlocked}
+                className="flex-[2] px-6 py-3.5 sm:py-3 bg-orange-500 text-white font-black rounded-xl shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs order-1 sm:order-2"
+              >
+                {isSubmitting ? 'Processando...' : (andaime ? 'Salvar Alterações' : 'Solicitar Agendamento')}
+              </button>
+            </div>
+          </div>
           </>
         )}
       </div>

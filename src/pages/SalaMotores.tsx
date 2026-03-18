@@ -465,36 +465,36 @@ export default function SalaMotores() {
       </DragDropContext>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
-            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="p-5 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div>
-                <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight text-orange-500">NOVA ATIVIDADE</h2>
-                <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Sala de Motores</p>
+                <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight text-orange-500 uppercase">NOVA ATIVIDADE</h2>
+                <p className="text-[8px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 sm:mt-1.5">Sala de Motores</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
-                <X size={20} className="text-gray-400 md:w-6 md:h-6" />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 sm:p-3 hover:bg-gray-200 rounded-xl sm:rounded-2xl transition-colors">
+                <X size={24} className="text-gray-400 sm:w-6 sm:h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-4 md:p-8 space-y-4 md:space-y-6 overflow-y-auto custom-scrollbar">
-                <div className="space-y-4">
+            <form id="nova-atividade-form" onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-5 sm:p-8 space-y-5 sm:space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="space-y-5 sm:space-y-6">
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Título da Atividade</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Título da Atividade</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.titulo}
                       onChange={e => setFormData({...formData, titulo: e.target.value})}
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Área</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                         value={formData.area}
                         onChange={e => setFormData({...formData, area: e.target.value})}
                       >
@@ -502,9 +502,9 @@ export default function SalaMotores() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Sub-Área</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sub-Área</label>
                       <select 
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                         value={formData.sub_area}
                         onChange={e => setFormData({...formData, sub_area: e.target.value})}
                       >
@@ -513,60 +513,60 @@ export default function SalaMotores() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">TAG do Motor</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TAG do Motor</label>
                     <input 
                       type="text"
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.tag_motor}
                       onChange={e => setFormData({...formData, tag_motor: e.target.value})}
                       placeholder="Ex: MTR-01"
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Responsável</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
                       <input 
                         type="text"
                         required
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                         value={formData.responsavel}
                         onChange={e => setFormData({...formData, responsavel: e.target.value})}
                       />
                     </div>
                     <div>
-                      <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Data</label>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
                       <input 
                         type="date"
                         required
-                        className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                         value={formData.data}
                         onChange={e => setFormData({...formData, data: e.target.value})}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Custo Evitado (R$)</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Custo Evitado (R$)</label>
                     <input 
                       type="number"
                       required
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                       value={formData.custo_evitado}
                       onChange={e => setFormData({...formData, custo_evitado: Number(e.target.value)})}
                     />
                   </div>
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Causa Raiz da Falha</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Causa Raiz da Falha</label>
                     <textarea 
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[80px]"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base min-h-[100px]"
                       value={formData.causa_raiz}
                       onChange={e => setFormData({...formData, causa_raiz: e.target.value})}
                       placeholder="Descreva a causa raiz..."
                     />
                   </div>
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 md:mb-2">Observações</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
                     <textarea 
-                      className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl p-3 md:p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[80px]"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base min-h-[100px]"
                       value={formData.observacoes}
                       onChange={e => setFormData({...formData, observacoes: e.target.value})}
                       placeholder="Observações adicionais..."
@@ -575,17 +575,18 @@ export default function SalaMotores() {
                 </div>
               </div>
 
-              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
+              <div className="p-5 sm:p-8 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
+                  className="w-full sm:flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm order-2 sm:order-1"
                 >
                   CANCELAR
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm"
+                  form="nova-atividade-form"
+                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2"
                 >
                   SALVAR
                 </button>
@@ -596,16 +597,16 @@ export default function SalaMotores() {
       )}
 
       {isDetailsModalOpen && selectedActivity && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-2 md:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] md:max-h-[90vh]">
-            <div className="p-4 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
-                  <Zap className="text-white" size={24} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+            <div className="p-5 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
+                  <Zap className="text-white sm:w-6 sm:h-6" size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA ATIVIDADE</h2>
-                  <p className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5 md:mt-1">Sala de Motores</p>
+                  <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight uppercase">DETALHES DA ATIVIDADE</h2>
+                  <p className="text-[8px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mt-1 sm:mt-1.5">Sala de Motores</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -614,35 +615,35 @@ export default function SalaMotores() {
                     setPasswordAction({ type: 'delete', id: selectedActivity.id });
                     setIsPasswordModalOpen(true);
                   }}
-                  className="p-2 md:p-3 hover:bg-red-50 text-red-500 rounded-xl md:rounded-2xl transition-colors"
+                  className="p-2 sm:p-3 hover:bg-red-50 text-red-500 rounded-xl sm:rounded-2xl transition-colors"
                   title="Excluir Atividade"
                 >
-                  <Trash2 size={20} className="md:w-6 md:h-6" />
+                  <Trash2 size={24} className="sm:w-6 sm:h-6" />
                 </button>
-                <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 md:p-3 hover:bg-gray-200 rounded-xl md:rounded-2xl transition-colors">
-                  <X size={20} className="text-gray-400 md:w-6 md:h-6" />
+                <button onClick={() => setIsDetailsModalOpen(false)} className="p-2 sm:p-3 hover:bg-gray-200 rounded-xl sm:rounded-2xl transition-colors">
+                  <X size={24} className="text-gray-400 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="flex-1 overflow-hidden flex flex-col">
-              <div className="p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Título da Atividade</label>
+            <form id="detalhes-atividade-form" onSubmit={handleEditSubmit} className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-5 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Título da Atividade</label>
                     <input 
                       type="text"
                       required
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base uppercase"
                       value={selectedActivity.titulo}
                       onChange={e => setSelectedActivity({...selectedActivity, titulo: e.target.value})}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Área</label>
                     <select 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                       value={selectedActivity.area || AREAS_MOTORES[0]}
                       onChange={e => setSelectedActivity({...selectedActivity, area: e.target.value})}
                     >
@@ -651,9 +652,9 @@ export default function SalaMotores() {
                   </div>
 
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sub-Área</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Sub-Área</label>
                     <select 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                       value={selectedActivity.sub_area || ''}
                       onChange={e => setSelectedActivity({...selectedActivity, sub_area: e.target.value})}
                     >
@@ -661,11 +662,11 @@ export default function SalaMotores() {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TAG do Motor</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TAG do Motor</label>
                     <input 
                       type="text"
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base uppercase"
                       value={selectedActivity.tag_motor || ''}
                       onChange={e => setSelectedActivity({...selectedActivity, tag_motor: e.target.value})}
                       placeholder="Ex: MTR-01"
@@ -673,13 +674,13 @@ export default function SalaMotores() {
                   </div>
                   
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="text"
                         required
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base uppercase"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base uppercase"
                         value={selectedActivity.responsavel}
                         onChange={e => setSelectedActivity({...selectedActivity, responsavel: e.target.value})}
                       />
@@ -687,13 +688,13 @@ export default function SalaMotores() {
                   </div>
 
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
                     <div className="relative">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input 
                         type="date"
                         required
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                         value={selectedActivity.data}
                         onChange={e => setSelectedActivity({...selectedActivity, data: e.target.value})}
                       />
@@ -701,13 +702,13 @@ export default function SalaMotores() {
                   </div>
 
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Custo Evitado (R$)</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Custo Evitado (R$)</label>
                     <div className="relative">
                       <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
                       <input 
                         type="number"
                         required
-                        className="w-full bg-gray-50 border-none rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base"
+                        className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 pl-12 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
                         value={selectedActivity.custo_evitado}
                         onChange={e => setSelectedActivity({...selectedActivity, custo_evitado: Number(e.target.value)})}
                       />
@@ -715,9 +716,9 @@ export default function SalaMotores() {
                   </div>
 
                   <div>
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
                     <select 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base appearance-none"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
                       value={selectedActivity.status}
                       onChange={e => setSelectedActivity({...selectedActivity, status: e.target.value})}
                     >
@@ -728,15 +729,15 @@ export default function SalaMotores() {
                     </select>
                   </div>
 
-                  <div className="md:col-span-2 space-y-4">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <div className="sm:col-span-2 space-y-4">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                       <History size={12} />
                       Histórico de Status
                     </label>
                     <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
                       {selectedActivity.historico_status && selectedActivity.historico_status.length > 0 ? (
                         selectedActivity.historico_status.map((h: any, i: number) => (
-                          <div key={i} className="flex items-center gap-3 text-[10px] md:text-xs font-bold text-gray-600">
+                          <div key={i} className="flex items-center gap-3 text-[10px] sm:text-xs font-bold text-gray-600">
                             <div className={cn(
                               "w-2 h-2 rounded-full shrink-0",
                               COLUMNS.find(c => c.id === h.status)?.color || 'bg-gray-300'
@@ -747,25 +748,25 @@ export default function SalaMotores() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase italic">Nenhum histórico registrado</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase italic">Nenhum histórico registrado</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Causa Raiz da Falha</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Causa Raiz da Falha</label>
                     <textarea 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[100px]"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base min-h-[100px]"
                       value={selectedActivity.causa_raiz || ''}
                       onChange={e => setSelectedActivity({...selectedActivity, causa_raiz: e.target.value})}
                       placeholder="Descreva a causa raiz..."
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Observações</label>
                     <textarea 
-                      className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm md:text-base min-h-[100px]"
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base min-h-[100px]"
                       value={selectedActivity.observacoes || ''}
                       onChange={e => setSelectedActivity({...selectedActivity, observacoes: e.target.value})}
                       placeholder="Observações adicionais..."
@@ -773,38 +774,39 @@ export default function SalaMotores() {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-blue-100 flex items-start gap-3 md:gap-4">
+                <div className="bg-blue-50 p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-blue-100 flex items-start gap-3 sm:gap-4">
                   <Info className="text-blue-500 shrink-0 mt-1" size={20} />
-                  <p className="text-[10px] md:text-xs font-bold text-blue-700 leading-relaxed uppercase">
+                  <p className="text-[10px] sm:text-xs font-bold text-blue-700 leading-relaxed uppercase">
                     A edição de informações requer autorização via senha mestre para garantir a integridade dos dados registrados.
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 md:p-8 border-t border-gray-100 flex gap-3 md:gap-4 bg-gray-50/50 shrink-0">
+              <div className="p-5 sm:p-8 border-t border-gray-100 flex flex-col sm:flex-row gap-3 sm:gap-4 bg-gray-50/50 shrink-0">
                 <button 
                   type="button"
                   onClick={() => {
                     setPasswordAction({ type: 'delete', id: selectedActivity.id });
                     setIsPasswordModalOpen(true);
                   }}
-                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm flex items-center justify-center gap-2 border border-red-100"
+                  className="w-full sm:flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-4 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 border border-red-100 order-3 sm:order-1"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                   EXCLUIR
                 </button>
                 <button 
                   type="button"
                   onClick={() => setIsDetailsModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-3 md:py-4 rounded-xl md:rounded-2xl transition-all text-xs md:text-sm"
+                  className="w-full sm:flex-1 bg-gray-100 hover:bg-gray-200 text-gray-500 font-black py-4 rounded-xl sm:rounded-2xl transition-all text-xs sm:text-sm order-2 sm:order-2"
                 >
                   FECHAR
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 md:py-4 rounded-xl md:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs md:text-sm flex items-center justify-center gap-2"
+                  form="detalhes-atividade-form"
+                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm flex items-center justify-center gap-2 order-1 sm:order-3"
                 >
-                  <Edit3 size={16} />
+                  <Edit3 size={18} />
                   SALVAR ALTERAÇÕES
                 </button>
               </div>
