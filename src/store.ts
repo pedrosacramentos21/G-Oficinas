@@ -79,6 +79,11 @@ interface ArmstrongBacklog {
   data_prevista: string;
   status: string;
   observacoes?: string;
+  descricao?: string;
+  equipamento?: string;
+  responsavel?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
 }
 
 interface StoreState {

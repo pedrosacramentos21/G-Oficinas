@@ -682,11 +682,25 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/armstrong/backlog', async (req, res) => {
-    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes } = req.body;
+    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('armstrong_backlog')
-        .insert([{ area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada', observacoes }])
+        .insert([{ 
+          area, 
+          sub_area, 
+          titulo, 
+          impacto_energetico, 
+          investimento_estimado, 
+          data_prevista, 
+          status: status || 'Não planejada', 
+          observacoes, 
+          descricao,
+          equipamento,
+          responsavel,
+          hora_inicio,
+          hora_fim
+        }])
         .select();
       
       if (error) throw error;
@@ -901,11 +915,25 @@ app.get('/api/health', async (req, res) => {
   });
 
   app.post('/api/refrigeracao/backlog', async (req, res) => {
-    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes } = req.body;
+    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('refrigeracao_backlog')
-        .insert([{ area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status: status || 'Não planejada', observacoes }])
+        .insert([{ 
+          area, 
+          sub_area, 
+          titulo, 
+          impacto_energetico, 
+          investimento_estimado, 
+          data_prevista, 
+          status: status || 'Não planejada', 
+          observacoes, 
+          descricao,
+          equipamento,
+          responsavel,
+          hora_inicio,
+          hora_fim
+        }])
         .select();
       
       if (error) throw error;

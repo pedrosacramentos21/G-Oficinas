@@ -125,6 +125,14 @@ export default function Armstrong() {
     }
   };
 
+  const handleToday = () => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.today();
+      setCurrentDate(calendarApi.getDate());
+    }
+  };
+
   const openNewModal = () => {
     setSelectedItem(null);
     setModalType('manutencao');
@@ -182,7 +190,13 @@ export default function Armstrong() {
           impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           data_prevista: formData.data,
-          status: formData.status
+          status: formData.status,
+          observacoes: formData.observacoes,
+          descricao: formData.descricao,
+          equipamento: formData.equipamento,
+          responsavel: formData.responsavel,
+          hora_inicio: formData.hora_inicio,
+          hora_fim: formData.hora_fim
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
         // This was a backlog item being scheduled
@@ -194,7 +208,12 @@ export default function Armstrong() {
           investimento_estimado: formData.investimento_estimado,
           status: formData.status, 
           data_prevista: formData.data,
-          observacoes: formData.observacoes
+          observacoes: formData.observacoes,
+          descricao: formData.descricao,
+          equipamento: formData.equipamento,
+          responsavel: formData.responsavel,
+          hora_inicio: formData.hora_inicio,
+          hora_fim: formData.hora_fim
         }, 'Itf2026');
       } else if (existingBacklog) {
         // Update existing backlog item status and date
@@ -206,7 +225,12 @@ export default function Armstrong() {
           investimento_estimado: formData.investimento_estimado,
           status: formData.status, 
           data_prevista: formData.data,
-          observacoes: formData.observacoes
+          observacoes: formData.observacoes,
+          descricao: formData.descricao,
+          equipamento: formData.equipamento,
+          responsavel: formData.responsavel,
+          hora_inicio: formData.hora_inicio,
+          hora_fim: formData.hora_fim
         }, 'Itf2026');
       }
 
@@ -220,10 +244,42 @@ export default function Armstrong() {
 
   const handlePasswordConfirm = async (password: string) => {
     try {
-      const { id: _, created_at: __, ...updates } = formData;
+      const { id: _, created_at: __, ...allUpdates } = formData;
+      
+      const manutencaoUpdates = {
+        titulo: allUpdates.titulo,
+        area: allUpdates.area,
+        sub_area: allUpdates.sub_area,
+        equipamento: allUpdates.equipamento,
+        responsavel: allUpdates.responsavel,
+        data: formData.data,
+        hora_inicio: allUpdates.hora_inicio,
+        hora_fim: allUpdates.hora_fim,
+        descricao: allUpdates.descricao,
+        observacoes: allUpdates.observacoes,
+        impacto_energetico: allUpdates.impacto_energetico,
+        investimento_estimado: allUpdates.investimento_estimado,
+        status: allUpdates.status
+      };
+
+      const backlogUpdates = {
+        titulo: allUpdates.titulo,
+        area: allUpdates.area,
+        sub_area: allUpdates.sub_area,
+        impacto_energetico: allUpdates.impacto_energetico,
+        investimento_estimado: allUpdates.investimento_estimado,
+        data_prevista: formData.data,
+        status: allUpdates.status,
+        observacoes: allUpdates.observacoes,
+        descricao: allUpdates.descricao,
+        equipamento: allUpdates.equipamento,
+        responsavel: allUpdates.responsavel,
+        hora_inicio: allUpdates.hora_inicio,
+        hora_fim: allUpdates.hora_fim
+      };
       
       if (passwordModal.action === 'edit') {
-        await updateArmstrongManutencao(passwordModal.id!, updates, password);
+        await updateArmstrongManutencao(passwordModal.id!, manutencaoUpdates, password);
         // Sync with backlog
         const currentItem = armstrongManutencoes.find(m => m.id === passwordModal.id);
         const existingBacklog = armstrongBacklog.find(b => 
@@ -231,27 +287,11 @@ export default function Armstrong() {
           (b.titulo === formData.titulo && b.area === formData.area)
         );
         if (existingBacklog) {
-          await updateArmstrongBacklog(existingBacklog.id, { 
-            titulo: formData.titulo,
-            area: formData.area,
-            sub_area: formData.sub_area,
-            impacto_energetico: formData.impacto_energetico,
-            investimento_estimado: formData.investimento_estimado,
-            status: formData.status, 
-            data_prevista: formData.data,
-            observacoes: formData.observacoes
-          }, password);
+          await updateArmstrongBacklog(existingBacklog.id, backlogUpdates, password);
         } else {
           // Create backlog item if it doesn't exist
           await addArmstrongBacklog({
-            area: formData.area,
-            sub_area: formData.sub_area,
-            titulo: formData.titulo,
-            impacto_energetico: formData.impacto_energetico,
-            investimento_estimado: formData.investimento_estimado,
-            data_prevista: formData.data,
-            status: formData.status,
-            observacoes: formData.observacoes
+            ...backlogUpdates
           });
         }
       } else if (passwordModal.action === 'delete') {
@@ -263,16 +303,6 @@ export default function Armstrong() {
           await deleteArmstrongBacklog(existingBacklog.id, password);
         }
       } else if (passwordModal.action === 'backlog-edit') {
-        const backlogUpdates = {
-          titulo: formData.titulo,
-          area: formData.area,
-          sub_area: formData.sub_area,
-          impacto_energetico: formData.impacto_energetico,
-          investimento_estimado: formData.investimento_estimado,
-          data_prevista: formData.data,
-          status: formData.status,
-          observacoes: formData.observacoes
-        };
         await updateArmstrongBacklog(passwordModal.id!, backlogUpdates, password);
         // Sync with calendar
         const currentBacklog = armstrongBacklog.find(b => b.id === passwordModal.id);
@@ -281,16 +311,10 @@ export default function Armstrong() {
           (m.titulo === formData.titulo && m.area === formData.area)
         );
         if (existingManutencao) {
-          await updateArmstrongManutencao(existingManutencao.id, { 
-            ...updates,
-            data: formData.data 
-          }, password);
+          await updateArmstrongManutencao(existingManutencao.id, manutencaoUpdates, password);
         } else if (formData.status === 'Planejada') {
           // Create calendar item if it doesn't exist and status is Planejada
-          await addArmstrongManutencao({
-            ...updates,
-            data: formData.data
-          });
+          await addArmstrongManutencao(manutencaoUpdates);
         }
       } else if (passwordModal.action === 'backlog-delete') {
         const currentBacklog = armstrongBacklog.find(b => b.id === passwordModal.id);
@@ -357,6 +381,23 @@ export default function Armstrong() {
       const existingManutencao = armstrongManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
       if (existingManutencao) {
         await updateArmstrongManutencao(existingManutencao.id, { status: newStatus }, 'Itf2026');
+      } else if (newStatus === 'Planejada') {
+        // Create calendar item if it doesn't exist and status is Planejada
+        await addArmstrongManutencao({
+          titulo: item.titulo,
+          area: item.area,
+          sub_area: item.sub_area || '',
+          equipamento: item.equipamento || '',
+          responsavel: item.responsavel || '',
+          data: item.data_prevista || new Date().toISOString().split('T')[0],
+          hora_inicio: item.hora_inicio || '07:00',
+          hora_fim: item.hora_fim || '08:00',
+          descricao: item.descricao || '',
+          observacoes: item.observacoes || '',
+          impacto_energetico: item.impacto_energetico || '',
+          investimento_estimado: item.investimento_estimado || '',
+          status: newStatus
+        });
       }
       
       fetchArmstrong();
@@ -508,6 +549,12 @@ export default function Armstrong() {
               Nova Manutenção
             </button>
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+              <button 
+                onClick={handleToday}
+                className="px-3 py-1.5 hover:bg-slate-50 rounded-lg text-slate-600 font-black text-[10px] uppercase tracking-widest transition-all border-r border-slate-100"
+              >
+                Hoje
+              </button>
               <button onClick={handlePrev} className="p-1.5 md:p-2 hover:bg-slate-50 rounded-lg text-slate-600 transition-all">
                 <ChevronLeft size={18} />
               </button>
