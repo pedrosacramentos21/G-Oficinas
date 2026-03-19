@@ -154,8 +154,8 @@ export default function Refrigeracao() {
     setIsModalOpen(true);
   };
 
-  const openDetailsModal = (item: any) => {
-    setSelectedItem(item);
+  const openDetailsModal = (item: any, source: 'calendar' | 'backlog') => {
+    setSelectedItem({ ...item, _source: source });
     setModalType('details');
     setFormData({
       ...item,
@@ -171,7 +171,7 @@ export default function Refrigeracao() {
         setPasswordModal({ 
           isOpen: true, 
           id: selectedItem.id, 
-          action: selectedItem.hora_inicio ? 'edit' : 'backlog-edit' 
+          action: selectedItem._source === 'calendar' ? 'edit' : 'backlog-edit' 
         });
         return;
       }
@@ -638,7 +638,7 @@ export default function Refrigeracao() {
               expandRows={true}
               stickyHeaderDates={true}
               slotDuration="01:00:00"
-              eventClick={(info) => openDetailsModal(info.event.extendedProps)}
+              eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
               eventContent={(eventInfo) => {
                 const data = eventInfo.event.extendedProps;
                 const isSelected = selectedIds.includes(data.id);
@@ -811,7 +811,7 @@ export default function Refrigeracao() {
                                     if (selectionMode) {
                                       toggleSelection(item.id);
                                     } else {
-                                      openDetailsModal(item);
+                                      openDetailsModal(item, 'backlog');
                                     }
                                   }}
                                   className={cn(
@@ -870,7 +870,7 @@ export default function Refrigeracao() {
                                           <button 
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              openDetailsModal(item);
+                                              openDetailsModal(item, 'backlog');
                                             }}
                                             className="p-1.5 md:p-2 bg-white rounded-lg md:rounded-xl text-slate-400 hover:bg-slate-100 transition-all shadow-sm"
                                           >
@@ -1110,7 +1110,7 @@ export default function Refrigeracao() {
                     onClick={() => setPasswordModal({ 
                       isOpen: true, 
                       id: selectedItem.id, 
-                      action: selectedItem.equipamento ? 'delete' : 'backlog-delete' 
+                      action: selectedItem._source === 'calendar' ? 'delete' : 'backlog-delete' 
                     })}
                     className="w-full sm:flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100 text-[10px] sm:text-xs uppercase tracking-widest order-2 sm:order-1"
                   >
