@@ -11,24 +11,24 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const MASTER_PASSWORD = 'Itf2026';
-;
 
-const app = express();
-const PORT = 3000;
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
 
-app.use(express.json());
-app.use(cors());
+  app.use(express.json());
+  app.use(cors());
 
-// API health check
-app.get('/api/health', async (req, res) => {
-  try {
-    const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
-    if (error) throw error;
-    res.json({ status: 'ok' });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Database connection failed' });
-  }
-});
+  // API health check
+  app.get('/api/health', async (req, res) => {
+    try {
+      const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
+      if (error) throw error;
+      res.json({ status: 'ok' });
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Database connection failed' });
+    }
+  });
 
   // API Routes for Andaimes
   app.get('/api/andaimes', async (req, res) => {
@@ -1009,10 +1009,9 @@ app.get('/api/health', async (req, res) => {
     });
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  }
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
-export default app;
+startServer();

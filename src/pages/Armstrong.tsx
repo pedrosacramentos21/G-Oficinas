@@ -461,9 +461,9 @@ export default function Armstrong() {
   const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 p-4 md:p-6 overflow-hidden">
+    <div className="h-screen flex flex-col gap-3 md:gap-4 p-2 md:p-6 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 shrink-0">
         <div className="flex items-center gap-3 md:gap-4">
           <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
             <Flame className="text-white w-5 h-5 md:w-6 md:h-6" />
@@ -569,56 +569,77 @@ export default function Armstrong() {
       {activeTab === 'calendario' ? (
         <div className="flex-1 flex flex-col gap-6 overflow-hidden">
           {/* PCM Areas Panel */}
-          <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-3 md:p-4 shrink-0">
-            <h2 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 md:mb-3 flex items-center gap-2">
-              <AlertCircle size={12} className="text-orange-500" />
+          <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-3 shrink-0 overflow-y-auto overflow-x-hidden max-h-[160px] custom-scrollbar relative scroll-pt-[32px]">
+            <h2 className="text-[10px] md:text-[12px] font-bold text-slate-700 uppercase tracking-tight mb-2 flex items-center gap-2 bg-white pb-1">
+              <Clock size={14} className="text-red-500" />
               Áreas em PCM (Parada de Manutenção)
             </h2>
-            <div className="flex overflow-x-auto pb-2 -mx-4 px-4 sm:grid sm:grid-cols-7 sm:mx-0 sm:px-0 gap-2 md:gap-3 custom-scrollbar">
+            <div className="grid grid-cols-7 gap-1 md:gap-3 min-w-[600px] lg:min-w-0">
+              {/* Day Headers - Sticky */}
+              {weekDays.map((day, idx) => {
+                const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
+                const dayOfMonth = day.getDate();
+                return (
+                  <div key={`header-${idx}`} className="sticky top-0 z-20 bg-white pb-1 border-b border-slate-100">
+                    <div className="text-center py-0.5">
+                      <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">{dayName}., {dayOfMonth}</span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Day Content */}
               {weekDays.map((day, idx) => {
                 const dateStr = day.toISOString().split('T')[0];
-                const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
                 const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
                 
                 return (
-                  <div key={idx} className="flex flex-col gap-1 md:gap-1.5 min-w-[100px] sm:min-w-0">
-                    <div className="text-center py-0.5 md:py-1 bg-slate-50 rounded-lg">
-                      <span className="text-[8px] md:text-[9px] font-black text-slate-500">{dayName}</span>
-                    </div>
-                    <div className="min-h-[50px] md:min-h-[60px] bg-slate-50/50 rounded-xl p-1 md:p-1.5 border border-dashed border-slate-200 flex flex-wrap gap-1 content-start relative group">
-                      {areas.map(a => (
-                        <div key={a.id} className="relative z-10 bg-white border border-slate-200 px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                          <span className="text-[8px] md:text-[9px] font-bold text-slate-700 uppercase">{a.area}</span>
-                          <button onClick={() => deleteArmstrongPCMArea(a.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                            <X size={10} />
-                          </button>
-                        </div>
-                      ))}
+                  <div key={`content-${idx}`} className="flex flex-col min-w-[100px] sm:min-w-0 h-full relative z-1">
+                    <div className="flex-1 bg-slate-50/50 rounded-lg p-2 border border-slate-100 flex flex-col gap-1 relative group min-h-[80px] pb-[40px]">
+                      <div className="flex-1 flex flex-col gap-1">
+                        {areas.length > 0 ? (
+                          areas.map(a => (
+                            <div key={a.id} className="relative z-1 bg-red-50 border border-red-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden">
+                              <span className="text-[8px] md:text-[10px] font-black text-red-600 uppercase truncate flex-1">{a.area}</span>
+                              <button onClick={() => deleteArmstrongPCMArea(a.id)} className="text-red-400 hover:text-red-600 transition-colors shrink-0">
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center py-2">
+                            <span className="text-[8px] md:text-[9px] text-slate-300 italic font-medium">Nenhuma parada</span>
+                          </div>
+                        )}
+                      </div>
                       
-                      {addingPCMArea?.date === dateStr ? (
-                        <div className="w-full">
-                          <input
-                            ref={pcmInputRef}
-                            type="text"
-                            className="w-full bg-white border border-orange-500 rounded-lg px-1.5 md:px-2 py-0.5 md:py-1 text-[8px] md:text-[9px] font-bold uppercase focus:outline-none"
-                            value={addingPCMArea.value}
-                            onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
-                            onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
-                            onBlur={() => {
-                              if (!addingPCMArea.value.trim()) setAddingPCMArea(null);
-                            }}
-                            placeholder="ÁREA..."
-                          />
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => handleAddPCMAreaTag(dateStr)}
-                          className="px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-orange-500 hover:text-orange-500 transition-all flex items-center justify-center"
-                          title="Adicionar Área"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      )}
+                      <div className="absolute bottom-2 right-2 z-10">
+                        {addingPCMArea?.date === dateStr ? (
+                          <div className="absolute bottom-0 right-0 w-[120px] bg-white shadow-xl rounded-lg p-1 border border-red-200 z-20">
+                            <input
+                              ref={pcmInputRef}
+                              type="text"
+                              className="w-full bg-white border border-red-500 rounded px-1.5 md:px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
+                              value={addingPCMArea.value}
+                              onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
+                              onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
+                              onBlur={() => {
+                                if (!addingPCMArea.value.trim()) setAddingPCMArea(null);
+                              }}
+                              autoFocus
+                              placeholder="..."
+                            />
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => handleAddPCMAreaTag(dateStr)}
+                            className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center group-hover:scale-110"
+                            title="Adicionar Área"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -627,85 +648,99 @@ export default function Armstrong() {
           </div>
 
           {/* Calendar */}
-          <div className="flex-1 bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-[400px]">
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
-              locale={ptBrLocale}
-              headerToolbar={false}
-              events={events}
-              slotMinTime="07:00:00"
-              slotMaxTime="18:00:00"
-              allDaySlot={false}
-              height="100%"
-              expandRows={true}
-              stickyHeaderDates={true}
-              slotDuration="01:00:00"
-              eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
-              eventContent={(eventInfo) => {
-                const data = eventInfo.event.extendedProps;
-                const isSelected = selectedIds.includes(data.id);
-                return (
-                  <div 
-                    onClick={(e) => {
-                      if (selectionMode) {
-                        e.stopPropagation();
-                        toggleSelection(data.id);
-                      }
-                    }}
-                    className={cn(
-                      "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
-                      data.status === 'Concluída' ? "border-green-500 bg-green-50/50" : 
-                      data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/50" : 
-                      "border-red-500 bg-red-50/50",
-                      isSelected && "ring-2 ring-orange-500 ring-offset-1"
-                    )}
-                  >
-                    {selectionMode && (
-                      <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
-                        {isSelected ? (
-                          <CheckSquare size={10} className="text-orange-500 md:w-3 md:h-3" />
-                        ) : (
-                          <Square size={10} className="text-slate-300 md:w-3 md:h-3" />
+          <div className="flex-1 bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-0">
+            <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
+              <div className="min-w-[1200px] w-max h-full">
+                <FullCalendar
+                  ref={calendarRef}
+                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
+                  locale={ptBrLocale}
+                  headerToolbar={false}
+                  events={events}
+                  slotMinTime="07:00:00"
+                  slotMaxTime="18:00:00"
+                  allDaySlot={false}
+                  height="100%"
+                  expandRows={true}
+                  stickyHeaderDates={true}
+                  slotDuration="01:00:00"
+                  eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
+                  eventContent={(eventInfo) => {
+                    const data = eventInfo.event.extendedProps;
+                    const isSelected = selectedIds.includes(data.id);
+                    
+                    const areaColorMap: Record<string, string> = {
+                      'Packaging': 'text-blue-600 bg-blue-50 px-1 rounded',
+                      'Processo Refri': 'text-purple-600 bg-purple-50 px-1 rounded',
+                      'Processo Cerveja': 'text-amber-600 bg-amber-50 px-1 rounded',
+                      'Meio ambiente': 'text-emerald-600 bg-emerald-50 px-1 rounded',
+                      'Utilidades': 'text-cyan-600 bg-cyan-50 px-1 rounded',
+                      'Subprodutos': 'text-indigo-600 bg-indigo-50 px-1 rounded',
+                      'ADM': 'text-slate-600 bg-slate-50 px-1 rounded',
+                      'Outras áreas': 'text-rose-600 bg-rose-50 px-1 rounded'
+                    };
+
+                    return (
+                      <div 
+                        onClick={(e) => {
+                          if (selectionMode) {
+                            e.stopPropagation();
+                            toggleSelection(data.id);
+                          }
+                        }}
+                        className={cn(
+                          "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
+                          data.status === 'Concluída' ? "border-green-500 bg-green-50/50" : 
+                          data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/50" : 
+                          "border-red-500 bg-red-50/50",
+                          isSelected && "ring-2 ring-orange-500 ring-offset-1"
                         )}
+                      >
+                        {selectionMode && (
+                          <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
+                            {isSelected ? (
+                              <CheckSquare size={10} className="text-orange-500 md:w-3 md:h-3" />
+                            ) : (
+                              <Square size={10} className="text-slate-300 md:w-3 md:h-3" />
+                            )}
+                          </div>
+                        )}
+                        <div className="space-y-0.5 md:space-y-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className={cn(
+                              "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate",
+                              areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
+                            )}>
+                              {data.area}
+                            </span>
+                            <span className={cn(
+                              "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
+                              data.status === 'Concluída' ? "bg-green-500" : 
+                              data.status === 'Planejada' ? "bg-yellow-500" : 
+                              "bg-red-500"
+                            )}>
+                              {data.status}
+                            </span>
+                          </div>
+                          <div className="font-black text-[8px] md:text-[10px] text-slate-900 uppercase leading-tight line-clamp-2">
+                            {data.equipamento}
+                          </div>
+                          <div className="text-[7px] md:text-[9px] text-slate-500 font-medium line-clamp-1">
+                            {data.responsavel}
+                          </div>
+                        </div>
+                        <div className="mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-orange-100 hidden md:block">
+                          <p className="text-[8px] text-slate-600 font-bold uppercase truncate italic">
+                            {data.descricao}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    <div className="space-y-0.5 md:space-y-1">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={cn(
-                          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate",
-                          data.status === 'Concluída' ? "text-green-600" : 
-                          data.status === 'Planejada' ? "text-yellow-600" : 
-                          "text-red-600"
-                        )}>
-                          {data.area}
-                        </span>
-                        <span className={cn(
-                          "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
-                          data.status === 'Concluída' ? "bg-green-500" : 
-                          data.status === 'Planejada' ? "bg-yellow-500" : 
-                          "bg-red-500"
-                        )}>
-                          {data.status}
-                        </span>
-                      </div>
-                      <div className="font-black text-[8px] md:text-[10px] text-slate-900 uppercase leading-tight line-clamp-2">
-                        {data.equipamento}
-                      </div>
-                      <div className="text-[7px] md:text-[9px] text-slate-500 font-medium line-clamp-1">
-                        {data.responsavel}
-                      </div>
-                    </div>
-                    <div className="mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-orange-100 hidden md:block">
-                      <p className="text-[8px] text-slate-600 font-bold uppercase truncate italic">
-                        {data.descricao}
-                      </p>
-                    </div>
-                  </div>
-                );
-              }}
-            />
+                    );
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -925,9 +960,9 @@ export default function Armstrong() {
 
       {/* Main Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[150] p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[90vh]">
-            <div className="p-4 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[150] p-2 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
                   {modalType === 'manutencao' ? <Plus className="text-white w-5 h-5 sm:w-6 sm:h-6" /> : <Info className="text-white w-5 h-5 sm:w-6 sm:h-6" />}
@@ -952,7 +987,7 @@ export default function Armstrong() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
               <form id="armstrong-form" onSubmit={handleSave} className="space-y-4 sm:space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div className="sm:col-span-2 space-y-1.5 sm:space-y-2">
@@ -1123,7 +1158,7 @@ export default function Armstrong() {
               </form>
             </div>
 
-            <div className="p-4 sm:p-8 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
+            <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
               {modalType === 'details' ? (
                 <>
                   <button 
@@ -1161,7 +1196,6 @@ export default function Armstrong() {
           </div>
         </div>
       )}
-
       <PasswordModal 
         isOpen={passwordModal.isOpen}
         onClose={() => setPasswordModal({ ...passwordModal, isOpen: false })}
@@ -1207,6 +1241,57 @@ export default function Armstrong() {
           transform: translateY(-2px);
           box-shadow: 0 8px 16px rgba(242, 92, 5, 0.12);
           z-index: 50;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+          display: block !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+          border: 1px solid #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        
+        /* FullCalendar Scrollbar Styling */
+        .fc-scroller::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+          display: block !important;
+        }
+        .fc-scroller::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        .fc-scroller::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+          .fc-header-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+          }
+          .fc-view-h-scroll {
+            overflow-x: auto !important;
+          }
+          .fc-timegrid-slot {
+            height: 50px !important;
+          }
         }
       `}} />
     </div>

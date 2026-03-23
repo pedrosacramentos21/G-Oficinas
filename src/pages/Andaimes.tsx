@@ -119,7 +119,7 @@ export default function Andaimes() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 p-2 md:p-4 lg:p-6 overflow-hidden">
+    <div className="flex flex-col gap-4 md:gap-6 p-2 md:p-4 lg:p-6">
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div className="flex items-center gap-3 md:gap-4">
           <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20 shrink-0">
@@ -188,7 +188,7 @@ export default function Andaimes() {
       </div>
 
       {activeTab === 'calendario' ? (
-        <div className="flex-1 bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-[850px]">
           <FullCalendar
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
             plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}

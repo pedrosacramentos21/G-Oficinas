@@ -197,7 +197,7 @@ export default function PTAs() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 p-3 md:p-6 overflow-hidden relative">
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6 relative">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-center gap-3 md:gap-4">
           <div className="bg-blue-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-blue-500/20">
@@ -246,7 +246,7 @@ export default function PTAs() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar">
+      <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-[850px]">
         <FullCalendar
           ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
           plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
