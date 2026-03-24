@@ -85,9 +85,12 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
   return (
     <div className={cn(
       "h-screen bg-[#1e293b] text-white flex flex-col shadow-2xl transition-all duration-300 relative",
-      collapsed ? "w-20" : "w-64"
+      collapsed ? "w-20" : "w-72"
     )}>
-      <div className="p-6 border-b border-white/5 flex items-center justify-between overflow-hidden relative">
+      <div className={cn(
+        "p-6 border-b border-white/5 flex items-center justify-between overflow-hidden relative",
+        collapsed && "px-0 justify-center"
+      )}>
         <h1 className={cn(
           "text-xl font-bold text-white flex items-center gap-2 transition-all duration-300",
           collapsed ? "opacity-0 w-0" : "opacity-100"
@@ -118,7 +121,7 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
 
       <div className="flex-1 overflow-y-auto py-6 custom-scrollbar">
         {menuItems.map((group) => (
-          <div key={group.group} className="mb-8 px-4">
+          <div key={group.group} className={cn("mb-8 px-4", collapsed && "px-0")}>
             <h2 className={cn(
               "text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2 transition-all duration-300",
               collapsed ? "opacity-0 h-0 mb-0 overflow-hidden" : "opacity-100"
@@ -136,7 +139,7 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
                     isActive 
                       ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 translate-x-1" 
                       : "text-gray-400 hover:bg-white/5 hover:text-white",
-                    collapsed && "justify-center px-0"
+                    collapsed && "justify-center px-0 rounded-none translate-x-0"
                   )}
                   title={collapsed ? item.name : undefined}
                 >

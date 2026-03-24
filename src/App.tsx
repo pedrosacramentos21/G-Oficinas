@@ -51,7 +51,7 @@ export default function App() {
         <div className={cn(
           "fixed inset-y-0 left-0 z-[70] lg:relative lg:z-50 transition-all duration-300 transform",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          isSidebarCollapsed ? "lg:w-20" : "lg:w-64"
+          isSidebarCollapsed ? "lg:w-20" : "lg:w-72"
         )}>
           <Sidebar 
             collapsed={isSidebarCollapsed} 

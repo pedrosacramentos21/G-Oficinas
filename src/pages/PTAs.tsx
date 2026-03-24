@@ -87,6 +87,10 @@ export default function PTAs() {
     const equip = EQUIPAMENTOS.find(e => e.name === p.equipamento);
     const isSelected = selectedIds.includes(p.id);
     
+    // Defensive check for date
+    const date = p.data || new Date().toISOString().split('T')[0];
+    const datePart = date.split('T')[0];
+    
     // Fallback for missing time fields
     const horaInicio = p.hora_inicio || '08:00';
     const horaFim = p.hora_fim || '17:00';
@@ -94,11 +98,11 @@ export default function PTAs() {
     return {
       id: p.id.toString(),
       title: p.responsavel,
-      start: `${p.data}T${horaInicio}`,
-      end: `${p.data}T${horaFim}`,
-      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.id === 'articulada' ? '#eff6ff' : '#f5f3ff') : '#fef9c3'),
-      borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#eab308'),
-      textColor: isSelected ? '#ffffff' : '#1e293b',
+      start: `${datePart}T${horaInicio}`,
+      end: `${datePart}T${horaFim}`,
+      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#f59e0b'),
+      borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#d97706'),
+      textColor: '#ffffff',
       className: `event-status-${p.status}`,
       extendedProps: { ...p }
     };
@@ -246,8 +250,9 @@ export default function PTAs() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-[850px]">
+      <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar h-[850px]">
         <FullCalendar
+          key={`calendar-${events.length}-${calendarView}`}
           ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
           plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
           initialView={calendarView}
@@ -278,46 +283,75 @@ export default function PTAs() {
             const isSelected = selectedIds.includes(data.id);
             
             return (
-              <div className="p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden relative">
+              <div 
+                onClick={(e) => {
+                  if (isSelectionMode) {
+                    e.stopPropagation();
+                    toggleSelection(data.id);
+                  }
+                }}
+                className={cn(
+                  "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
+                  data.status === 'aprovado' 
+                    ? (equip?.id === 'articulada' ? "border-blue-500 bg-blue-50/50" : "border-purple-500 bg-purple-50/50")
+                    : "border-yellow-500 bg-yellow-50/50",
+                  isSelected && "ring-2 ring-blue-500 ring-offset-1 bg-blue-500"
+                )}
+              >
                 {isSelectionMode && (
-                  <div className="absolute top-0.5 right-0.5 z-10">
-                    <div className={cn(
-                      "w-3 h-3 md:w-4 md:h-4 rounded border flex items-center justify-center transition-all",
-                      isSelected ? "bg-white border-white" : "bg-white/50 border-slate-300"
-                    )}>
-                      {isSelected && <CheckCircle2 size={10} className="text-blue-600 md:w-3 md:h-3" />}
-                    </div>
+                  <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
+                    {isSelected ? (
+                      <CheckCircle2 size={10} className="text-white md:w-3 md:h-3" />
+                    ) : (
+                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 border border-slate-300 rounded-sm" />
+                    )}
                   </div>
                 )}
                 <div className="space-y-0.5 md:space-y-1">
                   <div className="flex items-center justify-between gap-1">
                     <span className={cn(
-                      "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
-                      data.status === 'aprovado' ? (isSelected ? "bg-white/20 text-white" : "bg-green-500 text-white") : (isSelected ? "bg-white/20 text-white" : "bg-yellow-500 text-white")
+                      "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
+                      isSelected ? "text-white bg-white/20" : "text-blue-600 bg-blue-50"
+                    )}>
+                      {data.area}
+                    </span>
+                    <span className={cn(
+                      "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
+                      data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
                     )}>
                       {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className={cn(
-                      "text-[6px] md:text-[8px] font-black px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
-                      isSelected ? "bg-white/20 text-white" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
-                    )}>
-                      {data.equipamento ? data.equipamento.split(' ')[1] : 'PTA'}
-                    </span>
-                    <span className={cn("text-[6px] md:text-[8px] font-black uppercase", isSelected ? "text-white/80" : "text-slate-600")}>
-                      {data.prioridade}
-                    </span>
-                  </div>
-                  <div className={cn("font-black text-[9px] md:text-[11px] uppercase leading-tight line-clamp-2 drop-shadow-sm", isSelected ? "text-white" : "text-slate-900")}>
+                  <div className={cn(
+                    "font-black text-[8px] md:text-[10px] uppercase leading-tight line-clamp-2",
+                    isSelected ? "text-white" : "text-slate-900"
+                  )}>
                     {data.responsavel}
+                  </div>
+                  <div className={cn(
+                    "text-[7px] md:text-[9px] font-medium line-clamp-1",
+                    isSelected ? "text-white/80" : "text-slate-500"
+                  )}>
+                    {data.equipamento}
                   </div>
                 </div>
                 
-                <div className={cn("mt-auto pt-0.5 md:pt-1 border-t", isSelected ? "border-white/20" : "border-slate-200")}>
-                  <div className={cn("text-[7px] md:text-[9px] font-black uppercase truncate", isSelected ? "text-white/80" : "text-blue-600")}>
-                    {data.area}
-                  </div>
+                <div className={cn(
+                  "mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t hidden md:flex items-center justify-between gap-1",
+                  isSelected ? "border-white/20" : "border-blue-100"
+                )}>
+                  <span className={cn(
+                    "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
+                    isSelected ? "text-white bg-white/10" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
+                  )}>
+                    {data.equipamento ? data.equipamento.split(' ')[1] : 'PTA'}
+                  </span>
+                  <span className={cn(
+                    "text-[7px] md:text-[8px] font-black uppercase",
+                    isSelected ? "text-white/60" : "text-slate-600"
+                  )}>
+                    {data.prioridade}
+                  </span>
                 </div>
               </div>
             );
