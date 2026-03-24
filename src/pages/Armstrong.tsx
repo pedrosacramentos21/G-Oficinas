@@ -461,7 +461,10 @@ export default function Armstrong() {
   const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
-    <div className="h-screen flex flex-col gap-3 md:gap-4 p-2 md:p-6 overflow-hidden">
+    <div className={cn(
+      "flex flex-col gap-3 md:gap-4 p-2 md:p-6",
+      activeTab === 'calendario' ? "h-screen overflow-hidden" : "min-h-screen h-auto overflow-y-auto"
+    )}>
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 shrink-0">
         <div className="flex items-center gap-3 md:gap-4">
@@ -744,7 +747,7 @@ export default function Armstrong() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col gap-4 md:gap-8 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-4 md:gap-8">
           {/* Filters */}
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center">
             <div className="flex items-center gap-2">
@@ -819,14 +822,14 @@ export default function Armstrong() {
 
           {/* Backlog Columns */}
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 items-start">
               {STATUS_OPTIONS.map(status => (
                 <Droppable key={status} droppableId={status}>
                   {(provided) => (
                     <div 
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className="flex flex-col gap-3 md:gap-4 bg-slate-50 p-3 md:p-4 rounded-2xl md:rounded-[2.5rem] border border-slate-200/50 min-h-0"
+                      className="flex flex-col gap-3 md:gap-4 bg-slate-50 p-3 md:p-4 rounded-2xl md:rounded-[2.5rem] border border-slate-200/50 h-auto"
                     >
                       <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
                         <h2 className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{status}</h2>
@@ -835,7 +838,7 @@ export default function Armstrong() {
                         </span>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-3 md:space-y-4">
+                      <div className="max-h-[500px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-3 md:space-y-4">
                         {filteredBacklog
                           .filter(b => b.status === status)
                           .map((item, index) => (

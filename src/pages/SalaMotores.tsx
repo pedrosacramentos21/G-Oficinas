@@ -198,7 +198,7 @@ export default function SalaMotores() {
   };
 
   return (
-    <div className="h-full flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-hidden relative">
+    <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible relative">
       <div className="shrink-0 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3 md:gap-4">
           <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
@@ -288,7 +288,7 @@ export default function SalaMotores() {
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 overflow-y-auto lg:overflow-hidden p-1 custom-scrollbar">
+        <div className="h-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 overflow-y-auto lg:overflow-visible p-1 custom-scrollbar items-start">
           {COLUMNS.map(column => (
             <DroppableAny key={column.id} droppableId={column.id}>
               {(provided, snapshot) => (
@@ -296,7 +296,7 @@ export default function SalaMotores() {
                   {...provided.droppableProps}
                   ref={provided.innerRef}
                   className={cn(
-                    "flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-200/50 min-h-[300px] lg:min-h-0 transition-colors",
+                    "flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-2xl md:rounded-[2rem] border border-gray-200/50 min-h-[300px] lg:h-auto transition-colors",
                     snapshot.isDraggingOver && "bg-orange-50/50 border-orange-200"
                   )}
                 >
@@ -310,7 +310,7 @@ export default function SalaMotores() {
                     </span>
                   </div>
 
-                  <div className="flex-1 lg:overflow-y-auto space-y-3 md:space-y-4 pr-1 md:pr-2 custom-scrollbar">
+                  <div className="max-h-[500px] overflow-y-auto space-y-3 md:space-y-4 pr-1 md:pr-2 custom-scrollbar">
                     {filteredActivities
                       .filter(a => a.status === column.id)
                       .map((item, index) => {
