@@ -619,9 +619,9 @@ export default function Refrigeracao() {
                       <div className="flex-1 flex flex-col gap-1">
                         {areas.length > 0 ? (
                           areas.map(a => (
-                            <div key={a.id} className="relative z-1 bg-red-50 border border-red-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden">
-                              <span className="text-[8px] md:text-[10px] font-black text-red-600 uppercase truncate flex-1">{a.area}</span>
-                              <button onClick={() => deleteRefrigeracaoPCMArea(a.id)} className="text-red-400 hover:text-red-600 transition-colors shrink-0">
+                            <div key={a.id} className="relative z-1 bg-red-50 border border-red-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden w-fit max-w-full">
+                              <span className="text-[8px] md:text-[10px] font-black text-red-600 uppercase truncate">{a.area}</span>
+                              <button onClick={() => deleteRefrigeracaoPCMArea(a.id)} className="text-red-400 hover:text-red-600 transition-colors shrink-0 ml-1">
                                 <X size={8} className="md:w-[10px] md:h-[10px]" />
                               </button>
                             </div>
@@ -653,10 +653,10 @@ export default function Refrigeracao() {
                         ) : (
                           <button 
                             onClick={() => handleAddPCMAreaTag(dateStr)}
-                            className="w-7 h-7 md:w-8 md:h-8 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center"
+                            className="w-5 h-5 md:w-6 md:h-6 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center"
                             title="Adicionar Área"
                           >
-                            <Plus size={12} />
+                            <Plus size={10} />
                           </button>
                         )}
                       </div>
