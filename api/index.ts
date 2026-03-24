@@ -544,7 +544,7 @@ async function startServer() {
   });
 
   app.post('/api/armstrong/manutencoes', async (req, res) => {
-    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
+    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status, tipo_manutencao } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('armstrong_manutencao')
@@ -561,7 +561,8 @@ async function startServer() {
           observacoes: observacoes || '', 
           impacto_energetico, 
           investimento_estimado, 
-          status: status || 'Planejada' 
+          status: status || 'Planejada',
+          tipo_manutencao
         }])
         .select();
       
@@ -682,7 +683,7 @@ async function startServer() {
   });
 
   app.post('/api/armstrong/backlog', async (req, res) => {
-    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim } = req.body;
+    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim, tipo_manutencao } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('armstrong_backlog')
@@ -699,7 +700,8 @@ async function startServer() {
           equipamento,
           responsavel,
           hora_inicio,
-          hora_fim
+          hora_fim,
+          tipo_manutencao
         }])
         .select();
       
@@ -777,7 +779,7 @@ async function startServer() {
   });
 
   app.post('/api/refrigeracao/manutencoes', async (req, res) => {
-    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, impacto_energetico, investimento_estimado, status } = req.body;
+    const { titulo, area, sub_area, equipamento, responsavel, data, hora_inicio, hora_fim, descricao, observacoes, investimento_estimado, status, tipo_manutencao, nivel_criticidade } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('refrigeracao_manutencao')
@@ -792,9 +794,10 @@ async function startServer() {
           hora_fim, 
           descricao, 
           observacoes: observacoes || '', 
-          impacto_energetico, 
-          investimento_estimado, 
-          status: status || 'Planejada' 
+          investimento_estimado: investimento_estimado || '',
+          status: status || 'Planejada',
+          tipo_manutencao,
+          nivel_criticidade
         }])
         .select();
       
@@ -915,7 +918,7 @@ async function startServer() {
   });
 
   app.post('/api/refrigeracao/backlog', async (req, res) => {
-    const { area, sub_area, titulo, impacto_energetico, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim } = req.body;
+    const { area, sub_area, titulo, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim, tipo_manutencao, nivel_criticidade } = req.body;
     try {
       const { data: inserted, error } = await supabase
         .from('refrigeracao_backlog')
@@ -923,8 +926,7 @@ async function startServer() {
           area, 
           sub_area, 
           titulo, 
-          impacto_energetico, 
-          investimento_estimado, 
+          investimento_estimado: investimento_estimado || '',
           data_prevista, 
           status: status || 'Não planejada', 
           observacoes, 
@@ -932,7 +934,9 @@ async function startServer() {
           equipamento,
           responsavel,
           hora_inicio,
-          hora_fim
+          hora_fim,
+          tipo_manutencao,
+          nivel_criticidade
         }])
         .select();
       

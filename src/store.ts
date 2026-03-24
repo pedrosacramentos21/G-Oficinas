@@ -61,6 +61,25 @@ interface ArmstrongManutencao {
   impacto_energetico: string;
   investimento_estimado: string;
   status: string;
+  tipo_manutencao: string;
+}
+
+interface RefrigeracaoManutencao {
+  id: number;
+  titulo: string;
+  area: string;
+  sub_area?: string;
+  equipamento: string;
+  responsavel: string;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  descricao: string;
+  observacoes: string;
+  investimento_estimado: string;
+  status: string;
+  tipo_manutencao: string;
+  nivel_criticidade: string;
 }
 
 interface ArmstrongPCMArea {
@@ -84,6 +103,25 @@ interface ArmstrongBacklog {
   responsavel?: string;
   hora_inicio?: string;
   hora_fim?: string;
+  tipo_manutencao: string;
+}
+
+interface RefrigeracaoBacklog {
+  id: number;
+  area: string;
+  sub_area?: string;
+  titulo: string;
+  investimento_estimado: string;
+  data_prevista: string;
+  status: string;
+  observacoes?: string;
+  descricao?: string;
+  equipamento?: string;
+  responsavel?: string;
+  hora_inicio?: string;
+  hora_fim?: string;
+  tipo_manutencao: string;
+  nivel_criticidade: string;
 }
 
 interface StoreState {
@@ -93,9 +131,9 @@ interface StoreState {
   armstrongManutencoes: ArmstrongManutencao[];
   armstrongPCMAreas: ArmstrongPCMArea[];
   armstrongBacklog: ArmstrongBacklog[];
-  refrigeracaoManutencoes: ArmstrongManutencao[];
+  refrigeracaoManutencoes: RefrigeracaoManutencao[];
   refrigeracaoPCMAreas: ArmstrongPCMArea[];
-  refrigeracaoBacklog: ArmstrongBacklog[];
+  refrigeracaoBacklog: RefrigeracaoBacklog[];
   fetchAndaimes: () => Promise<void>;
   addAndaime: (andaime: Omit<Andaime, 'id' | 'status'>) => Promise<any>;
   approveAndaime: (id: number, password: string) => Promise<void>;
@@ -127,14 +165,14 @@ interface StoreState {
   batchDeleteArmstrongBacklog: (ids: number[], password: string) => Promise<void>;
 
   fetchRefrigeracao: () => Promise<void>;
-  addRefrigeracaoManutencao: (manutencao: Omit<ArmstrongManutencao, 'id'>) => Promise<void>;
-  updateRefrigeracaoManutencao: (id: number, updates: Partial<ArmstrongManutencao>, password?: string) => Promise<void>;
+  addRefrigeracaoManutencao: (manutencao: Omit<RefrigeracaoManutencao, 'id'>) => Promise<void>;
+  updateRefrigeracaoManutencao: (id: number, updates: Partial<RefrigeracaoManutencao>, password?: string) => Promise<void>;
   deleteRefrigeracaoManutencao: (id: number, password: string) => Promise<void>;
   batchDeleteRefrigeracaoManutencoes: (ids: number[], password: string) => Promise<void>;
   addRefrigeracaoPCMArea: (area: Omit<ArmstrongPCMArea, 'id'>) => Promise<void>;
   deleteRefrigeracaoPCMArea: (id: number) => Promise<void>;
-  addRefrigeracaoBacklog: (item: Omit<ArmstrongBacklog, 'id'>) => Promise<void>;
-  updateRefrigeracaoBacklog: (id: number, updates: Partial<ArmstrongBacklog>, password?: string) => Promise<void>;
+  addRefrigeracaoBacklog: (item: Omit<RefrigeracaoBacklog, 'id'>) => Promise<void>;
+  updateRefrigeracaoBacklog: (id: number, updates: Partial<RefrigeracaoBacklog>, password?: string) => Promise<void>;
   deleteRefrigeracaoBacklog: (id: number, password: string) => Promise<void>;
   batchDeleteRefrigeracaoBacklog: (ids: number[], password: string) => Promise<void>;
 }

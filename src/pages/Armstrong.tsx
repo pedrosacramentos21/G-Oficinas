@@ -84,6 +84,9 @@ export default function Armstrong() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterArea, setFilterArea] = useState('');
   const [filterSubArea, setFilterSubArea] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterYear, setFilterYear] = useState('');
   const [sortBy, setSortBy] = useState<'impacto' | 'investimento' | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -106,7 +109,8 @@ export default function Armstrong() {
     observacoes: '',
     impacto_energetico: '',
     investimento_estimado: '',
-    status: 'Planejada'
+    status: 'Planejada',
+    tipo_manutencao: 'Corretiva'
   });
 
   useEffect(() => {
@@ -153,7 +157,8 @@ export default function Armstrong() {
       observacoes: '',
       impacto_energetico: '',
       investimento_estimado: '',
-      status: 'Planejada'
+      status: 'Planejada',
+      tipo_manutencao: 'Corretiva'
     });
     setIsModalOpen(true);
   };
@@ -200,7 +205,8 @@ export default function Armstrong() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
         // This was a backlog item being scheduled
@@ -217,7 +223,8 @@ export default function Armstrong() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao
         }, 'Itf2026');
       } else if (existingBacklog) {
         // Update existing backlog item status and date
@@ -234,7 +241,8 @@ export default function Armstrong() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao
         }, 'Itf2026');
       }
 
@@ -263,7 +271,8 @@ export default function Armstrong() {
         observacoes: allUpdates.observacoes,
         impacto_energetico: allUpdates.impacto_energetico,
         investimento_estimado: allUpdates.investimento_estimado,
-        status: allUpdates.status
+        status: allUpdates.status,
+        tipo_manutencao: allUpdates.tipo_manutencao
       };
 
       const backlogUpdates = {
@@ -279,7 +288,8 @@ export default function Armstrong() {
         equipamento: allUpdates.equipamento,
         responsavel: allUpdates.responsavel,
         hora_inicio: allUpdates.hora_inicio,
-        hora_fim: allUpdates.hora_fim
+        hora_fim: allUpdates.hora_fim,
+        tipo_manutencao: allUpdates.tipo_manutencao
       };
       
       if (passwordModal.action === 'edit') {
@@ -400,7 +410,8 @@ export default function Armstrong() {
           observacoes: item.observacoes || '',
           impacto_energetico: item.impacto_energetico || '',
           investimento_estimado: item.investimento_estimado || '',
-          status: newStatus
+          status: newStatus,
+          tipo_manutencao: item.tipo_manutencao || 'Corretiva'
         });
       }
       
@@ -458,7 +469,21 @@ export default function Armstrong() {
     .filter(b => {
       const matchArea = !filterArea || b.area === filterArea;
       const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
-      return matchArea && matchSubArea;
+      const matchTipo = !filterTipo || b.tipo_manutencao === filterTipo;
+      
+      let matchDate = true;
+      if (b.data_prevista) {
+        const date = new Date(b.data_prevista);
+        const month = (date.getMonth() + 1).toString();
+        const year = date.getFullYear().toString();
+        
+        if (filterMonth && month !== filterMonth) matchDate = false;
+        if (filterYear && year !== filterYear) matchDate = false;
+      } else if (filterMonth || filterYear) {
+        matchDate = false;
+      }
+
+      return matchArea && matchSubArea && matchTipo && matchDate;
     })
     .sort((a, b) => {
       if (!sortBy) return 0;
@@ -732,12 +757,22 @@ export default function Armstrong() {
                         )}
                         <div className="space-y-0.5 md:space-y-1">
                           <div className="flex items-center justify-between gap-1">
-                            <span className={cn(
-                              "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate",
-                              areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
-                            )}>
-                              {data.area}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className={cn(
+                                "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate",
+                                areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
+                              )}>
+                                {data.area}
+                              </span>
+                              <span className={cn(
+                                "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase",
+                                data.tipo_manutencao === 'Corretiva' ? "bg-red-500 text-white" :
+                                data.tipo_manutencao === 'Preventiva' ? "bg-blue-500 text-white" :
+                                "bg-amber-500 text-white"
+                              )}>
+                                {data.tipo_manutencao}
+                              </span>
+                            </div>
                             <span className={cn(
                               "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
                               data.status === 'Concluída' ? "bg-green-500" : 
@@ -770,13 +805,13 @@ export default function Armstrong() {
       ) : (
         <div className="flex-1 flex flex-col gap-4 md:gap-8">
           {/* Filters */}
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área:</label>
+          <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-x-4 gap-y-2 items-center">
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Área:</label>
               <select 
                 value={filterArea}
                 onChange={(e) => setFilterArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
               >
                 <option value="">TODAS</option>
                 {AREAS_MOTORES.map(area => (
@@ -784,12 +819,12 @@ export default function Armstrong() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Área:</label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Sub-Área:</label>
               <select 
                 value={filterSubArea}
                 onChange={(e) => setFilterSubArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
               >
                 <option value="">TODAS</option>
                 {SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => (
@@ -797,12 +832,12 @@ export default function Armstrong() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordenar por:</label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ordenar:</label>
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
               >
                 <option value="">PADRÃO</option>
                 <option value="impacto">IMPACTO</option>
@@ -811,18 +846,62 @@ export default function Armstrong() {
               {sortBy && (
                 <button
                   onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                  className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 hover:text-orange-500 transition-colors"
+                  className="p-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 hover:text-orange-500 transition-colors"
                   title={sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
                 >
-                  {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
               )}
             </div>
-            {(filterArea || filterSubArea || sortBy) && (
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Tipo:</label>
+              <select 
+                value={filterTipo}
+                onChange={(e) => setFilterTipo(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                <option value="Corretiva">CORRETIVA</option>
+                <option value="Preventiva">PREVENTIVA</option>
+                <option value="Inspeção">INSPEÇÃO</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Mês:</label>
+              <select 
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={String(i + 1)}>
+                    {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ano:</label>
+              <select 
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                {[2024, 2025, 2026].map(year => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+            </div>
+            {(filterArea || filterSubArea || filterTipo || filterMonth || filterYear || sortBy) && (
               <button 
                 onClick={() => {
                   setFilterArea('');
                   setFilterSubArea('');
+                  setFilterTipo('');
+                  setFilterMonth('');
+                  setFilterYear('');
                   setSortBy('');
                   setSortOrder('desc');
                 }}
@@ -918,15 +997,24 @@ export default function Armstrong() {
                                     </div>
                                   )}
                                   <div className="space-y-3 md:space-y-4">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="space-y-0.5 md:space-y-1 min-w-0">
-                                        <p className={cn(
-                                          "text-[8px] md:text-[9px] font-black uppercase tracking-widest truncate",
-                                          status === 'Não planejada' ? "text-red-400" :
-                                          status === 'Planejada' ? "text-yellow-600" :
-                                          "text-green-600"
-                                        )}>{item.area}</p>
-                                        <h3 className="font-black text-slate-900 text-xs md:text-sm leading-tight uppercase truncate">{item.titulo}</h3>
+                                    <div className="flex items-center justify-between gap-2 mb-2 md:mb-3">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg uppercase tracking-wider",
+                                          item.tipo_manutencao === 'Corretiva' ? "bg-red-100 text-red-600" :
+                                          item.tipo_manutencao === 'Preventiva' ? "bg-blue-100 text-blue-600" :
+                                          "bg-amber-100 text-amber-600"
+                                        )}>
+                                          {item.tipo_manutencao}
+                                        </span>
+                                        <span className={cn(
+                                          "text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg uppercase tracking-wider",
+                                          status === 'Concluída' ? "bg-green-100 text-green-600" :
+                                          status === 'Planejada' ? "bg-yellow-100 text-yellow-600" :
+                                          "bg-red-100 text-red-600"
+                                        )}>
+                                          {status}
+                                        </span>
                                       </div>
                                       {!selectionMode && (
                                         <div className="flex gap-1.5 md:gap-2 shrink-0">
@@ -943,7 +1031,8 @@ export default function Armstrong() {
                                                   impacto_energetico: item.impacto_energetico,
                                                   investimento_estimado: item.investimento_estimado,
                                                   status: 'Planejada',
-                                                  data: item.data_prevista || new Date().toISOString().split('T')[0]
+                                                  data: item.data_prevista || new Date().toISOString().split('T')[0],
+                                                  tipo_manutencao: item.tipo_manutencao
                                                 });
                                                 setIsModalOpen(true);
                                               }}
@@ -964,6 +1053,18 @@ export default function Armstrong() {
                                           </button>
                                         </div>
                                       )}
+                                    </div>
+
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="space-y-0.5 md:space-y-1 min-w-0">
+                                        <p className={cn(
+                                          "text-[8px] md:text-[9px] font-black uppercase tracking-widest truncate",
+                                          status === 'Não planejada' ? "text-red-400" :
+                                          status === 'Planejada' ? "text-yellow-600" :
+                                          "text-green-600"
+                                        )}>{item.area}</p>
+                                        <h3 className="font-black text-slate-900 text-xs md:text-sm leading-tight uppercase truncate">{item.titulo}</h3>
+                                      </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 md:gap-4">
@@ -1073,6 +1174,20 @@ export default function Armstrong() {
                       {SUB_AREAS_MOTORES.map(s => (
                         <option key={s} value={s}>{s || 'NÃO DEFINIDA'}</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Manutenção/Intervenção</label>
+                    <select 
+                      required
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base appearance-none"
+                      value={formData.tipo_manutencao}
+                      onChange={e => setFormData({...formData, tipo_manutencao: e.target.value})}
+                    >
+                      <option value="Corretiva">Corretiva</option>
+                      <option value="Preventiva">Preventiva</option>
+                      <option value="Inspeção">Inspeção</option>
                     </select>
                   </div>
 

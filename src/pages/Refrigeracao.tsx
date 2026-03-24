@@ -84,7 +84,11 @@ export default function Refrigeracao() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterArea, setFilterArea] = useState('');
   const [filterSubArea, setFilterSubArea] = useState('');
-  const [sortBy, setSortBy] = useState<'impacto' | 'investimento' | ''>('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterCriticidade, setFilterCriticidade] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterYear, setFilterYear] = useState('');
+  const [sortBy, setSortBy] = useState<'investimento' | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete' }>({
@@ -104,8 +108,8 @@ export default function Refrigeracao() {
     hora_fim: '08:00',
     descricao: '',
     observacoes: '',
-    impacto_energetico: '',
-    investimento_estimado: '',
+    tipo_manutencao: 'Corretiva',
+    nivel_criticidade: '2 - Baixa',
     status: 'Planejada'
   });
 
@@ -151,8 +155,9 @@ export default function Refrigeracao() {
       hora_fim: '08:00',
       descricao: '',
       observacoes: '',
-      impacto_energetico: '',
       investimento_estimado: '',
+      tipo_manutencao: 'Corretiva',
+      nivel_criticidade: '2 - Baixa',
       status: 'Planejada'
     });
     setIsModalOpen(true);
@@ -189,7 +194,6 @@ export default function Refrigeracao() {
           area: formData.area,
           sub_area: formData.sub_area,
           titulo: formData.titulo,
-          impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           data_prevista: formData.data,
           status: formData.status,
@@ -198,7 +202,9 @@ export default function Refrigeracao() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao,
+          nivel_criticidade: formData.nivel_criticidade
         });
       } else if (selectedItem && !selectedItem.hora_inicio) {
         // This was a backlog item being scheduled
@@ -206,7 +212,6 @@ export default function Refrigeracao() {
           titulo: formData.titulo,
           area: formData.area,
           sub_area: formData.sub_area,
-          impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           status: formData.status, 
           data_prevista: formData.data,
@@ -215,7 +220,9 @@ export default function Refrigeracao() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao,
+          nivel_criticidade: formData.nivel_criticidade
         }, 'Itf2026');
       } else if (existingBacklog) {
         // Update existing backlog item status and date
@@ -223,7 +230,6 @@ export default function Refrigeracao() {
           titulo: formData.titulo,
           area: formData.area,
           sub_area: formData.sub_area,
-          impacto_energetico: formData.impacto_energetico,
           investimento_estimado: formData.investimento_estimado,
           status: formData.status, 
           data_prevista: formData.data,
@@ -232,7 +238,9 @@ export default function Refrigeracao() {
           equipamento: formData.equipamento,
           responsavel: formData.responsavel,
           hora_inicio: formData.hora_inicio,
-          hora_fim: formData.hora_fim
+          hora_fim: formData.hora_fim,
+          tipo_manutencao: formData.tipo_manutencao,
+          nivel_criticidade: formData.nivel_criticidade
         }, 'Itf2026');
       }
 
@@ -259,8 +267,9 @@ export default function Refrigeracao() {
         hora_fim: allUpdates.hora_fim,
         descricao: allUpdates.descricao,
         observacoes: allUpdates.observacoes,
-        impacto_energetico: allUpdates.impacto_energetico,
         investimento_estimado: allUpdates.investimento_estimado,
+        tipo_manutencao: allUpdates.tipo_manutencao,
+        nivel_criticidade: allUpdates.nivel_criticidade,
         status: allUpdates.status
       };
 
@@ -268,7 +277,6 @@ export default function Refrigeracao() {
         titulo: allUpdates.titulo,
         area: allUpdates.area,
         sub_area: allUpdates.sub_area,
-        impacto_energetico: allUpdates.impacto_energetico,
         investimento_estimado: allUpdates.investimento_estimado,
         data_prevista: formData.data,
         status: allUpdates.status,
@@ -277,7 +285,9 @@ export default function Refrigeracao() {
         equipamento: allUpdates.equipamento,
         responsavel: allUpdates.responsavel,
         hora_inicio: allUpdates.hora_inicio,
-        hora_fim: allUpdates.hora_fim
+        hora_fim: allUpdates.hora_fim,
+        tipo_manutencao: allUpdates.tipo_manutencao,
+        nivel_criticidade: allUpdates.nivel_criticidade
       };
       
       if (passwordModal.action === 'edit') {
@@ -395,8 +405,9 @@ export default function Refrigeracao() {
           hora_fim: item.hora_fim || '08:00',
           descricao: item.descricao || '',
           observacoes: item.observacoes || '',
-          impacto_energetico: item.impacto_energetico || '',
           investimento_estimado: item.investimento_estimado || '',
+          tipo_manutencao: item.tipo_manutencao || 'Corretiva',
+          nivel_criticidade: item.nivel_criticidade || '2 - Baixa',
           status: newStatus
         });
       }
@@ -412,8 +423,8 @@ export default function Refrigeracao() {
     title: m.titulo || m.descricao || 'Intervenção',
     start: `${m.data}T${m.hora_inicio}`,
     end: `${m.data}T${m.hora_fim}`,
-    backgroundColor: m.status === 'Concluída' ? '#dcfce7' : (m.status === 'Planejada' ? '#fef9c3' : '#fee2e2'),
-    borderColor: m.status === 'Concluída' ? '#22c55e' : (m.status === 'Planejada' ? '#eab308' : '#ef4444'),
+    backgroundColor: m.tipo_manutencao === 'Corretiva' ? '#fee2e2' : (m.tipo_manutencao === 'Preventiva' ? '#dbeafe' : '#fef3c7'),
+    borderColor: m.tipo_manutencao === 'Corretiva' ? '#ef4444' : (m.tipo_manutencao === 'Preventiva' ? '#3b82f6' : '#f59e0b'),
     textColor: '#1e293b',
     extendedProps: m
   }));
@@ -453,7 +464,18 @@ export default function Refrigeracao() {
     .filter(b => {
       const matchArea = !filterArea || b.area === filterArea;
       const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
-      return matchArea && matchSubArea;
+      const matchTipo = !filterTipo || b.tipo_manutencao === filterTipo;
+      const matchCriticidade = !filterCriticidade || b.nivel_criticidade === filterCriticidade;
+      
+      let matchDate = true;
+      if (filterMonth || filterYear) {
+        const date = new Date(b.data_prevista);
+        const monthMatch = !filterMonth || (date.getMonth() + 1).toString() === filterMonth;
+        const yearMatch = !filterYear || date.getFullYear().toString() === filterYear;
+        matchDate = monthMatch && yearMatch;
+      }
+
+      return matchArea && matchSubArea && matchTipo && matchCriticidade && matchDate;
     })
     .sort((a, b) => {
       if (!sortBy) return 0;
@@ -461,10 +483,7 @@ export default function Refrigeracao() {
       let valA = 0;
       let valB = 0;
       
-      if (sortBy === 'impacto') {
-        valA = parseFloat(a.impacto_energetico) || 0;
-        valB = parseFloat(b.impacto_energetico) || 0;
-      } else if (sortBy === 'investimento') {
+      if (sortBy === 'investimento') {
         valA = parseFloat(a.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0;
         valB = parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0;
       }
@@ -473,7 +492,6 @@ export default function Refrigeracao() {
     });
 
   const pendingBacklog = filteredBacklog.filter(b => b.status !== 'Concluída');
-  const totalGain = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
   const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
@@ -766,13 +784,13 @@ export default function Refrigeracao() {
       ) : (
         <div className="flex-1 flex flex-col gap-4 md:gap-8">
           {/* Filters */}
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área:</label>
+          <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-x-4 gap-y-2 items-center">
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Área:</label>
               <select 
                 value={filterArea}
                 onChange={(e) => setFilterArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
               >
                 <option value="">TODAS</option>
                 {AREAS_MOTORES.map(area => (
@@ -780,12 +798,12 @@ export default function Refrigeracao() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Área:</label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Sub-Área:</label>
               <select 
                 value={filterSubArea}
                 onChange={(e) => setFilterSubArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
               >
                 <option value="">TODAS</option>
                 {SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => (
@@ -793,36 +811,92 @@ export default function Refrigeracao() {
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordenar por:</label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Tipo:</label>
+              <select 
+                value={filterTipo}
+                onChange={(e) => setFilterTipo(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                <option value="Corretiva">CORRETIVA</option>
+                <option value="Preventiva">PREVENTIVA</option>
+                <option value="Inspeção">INSPEÇÃO</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Criticidade:</label>
+              <select 
+                value={filterCriticidade}
+                onChange={(e) => setFilterCriticidade(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
+              >
+                <option value="">TODAS</option>
+                <option value="0 - Urgente">0 - URGENTE</option>
+                <option value="1 - Média">1 - MÉDIA</option>
+                <option value="2 - Baixa">2 - BAIXA</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Mês:</label>
+              <select 
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={String(i + 1)}>
+                    {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ano:</label>
+              <select 
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
+              >
+                <option value="">TODOS</option>
+                {[2024, 2025, 2026].map(year => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ordenar:</label>
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
               >
                 <option value="">PADRÃO</option>
-                <option value="impacto">IMPACTO</option>
                 <option value="investimento">INVESTIMENTO</option>
               </select>
               {sortBy && (
-                <button
+                <button 
                   onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                  className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 hover:text-orange-500 transition-colors"
-                  title={sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
+                  className="p-1 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 transition-all"
                 >
-                  {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {sortOrder === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
               )}
             </div>
-            {(filterArea || filterSubArea || sortBy) && (
+            {(filterArea || filterSubArea || filterTipo || filterCriticidade || filterMonth || filterYear || sortBy) && (
               <button 
                 onClick={() => {
                   setFilterArea('');
                   setFilterSubArea('');
+                  setFilterTipo('');
+                  setFilterCriticidade('');
+                  setFilterMonth('');
+                  setFilterYear('');
                   setSortBy('');
                   setSortOrder('desc');
                 }}
-                className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
+                className="text-[10px] font-black text-sky-500 uppercase tracking-widest hover:underline"
               >
                 Limpar Filtros
               </button>
@@ -830,7 +904,7 @@ export default function Refrigeracao() {
           </div>
 
           {/* Indicators */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 shrink-0">
             <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
               <div className="bg-blue-50 p-2.5 md:p-4 rounded-xl md:rounded-2xl text-blue-500">
                 <AlertCircle size={24} className="md:w-8 md:h-8" />
@@ -838,15 +912,6 @@ export default function Refrigeracao() {
               <div>
                 <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Pendências em Aberto</p>
                 <p className="text-xl md:text-3xl font-black text-slate-900">{pendingBacklog.length}</p>
-              </div>
-            </div>
-            <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
-              <div className="bg-sky-50 p-2.5 md:p-4 rounded-xl md:rounded-2xl text-sky-500">
-                <TrendingUp size={24} className="md:w-8 md:h-8" />
-              </div>
-              <div>
-                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Ganho Total (MJ/hL)</p>
-                <p className="text-xl md:text-3xl font-black text-slate-900">{totalGain.toLocaleString()}</p>
               </div>
             </div>
             <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
@@ -914,15 +979,27 @@ export default function Refrigeracao() {
                                     </div>
                                   )}
                                   <div className="space-y-3 md:space-y-4">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="space-y-0.5 md:space-y-1">
-                                        <p className={cn(
-                                          "text-[8px] md:text-[9px] font-black uppercase tracking-widest",
-                                          status === 'Não planejada' ? "text-red-400" :
-                                          status === 'Planejada' ? "text-yellow-600" :
-                                          "text-green-600"
-                                        )}>{item.area}</p>
-                                        <h3 className="font-black text-slate-900 text-xs md:text-sm leading-tight uppercase line-clamp-2">{item.titulo}</h3>
+                                    <div className="flex items-center justify-between gap-2 mb-2 md:mb-3">
+                                      <div className="flex items-center gap-2">
+                                        <span className={cn(
+                                          "text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg uppercase tracking-wider",
+                                          item.tipo_manutencao === 'Corretiva' ? "bg-red-100 text-red-600" :
+                                          item.tipo_manutencao === 'Preventiva' ? "bg-blue-100 text-blue-600" :
+                                          "bg-amber-100 text-amber-600"
+                                        )}>
+                                          {item.tipo_manutencao}
+                                        </span>
+                                        <div className="flex items-center gap-1.5 bg-white px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg shadow-sm">
+                                          <div className={cn(
+                                            "w-1.5 h-1.5 md:w-2 md:h-2 rounded-full",
+                                            item.nivel_criticidade === '0 - Urgente' ? "bg-red-500" :
+                                            item.nivel_criticidade === '1 - Média' ? "bg-yellow-500" :
+                                            "bg-green-500"
+                                          )} />
+                                          <span className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase tracking-wider">
+                                            {item.nivel_criticidade?.split(' - ')[1]}
+                                          </span>
+                                        </div>
                                       </div>
                                       {!selectionMode && (
                                         <div className="flex gap-1 md:gap-2 shrink-0">
@@ -936,10 +1013,10 @@ export default function Refrigeracao() {
                                                   ...formData,
                                                   titulo: item.titulo,
                                                   area: item.area,
-                                                  impacto_energetico: item.impacto_energetico,
-                                                  investimento_estimado: item.investimento_estimado,
                                                   status: 'Planejada',
-                                                  data: item.data_prevista || new Date().toISOString().split('T')[0]
+                                                  data: item.data_prevista || new Date().toISOString().split('T')[0],
+                                                  tipo_manutencao: item.tipo_manutencao,
+                                                  nivel_criticidade: item.nivel_criticidade
                                                 });
                                                 setIsModalOpen(true);
                                               }}
@@ -962,16 +1039,19 @@ export default function Refrigeracao() {
                                       )}
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2 md:gap-4">
+                                    <div className="flex items-start justify-between gap-2">
                                       <div className="space-y-0.5 md:space-y-1">
-                                        <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">Impacto</p>
                                         <p className={cn(
-                                          "text-[10px] md:text-xs font-black",
-                                          status === 'Não planejada' ? "text-red-600" :
+                                          "text-[8px] md:text-[9px] font-black uppercase tracking-widest",
+                                          status === 'Não planejada' ? "text-red-400" :
                                           status === 'Planejada' ? "text-yellow-600" :
                                           "text-green-600"
-                                        )}>{item.impacto_energetico} MJ/hL</p>
+                                        )}>{item.area}</p>
+                                        <h3 className="font-black text-slate-900 text-xs md:text-sm leading-tight uppercase line-clamp-2">{item.titulo}</h3>
                                       </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-2 md:gap-4">
                                       <div className="space-y-0.5 md:space-y-1">
                                         <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">Investimento</p>
                                         <p className="text-[10px] md:text-xs font-black text-green-600">{item.investimento_estimado}</p>
@@ -1123,14 +1203,30 @@ export default function Refrigeracao() {
                     </div>
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto (MJ/hL)</label>
-                    <input 
-                      type="text"
-                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all text-sm sm:text-base"
-                      value={formData.impacto_energetico}
-                      onChange={e => setFormData({...formData, impacto_energetico: e.target.value})}
-                      placeholder="Ex: 500"
-                    />
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Manutenção/Intervenção</label>
+                    <select 
+                      required
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all text-sm sm:text-base appearance-none"
+                      value={formData.tipo_manutencao}
+                      onChange={e => setFormData({...formData, tipo_manutencao: e.target.value})}
+                    >
+                      <option value="Corretiva">CORRETIVA</option>
+                      <option value="Preventiva">PREVENTIVA</option>
+                      <option value="Inspeção">INSPEÇÃO</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nível de Criticidade</label>
+                    <select 
+                      required
+                      className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-sky-500 transition-all text-sm sm:text-base appearance-none"
+                      value={formData.nivel_criticidade}
+                      onChange={e => setFormData({...formData, nivel_criticidade: e.target.value})}
+                    >
+                      <option value="0 - Urgente">0 - URGENTE</option>
+                      <option value="1 - Média">1 - MÉDIA</option>
+                      <option value="2 - Baixa">2 - BAIXA</option>
+                    </select>
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
                     <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Investimento (R$)</label>
