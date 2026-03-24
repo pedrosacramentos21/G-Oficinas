@@ -9,6 +9,8 @@ import {
   Plus, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronUp,
+  ChevronDown,
   Snowflake, 
   Calendar as CalendarIcon, 
   LayoutGrid, 
@@ -82,6 +84,8 @@ export default function Refrigeracao() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [filterArea, setFilterArea] = useState('');
   const [filterSubArea, setFilterSubArea] = useState('');
+  const [sortBy, setSortBy] = useState<'impacto' | 'investimento' | ''>('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete' }>({
     isOpen: false,
@@ -445,11 +449,28 @@ export default function Refrigeracao() {
   };
 
   // Backlog Indicators
-  const filteredBacklog = refrigeracaoBacklog.filter(b => {
-    const matchArea = !filterArea || b.area === filterArea;
-    const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
-    return matchArea && matchSubArea;
-  });
+  const filteredBacklog = refrigeracaoBacklog
+    .filter(b => {
+      const matchArea = !filterArea || b.area === filterArea;
+      const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
+      return matchArea && matchSubArea;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
+      
+      let valA = 0;
+      let valB = 0;
+      
+      if (sortBy === 'impacto') {
+        valA = parseFloat(a.impacto_energetico) || 0;
+        valB = parseFloat(b.impacto_energetico) || 0;
+      } else if (sortBy === 'investimento') {
+        valA = parseFloat(a.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0;
+        valB = parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0;
+      }
+      
+      return sortOrder === 'asc' ? valA - valB : valB - valA;
+    });
 
   const pendingBacklog = filteredBacklog.filter(b => b.status !== 'Concluída');
   const totalGain = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
@@ -772,11 +793,34 @@ export default function Refrigeracao() {
                 ))}
               </select>
             </div>
-            {(filterArea || filterSubArea) && (
+            <div className="flex items-center gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ordenar por:</label>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                <option value="">PADRÃO</option>
+                <option value="impacto">IMPACTO</option>
+                <option value="investimento">INVESTIMENTO</option>
+              </select>
+              {sortBy && (
+                <button
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 hover:text-orange-500 transition-colors"
+                  title={sortOrder === 'asc' ? 'Crescente' : 'Decrescente'}
+                >
+                  {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              )}
+            </div>
+            {(filterArea || filterSubArea || sortBy) && (
               <button 
                 onClick={() => {
                   setFilterArea('');
                   setFilterSubArea('');
+                  setSortBy('');
+                  setSortOrder('desc');
                 }}
                 className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
               >
