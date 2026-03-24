@@ -569,18 +569,18 @@ export default function Armstrong() {
       {activeTab === 'calendario' ? (
         <div className="flex-1 flex flex-col gap-6 overflow-hidden">
           {/* PCM Areas Panel */}
-          <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-3 shrink-0 overflow-y-auto overflow-x-hidden max-h-[160px] custom-scrollbar relative scroll-pt-[32px]">
-            <h2 className="text-[10px] md:text-[12px] font-bold text-slate-700 uppercase tracking-tight mb-2 flex items-center gap-2 bg-white pb-1">
+          <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-3 shrink-0 overflow-y-auto overflow-x-hidden max-h-[160px] custom-scrollbar relative scroll-pt-[40px]">
+            <h2 className="text-[10px] md:text-[12px] font-bold text-slate-700 uppercase tracking-tight mb-2 flex items-center gap-2 sticky top-0 bg-white z-[40] pb-1 border-b border-slate-100">
               <Clock size={14} className="text-red-500" />
               Áreas em PCM (Parada de Manutenção)
             </h2>
-            <div className="grid grid-cols-7 gap-1 md:gap-3 min-w-[600px] lg:min-w-0">
+            <div className="grid grid-cols-7 gap-1 md:gap-3 min-w-[600px] lg:min-w-0 relative z-[1]">
               {/* Day Headers - Sticky */}
               {weekDays.map((day, idx) => {
                 const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
                 const dayOfMonth = day.getDate();
                 return (
-                  <div key={`header-${idx}`} className="sticky top-0 z-20 bg-white pb-1 border-b border-slate-100">
+                  <div key={`header-${idx}`} className="sticky top-[24px] md:top-[28px] z-[30] bg-white pb-1 border-b border-slate-100">
                     <div className="text-center py-0.5">
                       <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">{dayName}., {dayOfMonth}</span>
                     </div>
@@ -594,8 +594,8 @@ export default function Armstrong() {
                 const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
                 
                 return (
-                  <div key={`content-${idx}`} className="flex flex-col min-w-[100px] sm:min-w-0 h-full relative z-1">
-                    <div className="flex-1 bg-slate-50/50 rounded-lg p-2 border border-slate-100 flex flex-col gap-1 relative group min-h-[80px] pb-[40px]">
+                  <div key={`content-${idx}`} className="flex flex-col min-w-[100px] sm:min-w-0 h-full">
+                    <div className="flex-1 bg-slate-50/50 rounded-lg p-1 md:p-1.5 pb-[36px] border border-slate-100 flex flex-col gap-1 relative group min-h-[60px] z-[1]">
                       <div className="flex-1 flex flex-col gap-1">
                         {areas.length > 0 ? (
                           areas.map(a => (
@@ -613,13 +613,13 @@ export default function Armstrong() {
                         )}
                       </div>
                       
-                      <div className="absolute bottom-2 right-2 z-10">
+                      <div className="absolute bottom-2 right-2 left-2 z-10 flex justify-end">
                         {addingPCMArea?.date === dateStr ? (
-                          <div className="absolute bottom-0 right-0 w-[120px] bg-white shadow-xl rounded-lg p-1 border border-red-200 z-20">
+                          <div className="w-full bg-white shadow-lg rounded p-0.5 border border-red-200">
                             <input
                               ref={pcmInputRef}
                               type="text"
-                              className="w-full bg-white border border-red-500 rounded px-1.5 md:px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
+                              className="w-full bg-white border border-red-500 rounded px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
                               value={addingPCMArea.value}
                               onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
                               onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
@@ -633,10 +633,10 @@ export default function Armstrong() {
                         ) : (
                           <button 
                             onClick={() => handleAddPCMAreaTag(dateStr)}
-                            className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center group-hover:scale-110"
+                            className="w-7 h-7 md:w-8 md:h-8 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center"
                             title="Adicionar Área"
                           >
-                            <Plus size={16} />
+                            <Plus size={12} />
                           </button>
                         )}
                       </div>
