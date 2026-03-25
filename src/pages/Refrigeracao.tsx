@@ -30,6 +30,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { cn } from '../lib/utils';
 import PasswordModal from '../components/PasswordModal';
+import { MultiSelect } from '../components/MultiSelect';
 
 const STATUS_OPTIONS = ['Não planejada', 'Planejada', 'Concluída'];
 
@@ -82,12 +83,12 @@ export default function Refrigeracao() {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [filterArea, setFilterArea] = useState('');
-  const [filterSubArea, setFilterSubArea] = useState('');
-  const [filterTipo, setFilterTipo] = useState('');
-  const [filterCriticidade, setFilterCriticidade] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
-  const [filterYear, setFilterYear] = useState('');
+  const [filterArea, setFilterArea] = useState<string[]>([]);
+  const [filterSubArea, setFilterSubArea] = useState<string[]>([]);
+  const [filterTipo, setFilterTipo] = useState<string[]>([]);
+  const [filterCriticidade, setFilterCriticidade] = useState<string[]>([]);
+  const [filterMonth, setFilterMonth] = useState<string[]>([]);
+  const [filterYear, setFilterYear] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'investimento' | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -462,16 +463,16 @@ export default function Refrigeracao() {
   // Backlog Indicators
   const filteredBacklog = refrigeracaoBacklog
     .filter(b => {
-      const matchArea = !filterArea || b.area === filterArea;
-      const matchSubArea = !filterSubArea || b.sub_area === filterSubArea;
-      const matchTipo = !filterTipo || b.tipo_manutencao === filterTipo;
-      const matchCriticidade = !filterCriticidade || b.nivel_criticidade === filterCriticidade;
+      const matchArea = filterArea.length === 0 || filterArea.includes(b.area);
+      const matchSubArea = filterSubArea.length === 0 || filterSubArea.includes(b.sub_area);
+      const matchTipo = filterTipo.length === 0 || filterTipo.includes(b.tipo_manutencao);
+      const matchCriticidade = filterCriticidade.length === 0 || filterCriticidade.includes(b.nivel_criticidade);
       
       let matchDate = true;
-      if (filterMonth || filterYear) {
+      if (filterMonth.length > 0 || filterYear.length > 0) {
         const date = new Date(b.data_prevista);
-        const monthMatch = !filterMonth || (date.getMonth() + 1).toString() === filterMonth;
-        const yearMatch = !filterYear || date.getFullYear().toString() === filterYear;
+        const monthMatch = filterMonth.length === 0 || filterMonth.includes((date.getMonth() + 1).toString());
+        const yearMatch = filterYear.length === 0 || filterYear.includes(date.getFullYear().toString());
         matchDate = monthMatch && yearMatch;
       }
 
@@ -795,86 +796,59 @@ export default function Refrigeracao() {
         <div className="flex-1 flex flex-col gap-4 md:gap-8">
           {/* Filters */}
           <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-x-4 gap-y-2 items-center">
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Área:</label>
-              <select 
-                value={filterArea}
-                onChange={(e) => setFilterArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODAS</option>
-                {AREAS_MOTORES.map(area => (
-                  <option key={area} value={area}>{area}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Sub-Área:</label>
-              <select 
-                value={filterSubArea}
-                onChange={(e) => setFilterSubArea(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODAS</option>
-                {SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Tipo:</label>
-              <select 
-                value={filterTipo}
-                onChange={(e) => setFilterTipo(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODOS</option>
-                <option value="Corretiva">CORRETIVA</option>
-                <option value="Preventiva">PREVENTIVA</option>
-                <option value="Inspeção">INSPEÇÃO</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Criticidade:</label>
-              <select 
-                value={filterCriticidade}
-                onChange={(e) => setFilterCriticidade(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODAS</option>
-                <option value="0 - Urgente">0 - URGENTE</option>
-                <option value="1 - Média">1 - MÉDIA</option>
-                <option value="2 - Baixa">2 - BAIXA</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Mês:</label>
-              <select 
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODOS</option>
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i + 1} value={String(i + 1)}>
-                    {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ano:</label>
-              <select 
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 w-fit"
-              >
-                <option value="">TODOS</option>
-                {[2024, 2025, 2026].map(year => (
-                  <option key={year} value={String(year)}>{year}</option>
-                ))}
-              </select>
-            </div>
+            <MultiSelect 
+              label="Área"
+              options={AREAS_MOTORES.map(area => ({ label: area, value: area }))}
+              selectedValues={filterArea}
+              onChange={setFilterArea}
+              activeColor="sky"
+            />
+            <MultiSelect 
+              label="Sub-Área"
+              options={SUB_AREAS_MOTORES.filter(s => s !== '').map(sub => ({ label: sub, value: sub }))}
+              selectedValues={filterSubArea}
+              onChange={setFilterSubArea}
+              activeColor="sky"
+            />
+            <MultiSelect 
+              label="Tipo"
+              options={[
+                { label: 'CORRETIVA', value: 'Corretiva' },
+                { label: 'PREVENTIVA', value: 'Preventiva' },
+                { label: 'INSPEÇÃO', value: 'Inspeção' }
+              ]}
+              selectedValues={filterTipo}
+              onChange={setFilterTipo}
+              activeColor="sky"
+            />
+            <MultiSelect 
+              label="Criticidade"
+              options={[
+                { label: '0 - URGENTE', value: '0 - Urgente' },
+                { label: '1 - MÉDIA', value: '1 - Média' },
+                { label: '2 - BAIXA', value: '2 - Baixa' }
+              ]}
+              selectedValues={filterCriticidade}
+              onChange={setFilterCriticidade}
+              activeColor="sky"
+            />
+            <MultiSelect 
+              label="Mês"
+              options={Array.from({ length: 12 }, (_, i) => ({
+                label: new Date(2000, i).toLocaleString('pt-BR', { month: 'long' }).toUpperCase(),
+                value: String(i + 1)
+              }))}
+              selectedValues={filterMonth}
+              onChange={setFilterMonth}
+              activeColor="sky"
+            />
+            <MultiSelect 
+              label="Ano"
+              options={[2024, 2025, 2026].map(year => ({ label: String(year), value: String(year) }))}
+              selectedValues={filterYear}
+              onChange={setFilterYear}
+              activeColor="sky"
+            />
             <div className="flex items-center gap-1.5">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-tighter shrink-0">Ordenar:</label>
               <select 
@@ -894,15 +868,15 @@ export default function Refrigeracao() {
                 </button>
               )}
             </div>
-            {(filterArea || filterSubArea || filterTipo || filterCriticidade || filterMonth || filterYear || sortBy) && (
+            {(filterArea.length > 0 || filterSubArea.length > 0 || filterTipo.length > 0 || filterCriticidade.length > 0 || filterMonth.length > 0 || filterYear.length > 0 || sortBy) && (
               <button 
                 onClick={() => {
-                  setFilterArea('');
-                  setFilterSubArea('');
-                  setFilterTipo('');
-                  setFilterCriticidade('');
-                  setFilterMonth('');
-                  setFilterYear('');
+                  setFilterArea([]);
+                  setFilterSubArea([]);
+                  setFilterTipo([]);
+                  setFilterCriticidade([]);
+                  setFilterMonth([]);
+                  setFilterYear([]);
                   setSortBy('');
                   setSortOrder('desc');
                 }}
