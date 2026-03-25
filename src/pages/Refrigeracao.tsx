@@ -767,6 +767,16 @@ export default function Refrigeracao() {
                           <div className="text-[7px] md:text-[9px] text-slate-500 font-medium line-clamp-1">
                             {data.responsavel}
                           </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className={cn(
+                              "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white",
+                              data.tipo_manutencao === 'Corretiva' ? "bg-red-500" :
+                              data.tipo_manutencao === 'Preventiva' ? "bg-blue-500" :
+                              "bg-amber-500"
+                            )}>
+                              {data.tipo_manutencao}
+                            </span>
+                          </div>
                         </div>
                         <div className="mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-sky-100 hidden sm:block">
                           <p className="text-[7px] md:text-[8px] text-slate-600 font-bold uppercase truncate italic">

@@ -764,14 +764,6 @@ export default function Armstrong() {
                               )}>
                                 {data.area}
                               </span>
-                              <span className={cn(
-                                "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase",
-                                data.tipo_manutencao === 'Corretiva' ? "bg-red-500 text-white" :
-                                data.tipo_manutencao === 'Preventiva' ? "bg-blue-500 text-white" :
-                                "bg-amber-500 text-white"
-                              )}>
-                                {data.tipo_manutencao}
-                              </span>
                             </div>
                             <span className={cn(
                               "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
@@ -787,6 +779,16 @@ export default function Armstrong() {
                           </div>
                           <div className="text-[7px] md:text-[9px] text-slate-500 font-medium line-clamp-1">
                             {data.responsavel}
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className={cn(
+                              "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white",
+                              data.tipo_manutencao === 'Corretiva' ? "bg-red-500" :
+                              data.tipo_manutencao === 'Preventiva' ? "bg-blue-500" :
+                              "bg-amber-500"
+                            )}>
+                              {data.tipo_manutencao}
+                            </span>
                           </div>
                         </div>
                         <div className="mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-orange-100 hidden md:block">
@@ -928,7 +930,7 @@ export default function Armstrong() {
                 <TrendingUp size={24} className="md:w-8 md:h-8" />
               </div>
               <div>
-                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Ganho Total (MJ/hL)</p>
+                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Ganho Total (MJ/Mês)</p>
                 <p className="text-xl md:text-3xl font-black text-slate-900">{totalGain.toLocaleString()}</p>
               </div>
             </div>
@@ -1075,7 +1077,7 @@ export default function Armstrong() {
                                           status === 'Não planejada' ? "text-red-600" :
                                           status === 'Planejada' ? "text-yellow-600" :
                                           "text-green-600"
-                                        )}>{item.impacto_energetico} MJ/hL</p>
+                                        )}>{item.impacto_energetico} MJ/Mês</p>
                                       </div>
                                       <div className="space-y-0.5 md:space-y-1">
                                         <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">Investimento</p>
@@ -1255,7 +1257,7 @@ export default function Armstrong() {
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto (MJ/hL)</label>
+                    <label className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Impacto (MJ/Mês)</label>
                     <input 
                       type="text"
                       className="w-full bg-slate-50 border-none rounded-xl sm:rounded-2xl p-3.5 sm:p-4 font-bold text-slate-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
