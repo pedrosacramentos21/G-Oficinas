@@ -609,7 +609,7 @@ export default function Refrigeracao() {
           {/* PCM Areas Panel */}
           <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-3 shrink-0 overflow-y-auto overflow-x-hidden max-h-[160px] custom-scrollbar relative scroll-pt-[40px]">
             <h2 className="text-[10px] md:text-[12px] font-bold text-slate-700 uppercase tracking-tight mb-2 flex items-center gap-2 sticky top-0 bg-white z-[40] pb-1 border-b border-slate-100">
-              <Clock size={14} className="text-red-500" />
+              <Clock size={14} className="text-sky-500" />
               Áreas em PCM (Parada de Manutenção)
             </h2>
             <div className="grid grid-cols-7 gap-1 md:gap-3 min-w-[600px] lg:min-w-0 relative z-[1]">
@@ -637,9 +637,9 @@ export default function Refrigeracao() {
                       <div className="flex-1 flex flex-col gap-1">
                         {areas.length > 0 ? (
                           areas.map(a => (
-                            <div key={a.id} className="relative z-1 bg-red-50 border border-red-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden w-fit max-w-full">
-                              <span className="text-[8px] md:text-[10px] font-black text-red-600 uppercase truncate">{a.area}</span>
-                              <button onClick={() => deleteRefrigeracaoPCMArea(a.id)} className="text-red-400 hover:text-red-600 transition-colors shrink-0 ml-1">
+                            <div key={a.id} className="relative z-1 bg-sky-50 border border-sky-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden w-fit max-w-full">
+                              <span className="text-[8px] md:text-[10px] font-black text-sky-600 uppercase truncate">{a.area}</span>
+                              <button onClick={() => deleteRefrigeracaoPCMArea(a.id)} className="text-sky-400 hover:text-sky-600 transition-colors shrink-0 ml-1">
                                 <X size={8} className="md:w-[10px] md:h-[10px]" />
                               </button>
                             </div>
@@ -653,11 +653,11 @@ export default function Refrigeracao() {
                       
                       <div className="absolute bottom-2 right-2 left-2 z-10 flex justify-end">
                         {addingPCMArea?.date === dateStr ? (
-                          <div className="w-full bg-white shadow-lg rounded p-0.5 border border-red-200">
+                          <div className="w-full bg-white shadow-lg rounded p-0.5 border border-sky-200">
                             <input
                               ref={pcmInputRef}
                               type="text"
-                              className="w-full bg-white border border-red-500 rounded px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
+                              className="w-full bg-white border border-sky-500 rounded px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
                               value={addingPCMArea.value}
                               onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
                               onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
@@ -671,7 +671,7 @@ export default function Refrigeracao() {
                         ) : (
                           <button 
                             onClick={() => handleAddPCMAreaTag(dateStr)}
-                            className="w-5 h-5 md:w-6 md:h-6 rounded bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-500 transition-all shadow-sm flex items-center justify-center"
+                            className="w-5 h-5 md:w-6 md:h-6 rounded bg-white border border-slate-200 text-slate-400 hover:text-sky-500 hover:border-sky-500 transition-all shadow-sm flex items-center justify-center"
                             title="Adicionar Área"
                           >
                             <Plus size={10} />

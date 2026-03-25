@@ -577,7 +577,7 @@ async function startServer() {
 
   app.patch('/api/armstrong/manutencoes/:id', async (req, res) => {
     const { id } = req.params;
-    const { password, ...updates } = req.body;
+    const { password, id: _id, created_at: _ca, ...updates } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
       const { error } = await supabase
@@ -587,8 +587,9 @@ async function startServer() {
       
       if (error) throw error;
       res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update armstrong manutencao' });
+    } catch (error: any) {
+      console.error('Erro ao atualizar manutenção Armstrong:', error);
+      res.status(500).json({ error: error.message || 'Failed to update armstrong manutencao' });
     }
   });
 
@@ -706,15 +707,17 @@ async function startServer() {
         .select();
       
       if (error) throw error;
+      if (!inserted || inserted.length === 0) throw new Error('Nenhum dado retornado após a inserção.');
       res.json({ id: inserted[0].id });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to create armstrong backlog item' });
+    } catch (error: any) {
+      console.error('Erro ao criar backlog Armstrong:', error);
+      res.status(500).json({ error: error.message || 'Failed to create armstrong backlog item' });
     }
   });
 
   app.patch('/api/armstrong/backlog/:id', async (req, res) => {
     const { id } = req.params;
-    const { password, ...updates } = req.body;
+    const { password, id: _id, created_at: _ca, ...updates } = req.body;
     if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta.' });
     try {
       const { error } = await supabase
@@ -724,8 +727,9 @@ async function startServer() {
       
       if (error) throw error;
       res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update armstrong backlog item' });
+    } catch (error: any) {
+      console.error('Erro ao atualizar backlog Armstrong:', error);
+      res.status(500).json({ error: error.message || 'Failed to update armstrong backlog item' });
     }
   });
 
