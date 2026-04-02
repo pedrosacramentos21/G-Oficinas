@@ -251,6 +251,19 @@ export default function PTAs() {
             </button>
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-1">
+              <button 
+                onClick={() => (window as any).fullCalendarPTA?.getApi().changeView('dayGridMonth')} 
+                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Mês
+              </button>
+              <button 
+                onClick={() => (window as any).fullCalendarPTA?.getApi().changeView(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek')} 
+                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Semana
+              </button>
+              <div className="w-px h-3 bg-slate-100 mx-0.5" />
               <button onClick={() => (window as any).fullCalendarPTA?.getApi().today()} className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
                 Hoje
               </button>
@@ -285,6 +298,7 @@ export default function PTAs() {
             const data = eventInfo.event.extendedProps;
             const equip = EQUIPAMENTOS.find(e => e.name === data.equipamento);
             const isSelected = selectedIds.includes(data.id);
+            const isMonthView = eventInfo.view.type === 'dayGridMonth';
             
             return (
               <div 
@@ -299,7 +313,8 @@ export default function PTAs() {
                   data.status === 'aprovado' 
                     ? (equip?.id === 'articulada' ? "border-blue-500 bg-blue-50/40" : "border-purple-500 bg-purple-50/40")
                     : "border-yellow-500 bg-yellow-50/40",
-                  isSelected && "ring-2 ring-blue-500 ring-offset-0"
+                  isSelected && "ring-2 ring-blue-500 ring-offset-0",
+                  isMonthView && "p-0.5 gap-0"
                 )}>
                 {isSelectionMode && (
                   <div className="absolute top-0.5 right-0.5">
@@ -333,12 +348,14 @@ export default function PTAs() {
                   {data.responsavel}
                 </div>
 
-                <div className={cn(
-                  "text-[7px] font-bold line-clamp-1",
-                  isSelected ? "text-white/80" : "text-slate-500"
-                )}>
-                  {data.equipamento}
-                </div>
+                {!isMonthView && (
+                  <div className={cn(
+                    "text-[7px] font-bold line-clamp-1",
+                    isSelected ? "text-white/80" : "text-slate-500"
+                  )}>
+                    {data.equipamento}
+                  </div>
+                )}
 
                 <div className="details-on-hover">
                   <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
