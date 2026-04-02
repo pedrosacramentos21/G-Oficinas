@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../store';
-import { Calendar, User, Clock, CheckCircle2, MapPin } from 'lucide-react';
+import { Calendar, User, Clock, CheckCircle2, MapPin, Layers } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const COLUMNS = [
@@ -62,9 +62,9 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
               </div>
               <div className={cn(
                 "p-2 md:p-3 rounded-lg md:rounded-xl shrink-0",
-                isOverLimit ? "bg-red-50" : "bg-orange-50"
+                isOverLimit ? "bg-red-50" : "bg-blue-50"
               )}>
-                <MapPin className={cn(isOverLimit ? "text-red-500" : "text-orange-500", "md:w-[18px] md:h-[18px]")} size={16} />
+                <MapPin className={cn(isOverLimit ? "text-red-500" : "text-ambev-blue", "md:w-[18px] md:h-[18px]")} size={16} />
               </div>
             </div>
           );
@@ -98,17 +98,61 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                   <div 
                     key={item.id} 
                     onClick={() => onCardClick?.(item)}
-                    className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden cursor-pointer active:scale-[0.98]"
+                    className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]"
                   >
                     <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1 md:w-1.5",
-                      item.status === 'aprovado' ? "bg-green-500" : "bg-orange-500"
+                      item.status === 'aprovado' ? "bg-green-500" : "bg-ambev-blue"
                     )} />
                     
+                    {/* Popover de Detalhes */}
+                    <div className="details-on-hover">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200">
+                        <div className="bg-ambev-blue p-1.5 rounded-lg">
+                          <Layers className="text-ambev-gold w-4 h-4" />
+                        </div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Detalhes do Andaime</h3>
+                      </div>
+
+                      <div className="info-grid">
+                        <div>
+                          <span className="label">Quantidade de Pontos</span>
+                          <p className="text-ambev-blue font-black text-lg">{item.quantidade_pontos}</p>
+                        </div>
+                        <div>
+                          <span className="label">Local / Setor</span>
+                          <p>{item.local_setor}</p>
+                        </div>
+                        <div>
+                          <span className="label">Tipo de Serviço</span>
+                          <p className="uppercase font-black text-[10px]">{item.tipo_servico}</p>
+                        </div>
+                        <div>
+                          <span className="label">Solicitante</span>
+                          <p>{item.solicitante}</p>
+                        </div>
+                        <div>
+                          <span className="label">Data Montagem</span>
+                          <p>{new Date(item.data_montagem).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div>
+                          <span className="label">Data Desmontagem</span>
+                          <p>{item.data_desmontagem ? new Date(item.data_desmontagem).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                        </div>
+                      </div>
+
+                      {item.descricao_local && (
+                        <div className="mt-2 pt-2 border-t border-slate-50">
+                          <span className="label">Descrição do Local</span>
+                          <p className="text-[11px] italic text-slate-600 leading-relaxed">{item.descricao_local}</p>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="space-y-2 md:space-y-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-0.5 md:space-y-1 min-w-0">
-                          <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-orange-500 transition-colors uppercase truncate">
+                          <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase truncate">
                             {item.local_setor}
                           </h3>
                           <p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">{item.tipo_servico}</p>
@@ -116,7 +160,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                         {item.status === 'aprovado' ? (
                           <CheckCircle2 size={14} className="text-green-500 shrink-0 md:w-4 md:h-4" />
                         ) : (
-                          <Clock size={14} className="text-orange-500 shrink-0 md:w-4 md:h-4" />
+                          <Clock size={14} className="text-ambev-blue shrink-0 md:w-4 md:h-4" />
                         )}
                       </div>
 

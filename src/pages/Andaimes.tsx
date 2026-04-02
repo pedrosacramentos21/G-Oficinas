@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock } from 'lucide-react';
 import AndaimeModal from '../components/AndaimeModal';
 import PasswordModal from '../components/PasswordModal';
 import AndaimeBacklog from './AndaimeBacklog';
@@ -94,9 +94,9 @@ export default function Andaimes() {
       title: a.local_setor,
       start: `${datePart}T${a.hora_inicio || '08:00'}`,
       end: `${datePart}T${a.hora_fim || '17:00'}`,
-      backgroundColor: isSelected ? '#f97316' : (a.status === 'aprovado' ? '#22c55e' : '#f59e0b'),
-      borderColor: isSelected ? '#ea580c' : (a.status === 'aprovado' ? '#16a34a' : '#d97706'),
-      textColor: '#ffffff',
+      backgroundColor: isSelected ? '#005596' : (a.status === 'aprovado' ? '#22c55e' : '#FFD100'),
+      borderColor: isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#16a34a' : '#eab308'),
+      textColor: a.status === 'pendente' && !isSelected ? '#1e293b' : '#ffffff',
       className: `event-status-${a.status}`,
       extendedProps: a
     };
@@ -125,94 +125,89 @@ export default function Andaimes() {
   };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 p-2 md:p-4 lg:p-6">
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20 shrink-0">
-            <Layers className="text-white w-5 h-5 md:w-6 md:h-6" />
+    <div className="flex flex-col gap-2 p-2 h-screen overflow-hidden bg-[#f8f9fa]">
+      {/* Compact Header & Toolbar */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-ambev-blue p-2 rounded-lg shadow-sm shadow-ambev-blue/20 shrink-0">
+              <Layers className="text-ambev-gold w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-none">Andaimes</h1>
+              <p className="text-slate-400 font-bold mt-0.5 uppercase tracking-widest text-[7px]">Gestão de Montagem e Desmontagem</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase leading-tight">Andaimes</h1>
-            <p className="text-slate-500 font-bold mt-0.5 md:mt-1 uppercase tracking-widest text-[7px] md:text-[10px]">Gestão de Montagem e Desmontagem de Andaimes</p>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full xl:w-auto">
-          <div className="flex flex-col items-end order-2 sm:order-1">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button 
+                onClick={() => setActiveTab('calendario')}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  activeTab === 'calendario' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <CalendarIcon size={12} />
+                CALENDÁRIO
+              </button>
+              <button 
+                onClick={() => setActiveTab('backlog')}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  activeTab === 'backlog' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <LayoutGrid size={12} />
+                BACKLOG
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-slate-200 mx-1" />
+
             <button 
-              onClick={navigateToNextPending}
-              className="flex items-center gap-2 bg-orange-50 px-2 md:px-3 py-1.5 rounded-lg border border-orange-100 hover:bg-orange-100 transition-all active:scale-95"
-            >
-              <span className="text-[7px] md:text-[10px] font-black text-orange-500 uppercase tracking-widest">Solicitações pendentes:</span>
-              <span className="bg-orange-500 text-white text-[7px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 rounded-full">
-                {pendingAndaimes.length}
-              </span>
-            </button>
-          </div>
-
-          <button 
-            onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={cn(
-              "font-black px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all flex items-center gap-2 uppercase tracking-widest text-[9px] md:text-xs border order-3 sm:order-2",
-              isSelectionMode ? "bg-orange-600 text-white border-orange-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {isSelectionMode ? 'Sair' : 'Selecionar'}
-          </button>
-
-          <div className="flex items-center gap-1 md:gap-2 bg-gray-100 p-1 rounded-xl border border-gray-200 order-1 sm:order-3">
-            <button 
-              onClick={() => setActiveTab('calendario')}
+              onClick={() => setIsSelectionMode(!isSelectionMode)}
               className={cn(
-                "flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-lg font-black text-[7px] md:text-[10px] transition-all",
-                activeTab === 'calendario' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                "font-black px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-widest text-[9px] border",
+                isSelectionMode ? "bg-ambev-blue text-white border-ambev-blue" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               )}
             >
-              <CalendarIcon size={12} className="md:w-[14px] md:h-[14px]" />
-              CALENDÁRIO
+              {isSelectionMode ? 'Sair' : 'Selecionar'}
             </button>
-            <button 
-              onClick={() => setActiveTab('backlog')}
-              className={cn(
-                "flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 rounded-lg font-black text-[7px] md:text-[10px] transition-all",
-                activeTab === 'backlog' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
-              )}
-            >
-              <LayoutGrid size={12} className="md:w-[14px] md:h-[14px]" />
-              BACKLOG
-            </button>
-          </div>
 
-          <button 
-            onClick={openNewRequest}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 md:px-6 py-2 md:py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center gap-2 active:scale-95 uppercase tracking-widest text-[9px] md:text-xs ml-auto xl:ml-0 order-4"
-          >
-            <Plus size={16} className="md:w-[18px] md:h-[18px]" />
-            Nova Solicitação
-          </button>
+            <button 
+              onClick={openNewRequest}
+              className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-4 py-1.5 rounded-lg shadow-sm shadow-ambev-blue/20 transition-all flex items-center gap-1.5 active:scale-95 uppercase tracking-widest text-[9px]"
+            >
+              <Plus size={14} />
+              Nova Solicitação
+            </button>
+
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-1">
+              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().today()} className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
+                Hoje
+              </button>
+              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronLeft size={12} />
+              </button>
+              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {activeTab === 'calendario' ? (
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-4 overflow-hidden flex flex-col custom-calendar h-[850px]">
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
             key={`calendar-${events.length}`}
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
             plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
             initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: window.innerWidth < 768 ? 'multiMonthYear,timeGridDay' : 'multiMonthYear,timeGridWeek,timeGridDay'
-            }}
-            buttonText={{
-              multiMonthYear: 'Mês'
-            }}
-            multiMonthMaxColumns={window.innerWidth < 1024 ? 1 : (window.innerWidth < 1400 ? 2 : 3)}
+            headerToolbar={false}
             events={events}
-            slotMinTime="00:00:00"
-            slotMaxTime="23:59:59"
             scrollTime="08:00:00"
             allDaySlot={false}
             height="100%"
@@ -233,73 +228,130 @@ export default function Andaimes() {
                 const isSelected = selectedIds.includes(data.id);
                 
                 return (
-                  <div 
-                    onClick={(e) => {
-                      if (isSelectionMode) {
-                        e.stopPropagation();
-                        toggleSelection(data.id);
-                      }
-                    }}
-                    className={cn(
-                      "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
-                      data.status === 'aprovado' ? "border-green-500 bg-green-50/50" : "border-yellow-500 bg-yellow-50/50",
-                      isSelected && "ring-2 ring-orange-500 ring-offset-1 bg-orange-500"
-                    )}
-                  >
+                    <div 
+                      onClick={(e) => {
+                        if (isSelectionMode) {
+                          e.stopPropagation();
+                          toggleSelection(data.id);
+                        }
+                      }}
+                      className={cn(
+                        "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
+                        data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40",
+                        isSelected && "ring-2 ring-sky-500 ring-offset-0"
+                      )}
+                    >
                     {isSelectionMode && (
-                      <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
+                      <div className="absolute top-0.5 right-0.5">
                         {isSelected ? (
-                          <CheckCircle2 size={10} className="text-white md:w-3 md:h-3" />
+                          <CheckCircle2 size={8} className="text-sky-500" />
                         ) : (
-                          <div className="w-2.5 h-2.5 md:w-3 md:h-3 border border-slate-300 rounded-sm" />
+                          <div className="w-2 h-2 border border-slate-300 rounded-sm" />
                         )}
                       </div>
                     )}
-                    <div className="space-y-0.5 md:space-y-1">
+                    
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn(
-                          "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
-                          isSelected ? "text-white bg-white/20" : "text-orange-600 bg-orange-50"
+                          "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded border",
+                          data.area === 'Processo cerveja' ? "text-amber-700 bg-amber-50 border-amber-200" :
+                          data.area === 'Packaging, Bblend e Xaroparia' ? "text-blue-700 bg-blue-50 border-blue-200" :
+                          "text-emerald-700 bg-emerald-50 border-emerald-200"
                         )}>
                           {data.area}
                         </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0">
+                            {data.quantidade_pontos} PTS
+                          </span>
+                          <span className={cn(
+                            "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                            data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                          )}>
+                            {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                          </span>
+                        </div>
+                      </div>
+
+                    <div className="font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1">
+                      {eventInfo.event.title}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <User size={6} className="text-slate-400" />
+                      <span className="text-[7px] text-slate-500 font-bold line-clamp-1">
+                        {data.solicitante}
+                      </span>
+                    </div>
+
+                    <div className="details-on-hover">
+                      <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
                         <span className={cn(
-                          "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
+                          "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
                           data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
                         )}>
                           {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
                         </span>
+                        <span className="text-[11px] font-black text-slate-900 uppercase truncate">
+                          {eventInfo.event.title}
+                        </span>
                       </div>
-                      <div className={cn(
-                        "font-black text-[8px] md:text-[10px] uppercase leading-tight line-clamp-2",
-                        isSelected ? "text-white" : "text-slate-900"
-                      )}>
-                        {eventInfo.event.title}
+
+                      <div className="info-grid">
+                        <div>
+                          <span className="label">Área</span>
+                          <p>{data.area}</p>
+                        </div>
+                        <div>
+                          <span className="label">Local/Setor</span>
+                          <p>{data.local_setor}</p>
+                        </div>
+                        <div>
+                          <span className="label">Solicitante</span>
+                          <p>{data.solicitante}</p>
+                        </div>
+                        <div>
+                          <span className="label">Tipo Andaime</span>
+                          <p>{data.tipo_andaime}</p>
+                        </div>
+                        <div>
+                          <span className="label">Tipo Serviço</span>
+                          <p>{data.tipo_servico}</p>
+                        </div>
+                        <div>
+                          <span className="label">Pontos</span>
+                          <p className="text-ambev-blue font-black">{data.quantidade_pontos}</p>
+                        </div>
+                        <div>
+                          <span className="label">Montagem</span>
+                          <p>{new Date(data.data_montagem).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div>
+                          <span className="label">Desmontagem</span>
+                          <p>{new Date(data.data_desmontagem).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div>
+                          <span className="label">Horário</span>
+                          <p>{data.hora_inicio} - {data.hora_fim}</p>
+                        </div>
                       </div>
-                      <div className={cn(
-                        "text-[7px] md:text-[9px] font-medium line-clamp-1",
-                        isSelected ? "text-white/80" : "text-slate-500"
-                      )}>
-                        {data.solicitante}
+                      <div>
+                        <span className="label">Descrição Detalhada</span>
+                        <p className="text-slate-600 italic">{data.descricao_local || 'Sem descrição'}</p>
                       </div>
                     </div>
-                    
-                    <div className={cn(
-                      "mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t hidden md:flex items-center justify-between gap-1",
-                      isSelected ? "border-white/20" : "border-orange-100"
-                    )}>
+
+                    <div className="flex items-center justify-between mt-auto">
                       <span className={cn(
-                        "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
-                        isSelected ? "text-white bg-white/10" : (isMontagem ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600")
+                        "text-[5px] font-black px-0.5 rounded uppercase text-white",
+                        isMontagem ? "bg-ambev-blue" : "bg-blue-500"
                       )}>
                         {data.tipo_servico}
                       </span>
-                      <span className={cn(
-                        "text-[7px] md:text-[8px] font-black uppercase",
-                        isSelected ? "text-white/60" : "text-slate-600"
-                      )}>
-                        {data.quantidade_pontos} PTS
-                      </span>
+                      <div className="flex items-center gap-0.5 text-slate-400">
+                        <Clock size={6} />
+                        <span className="text-[6px] font-bold">{data.hora_inicio}</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -350,178 +402,6 @@ export default function Andaimes() {
         onConfirm={handleAction}
         onDelete={() => setPasswordModal(prev => ({ ...prev, action: 'delete' }))}
       />
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-calendar .fc {
-          --fc-border-color: #f1f5f9;
-          --fc-today-bg-color: #fff7ed;
-          font-family: 'Inter', sans-serif;
-        }
-        .custom-calendar .fc-col-header-cell {
-          padding: 16px 0;
-          background: #fff;
-          border: none !important;
-        }
-        .custom-calendar .fc-col-header-cell-cushion {
-          text-transform: uppercase;
-          font-weight: 900;
-          font-size: 11px;
-          letter-spacing: 0.1em;
-          color: #64748b;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-        }
-        .custom-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
-          color: #f25c05;
-        }
-        .custom-calendar .fc-timegrid-slot {
-          height: 45px !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .custom-calendar .fc-timegrid-slot-label-cushion {
-          font-weight: 700;
-          font-size: 12px;
-          color: #94a3b8;
-        }
-        .custom-calendar .fc-event {
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(242, 92, 5, 0.08);
-          transition: all 0.2s;
-          border-width: 0 0 0 4px !important;
-          margin: 2px !important;
-        }
-        .custom-calendar .fc-event:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(242, 92, 5, 0.12);
-          z-index: 50;
-        }
-        .custom-calendar .fc-toolbar-title {
-          font-weight: 900 !important;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-          color: #1e293b;
-          font-size: 1.25rem !important;
-        }
-        .custom-calendar .fc-button {
-          background: #fff !important;
-          border: 1px solid #e2e8f0 !important;
-          color: #64748b !important;
-          font-weight: 800 !important;
-          text-transform: uppercase !important;
-          font-size: 10px !important;
-          border-radius: 12px !important;
-          padding: 10px 20px !important;
-          box-shadow: none !important;
-        }
-        .custom-calendar .fc-button-active {
-          background: #f25c05 !important;
-          border-color: #f25c05 !important;
-          color: #fff !important;
-        }
-        .fc-multimonth {
-          border: none !important;
-          background: transparent !important;
-        }
-        .fc-multimonth-month {
-          border: 1px solid #f1f5f9 !important;
-          border-radius: 16px !important;
-          margin: 4px !important;
-          padding: 8px !important;
-          background: #fff !important;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
-          flex: 1 1 300px !important;
-          min-width: 280px !important;
-        }
-        .fc-multimonth-title {
-          font-weight: 900 !important;
-          text-transform: uppercase !important;
-          font-size: 11px !important;
-          color: #1e293b !important;
-          margin-bottom: 4px !important;
-          text-align: center !important;
-        }
-        .fc-multimonth-daygrid-table {
-          font-size: 9px !important;
-        }
-        .fc-multimonth-daygrid-table th {
-          font-weight: 800 !important;
-          color: #94a3b8 !important;
-          text-transform: uppercase !important;
-          font-size: 7px !important;
-          padding: 4px 0 !important;
-        }
-        /* Dot styles for Year View */
-        .fc-multimonth .fc-daygrid-event {
-          padding: 0 !important;
-          margin: 0 !important;
-          width: 9px !important;
-          height: 9px !important;
-          border-radius: 50% !important;
-          border: none !important;
-          font-size: 0 !important;
-          display: inline-block !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-        }
-        .fc-multimonth .event-status-aprovado {
-          background-color: #22c55e !important;
-        }
-        .fc-multimonth .event-status-pendente {
-          background-color: #eab308 !important;
-        }
-        .fc-multimonth .fc-event-title {
-          display: none !important;
-        }
-        .fc-multimonth .fc-daygrid-event-h-hook {
-          background: transparent !important;
-        }
-        .fc-multimonth .fc-daygrid-day-events {
-          display: flex !important;
-          flex-wrap: wrap !important;
-          gap: 4px !important;
-          justify-content: center !important;
-          padding-bottom: 6px !important;
-          margin-top: auto !important;
-          width: 100% !important;
-        }
-        .fc-multimonth .fc-daygrid-day-frame {
-          min-height: 52px !important;
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: flex-start !important;
-          padding: 4px 0 !important;
-        }
-        .fc-multimonth .fc-daygrid-day-top {
-          flex-direction: row !important;
-          justify-content: center !important;
-          margin-bottom: 0 !important;
-          width: 100% !important;
-          height: auto !important;
-        }
-        .fc-multimonth .fc-daygrid-day-number {
-          font-weight: 800 !important;
-          font-size: 13px !important;
-          padding: 4px 8px !important;
-          position: relative !important;
-          z-index: 1 !important;
-          color: #1e293b !important;
-          line-height: 1 !important;
-        }
-        .fc-multimonth .fc-day-today {
-          background: #fff7ed !important;
-        }
-        .fc-multimonth .fc-day-today .fc-daygrid-day-number {
-          color: #f25c05 !important;
-          background: #ffedd5 !important;
-          border-radius: 4px !important;
-        }
-        .custom-calendar .fc-theme-standard td, .custom-calendar .fc-theme-standard th {
-          border-color: #f1f5f9;
-        }
-      `}} />
     </div>
   );
 }

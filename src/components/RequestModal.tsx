@@ -58,7 +58,7 @@ export default function RequestModal({
             <div className="col-span-2">
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Área</label>
               <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                 value={formData.area}
                 onChange={e => setFormData({ ...formData, area: (e.target as HTMLSelectElement).value })}
                 required
@@ -71,7 +71,7 @@ export default function RequestModal({
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Responsável</label>
               <input
                 type="text"
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                 value={formData.responsavel}
                 onChange={e => setFormData({ ...formData, responsavel: (e.target as HTMLInputElement).value })}
                 placeholder="Ex: Mauricio"
@@ -82,7 +82,7 @@ export default function RequestModal({
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Tipo</label>
               <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                 value={formData.tipo}
                 onChange={e => setFormData({ ...formData, tipo: (e.target as HTMLSelectElement).value as Tipo })}
               >
@@ -94,7 +94,7 @@ export default function RequestModal({
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Prioridade</label>
               <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                 value={formData.prioridade}
                 onChange={e => setFormData({ ...formData, prioridade: (e.target as HTMLSelectElement).value as Prioridade })}
               >
@@ -108,7 +108,7 @@ export default function RequestModal({
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Data</label>
               <input
                 type="date"
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                 value={formData.data}
                 onChange={e => setFormData({ ...formData, data: (e.target as HTMLInputElement).value })}
                 required
@@ -120,7 +120,7 @@ export default function RequestModal({
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Início</label>
                 <input
                   type="time"
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                   value={formData.hora_inicio}
                   onChange={e => setFormData({ ...formData, hora_inicio: (e.target as HTMLInputElement).value })}
                   required
@@ -130,7 +130,7 @@ export default function RequestModal({
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Fim</label>
                 <input
                   type="time"
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium"
                   value={formData.hora_fim}
                   onChange={e => setFormData({ ...formData, hora_fim: (e.target as HTMLInputElement).value })}
                   required
@@ -141,7 +141,7 @@ export default function RequestModal({
             <div className="col-span-2">
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Descrição do Serviço</label>
               <textarea
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all font-medium min-h-[100px]"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ambev-blue focus:border-ambev-blue transition-all font-medium min-h-[100px]"
                 value={formData.descricao}
                 onChange={e => setFormData({ ...formData, descricao: (e.target as HTMLTextAreaElement).value })}
                 placeholder="Detalhes do serviço..."
@@ -171,7 +171,7 @@ export default function RequestModal({
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200 transition-all active:scale-95"
+                className="px-8 py-3 bg-ambev-blue hover:bg-ambev-blue/90 text-white rounded-xl font-bold shadow-lg shadow-ambev-blue/20 transition-all active:scale-95"
               >
                 Salvar Solicitação
               </button>

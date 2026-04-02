@@ -15,8 +15,8 @@ const TIPOS_SERVICO = [
   'Desmontagem'
 ];
 
-const HORARIOS = Array.from({ length: 12 }, (_, i) => {
-  const hour = (i + 7).toString().padStart(2, '0');
+const HORARIOS = Array.from({ length: 24 }, (_, i) => {
+  const hour = i.toString().padStart(2, '0');
   return `${hour}:00`;
 });
 
@@ -37,7 +37,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
     data_montagem: new Date().toISOString().split('T')[0],
     data_desmontagem: '',
     hora_inicio: '08:00',
-    hora_fim: '09:00',
+    hora_fim: '17:00',
     solicitante: '',
     descricao_local: ''
   };
@@ -152,7 +152,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
               <p className="text-gray-500 font-bold text-lg">
                 Aguarde aprovação da solicitação por
               </p>
-              <p className="text-orange-500 font-black text-xl uppercase">
+              <p className="text-ambev-blue font-black text-xl uppercase">
                 Pedro Sacramento - ITF
               </p>
             </div>
@@ -176,10 +176,10 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
             </button>
           </div>
         )}
-        <div className="p-4 sm:p-6 border-b border-orange-50 flex items-center justify-between bg-orange-50/30 sticky top-0 z-10 backdrop-blur-sm">
+        <div className="p-4 sm:p-6 border-b border-ambev-blue/10 flex items-center justify-between bg-ambev-blue/5 sticky top-0 z-10 backdrop-blur-sm">
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
-                  <Layers className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+                <div className="bg-ambev-blue p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-ambev-blue/20">
+                  <Layers className="text-ambev-gold w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none uppercase">Andaimes</h2>
@@ -198,7 +198,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {andaime?.status === 'pendente' && (
                 <div className="px-6 pt-4">
-                  <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest animate-pulse bg-orange-50 p-3 rounded-xl border border-orange-100 text-center">
+                  <p className="text-[10px] font-black text-ambev-blue uppercase tracking-widest animate-pulse bg-blue-50 p-3 rounded-xl border border-blue-100 text-center">
                     Aguardar aprovação por Pedro Sacramento - ITF
                   </p>
                 </div>
@@ -211,7 +211,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                   <input 
                     type="text"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none"
                     placeholder="Ex: Torre de Resfriar"
                     value={formData.local_setor}
                     onChange={e => setFormData({...formData, local_setor: e.target.value})}
@@ -221,7 +221,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                 <div>
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Área</label>
                   <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none appearance-none"
                     value={formData.area}
                     onChange={e => setFormData({...formData, area: e.target.value})}
                   >
@@ -232,7 +232,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                 <div>
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Tipo de Serviço</label>
                   <select 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none appearance-none"
                     value={formData.tipo_servico}
                     onChange={e => setFormData({...formData, tipo_servico: e.target.value})}
                   >
@@ -246,7 +246,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                     type="number"
                     min="1"
                     required
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none"
                     value={formData.quantidade_pontos}
                     onChange={e => setFormData({...formData, quantidade_pontos: parseInt(e.target.value)})}
                   />
@@ -380,7 +380,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
                 form="andaime-form"
                 type="submit"
                 disabled={isSubmitting || !isUnlocked}
-                className="flex-[2] px-6 py-3.5 sm:py-3 bg-orange-500 text-white font-black rounded-xl shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs order-1 sm:order-2"
+                className="flex-[2] px-6 py-3.5 sm:py-3 bg-ambev-blue text-white font-black rounded-xl shadow-xl shadow-ambev-blue/20 hover:bg-ambev-blue/90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest text-xs order-1 sm:order-2"
               >
                 {isSubmitting ? 'Processando...' : (andaime ? 'Salvar Alterações' : 'Solicitar Agendamento')}
               </button>

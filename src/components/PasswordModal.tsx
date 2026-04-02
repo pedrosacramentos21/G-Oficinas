@@ -24,8 +24,8 @@ export default function PasswordModal({ isOpen, onClose, onConfirm, onDelete }: 
       <div className="bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
         <div className="p-6 sm:p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="bg-orange-500 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/20">
-              <Shield className="text-white w-5 h-5 sm:w-6 sm:h-6" size={24} />
+            <div className="bg-ambev-blue p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg shadow-ambev-blue/20">
+              <Shield className="text-ambev-gold w-5 h-5 sm:w-6 sm:h-6" size={24} />
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-none uppercase">Ação Restrita</h2>
@@ -44,7 +44,7 @@ export default function PasswordModal({ isOpen, onClose, onConfirm, onDelete }: 
               type="password"
               required
               autoFocus
-              className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-center text-2xl tracking-[0.5em]"
+              className="w-full bg-gray-50 border-none rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue transition-all text-center text-2xl tracking-[0.5em]"
               value={password}
               onChange={e => setPassword(e.target.value)}
             />
@@ -65,7 +65,7 @@ export default function PasswordModal({ isOpen, onClose, onConfirm, onDelete }: 
             )}
             <button 
               type="submit"
-              className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 order-1 sm:order-2"
+              className="w-full sm:flex-1 bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-ambev-blue/20 transition-all flex items-center justify-center gap-2 order-1 sm:order-2"
             >
               <CheckCircle size={18} />
               APROVAR

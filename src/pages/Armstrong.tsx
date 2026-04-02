@@ -25,7 +25,8 @@ import {
   Info,
   Trash2,
   CheckSquare,
-  Square
+  Square,
+  Thermometer
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { cn } from '../lib/utils';
@@ -104,8 +105,8 @@ export default function Armstrong() {
     equipamento: '',
     responsavel: '',
     data: '',
-    hora_inicio: '07:00',
-    hora_fim: '08:00',
+    hora_inicio: '08:00',
+    hora_fim: '17:00',
     descricao: '',
     observacoes: '',
     impacto_energetico: '',
@@ -428,9 +429,9 @@ export default function Armstrong() {
     title: m.titulo || m.descricao || 'Intervenção',
     start: `${m.data}T${m.hora_inicio}`,
     end: `${m.data}T${m.hora_fim}`,
-    backgroundColor: m.status === 'Concluída' ? '#dcfce7' : (m.status === 'Planejada' ? '#fef9c3' : '#fee2e2'),
-    borderColor: m.status === 'Concluída' ? '#22c55e' : (m.status === 'Planejada' ? '#eab308' : '#ef4444'),
-    textColor: '#1e293b',
+    backgroundColor: m.status === 'Concluída' ? '#22c55e' : (m.status === 'Planejada' ? '#FFD100' : '#ef4444'),
+    borderColor: m.status === 'Concluída' ? '#16a34a' : (m.status === 'Planejada' ? '#eab308' : '#dc2626'),
+    textColor: m.status === 'Planejada' ? '#1e293b' : '#ffffff',
     extendedProps: m
   }));
 
@@ -512,59 +513,61 @@ export default function Armstrong() {
       "flex flex-col gap-3 md:gap-4 p-2 md:p-6",
       activeTab === 'calendario' ? "h-screen overflow-hidden" : "min-h-screen h-auto overflow-y-auto"
     )}>
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 shrink-0">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
-            <Flame className="text-white w-5 h-5 md:w-6 md:h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">Armstrong (Vapor)</h1>
-            <p className="text-slate-500 font-bold mt-0.5 md:mt-1 uppercase tracking-widest text-[8px] md:text-[10px]">Gestão de purgadores e sistemas de vapor</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 w-full lg:w-auto">
-          <div className="flex items-center gap-1 md:gap-2 bg-gray-100 p-1 rounded-xl border border-gray-200">
-            <button 
-              onClick={() => {
-                setActiveTab('calendario');
-                setSelectionMode(false);
-                setSelectedIds([]);
-              }}
-              className={cn(
-                "flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg font-black text-[9px] md:text-[10px] transition-all",
-                activeTab === 'calendario' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
-              )}
-            >
-              <CalendarIcon size={14} />
-              CALENDÁRIO
-            </button>
-            <button 
-              onClick={() => {
-                setActiveTab('backlog');
-                setSelectionMode(false);
-                setSelectedIds([]);
-              }}
-              className={cn(
-                "flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 md:px-4 py-2 rounded-lg font-black text-[9px] md:text-[10px] transition-all",
-                activeTab === 'backlog' ? "bg-white text-orange-500 shadow-sm" : "text-gray-400 hover:text-gray-600"
-              )}
-            >
-              <LayoutGrid size={14} />
-              BACKLOG
-            </button>
+      {/* Header & Toolbar */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-ambev-blue p-2 rounded-lg shadow-sm shadow-ambev-blue/20 shrink-0">
+              <Thermometer className="text-ambev-gold w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-none">Armstrong</h1>
+              <p className="text-slate-400 font-bold mt-0.5 uppercase tracking-widest text-[7px]">Gestão de vapor e sistemas térmicos</p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button 
+                onClick={() => {
+                  setActiveTab('calendario');
+                  setSelectionMode(false);
+                  setSelectedIds([]);
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  activeTab === 'calendario' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <CalendarIcon size={10} />
+                CALENDÁRIO
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveTab('backlog');
+                  setSelectionMode(false);
+                  setSelectedIds([]);
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  activeTab === 'backlog' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <LayoutGrid size={10} />
+                BACKLOG
+              </button>
+            </div>
+
+            <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden lg:block" />
+
             {selectionMode ? (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <>
                 <button 
                   onClick={() => {
                     setSelectionMode(false);
                     setSelectedIds([]);
                   }}
-                  className="flex-1 sm:flex-none bg-slate-200 hover:bg-slate-300 text-slate-600 font-black px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all text-[9px] md:text-[10px] uppercase tracking-widest"
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest"
                 >
                   Cancelar
                 </button>
@@ -576,40 +579,40 @@ export default function Armstrong() {
                     id: null
                   })}
                   disabled={selectedIds.length === 0}
-                  className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white font-black px-3 md:px-4 py-2.5 md:py-3 rounded-xl shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-[9px] md:text-[10px] uppercase tracking-widest"
+                  className="bg-red-500 hover:bg-red-600 text-white font-black px-2 py-1 rounded-lg shadow-lg shadow-red-500/20 transition-all flex items-center gap-1 disabled:opacity-50 text-[8px] uppercase tracking-widest"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={10} />
                   Excluir ({selectedIds.length})
                 </button>
-              </div>
+              </>
             ) : (
               <button 
                 onClick={() => setSelectionMode(true)}
-                className="flex-1 sm:flex-none bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all text-[9px] md:text-[10px] uppercase tracking-widest flex items-center justify-center gap-2"
+                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest flex items-center gap-1"
               >
-                <CheckSquare size={14} />
+                <CheckSquare size={10} />
                 Selecionar
               </button>
             )}
             <button 
               onClick={openNewModal}
-              className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600 text-white font-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 active:scale-95 uppercase tracking-widest text-[10px] md:text-xs"
+              className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-3 py-1.5 rounded-lg shadow-lg shadow-ambev-blue/20 transition-all flex items-center gap-1 active:scale-95 uppercase tracking-widest text-[8px]"
             >
-              <Plus size={18} />
-              Nova Manutenção
+              <Plus size={12} />
+              <span>Nova Manutenção</span>
             </button>
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5">
               <button 
                 onClick={handleToday}
-                className="px-3 py-1.5 hover:bg-slate-50 rounded-lg text-slate-600 font-black text-[10px] uppercase tracking-widest transition-all border-r border-slate-100"
+                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all border-r border-slate-100"
               >
                 Hoje
               </button>
-              <button onClick={handlePrev} className="p-1.5 md:p-2 hover:bg-slate-50 rounded-lg text-slate-600 transition-all">
-                <ChevronLeft size={18} />
+              <button onClick={handlePrev} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronLeft size={12} />
               </button>
-              <button onClick={handleNext} className="p-1.5 md:p-2 hover:bg-slate-50 rounded-lg text-slate-600 transition-all">
-                <ChevronRight size={18} />
+              <button onClick={handleNext} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronRight size={12} />
               </button>
             </div>
           </div>
@@ -617,99 +620,88 @@ export default function Armstrong() {
       </div>
 
       {activeTab === 'calendario' ? (
-        <div className="flex-1 flex flex-col gap-6 overflow-hidden">
-          {/* PCM Areas Panel */}
-          <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-2 md:p-3 shrink-0 overflow-y-auto overflow-x-hidden max-h-[160px] custom-scrollbar relative scroll-pt-[40px]">
-            <h2 className="text-[10px] md:text-[12px] font-bold text-slate-700 uppercase tracking-tight mb-2 flex items-center gap-2 sticky top-0 bg-white z-[40] pb-1 border-b border-slate-100">
-              <Clock size={14} className="text-orange-500" />
-              Áreas em PCM (Parada de Manutenção)
-            </h2>
-            <div className="grid grid-cols-7 gap-1 md:gap-3 min-w-[600px] lg:min-w-0 relative z-[1]">
-              {/* Day Headers - Sticky */}
-              {weekDays.map((day, idx) => {
-                const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
-                const dayOfMonth = day.getDate();
-                return (
-                  <div key={`header-${idx}`} className="sticky top-[24px] md:top-[28px] z-[30] bg-white pb-1 border-b border-slate-100">
-                    <div className="text-center py-0.5">
-                      <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">{dayName}., {dayOfMonth}</span>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Day Content */}
-              {weekDays.map((day, idx) => {
-                const dateStr = day.toISOString().split('T')[0];
-                const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
-                
-                return (
-                  <div key={`content-${idx}`} className="flex flex-col min-w-[100px] sm:min-w-0 h-full">
-                    <div className="flex-1 bg-slate-50/50 rounded-lg p-1 md:p-1.5 pb-[36px] border border-slate-100 flex flex-col gap-1 relative group min-h-[60px] z-[1]">
-                      <div className="flex-1 flex flex-col gap-1">
+        <div className="flex-1 flex flex-col gap-4 md:gap-6 overflow-hidden">
+          {/* PCM Areas Panel - Compact */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-1 shrink-0 overflow-x-auto custom-scrollbar">
+            <div className="flex items-center gap-2 min-w-[1000px]">
+              <div className="flex items-center gap-1.5 px-2 py-1 border-r border-slate-100 shrink-0">
+                <Clock size={12} className="text-orange-500" />
+                <span className="text-[9px] font-black text-slate-700 uppercase tracking-tight">Áreas em PCM</span>
+              </div>
+              
+              <div className="flex-1 grid grid-cols-7 gap-1">
+                {weekDays.map((day, idx) => {
+                  const dateStr = day.toISOString().split('T')[0];
+                  const areas = armstrongPCMAreas.filter(a => a.data === dateStr);
+                  const dayName = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][idx];
+                  const dayOfMonth = day.getDate();
+                  
+                  return (
+                    <div key={`pcm-${idx}`} className="flex items-center gap-1 bg-slate-50/50 rounded-md p-1 border border-slate-100 min-h-[40px]">
+                      <div className="flex flex-col items-center justify-center border-r border-slate-200 pr-1 shrink-0">
+                        <span className="text-[6px] font-bold text-slate-400 uppercase">{dayName}</span>
+                        <span className="text-[8px] font-black text-slate-600 leading-none">{dayOfMonth}</span>
+                      </div>
+                      
+                      <div className="flex-1 flex flex-wrap gap-0.5">
                         {areas.length > 0 ? (
                           areas.map(a => (
-                            <div key={a.id} className="relative z-1 bg-orange-50 border border-orange-100 px-1.5 md:px-2 py-0.5 rounded flex items-center justify-between gap-1 shadow-sm overflow-hidden w-fit max-w-full">
-                              <span className="text-[8px] md:text-[10px] font-black text-orange-600 uppercase truncate">{a.area}</span>
-                              <button onClick={() => deleteArmstrongPCMArea(a.id)} className="text-orange-400 hover:text-orange-600 transition-colors shrink-0 ml-1">
-                                <X size={10} />
+                            <div key={a.id} className="bg-orange-50 border border-orange-100 px-1 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
+                              <span className="text-[7px] font-black text-orange-600 uppercase truncate max-w-[40px]">{a.area}</span>
+                              <button onClick={() => deleteArmstrongPCMArea(a.id)} className="text-orange-400 hover:text-orange-600 transition-colors">
+                                <X size={6} />
                               </button>
                             </div>
                           ))
                         ) : (
-                          <div className="flex-1 flex items-center justify-center py-2">
-                            <span className="text-[8px] md:text-[9px] text-slate-300 italic font-medium">Nenhuma parada</span>
-                          </div>
+                          <span className="text-[6px] text-slate-300 italic font-medium">Livre</span>
                         )}
                       </div>
                       
-                      <div className="absolute bottom-2 right-2 left-2 z-10 flex justify-end">
+                      <div className="shrink-0">
                         {addingPCMArea?.date === dateStr ? (
-                          <div className="w-full bg-white shadow-lg rounded p-0.5 border border-orange-200">
-                            <input
-                              ref={pcmInputRef}
-                              type="text"
-                              className="w-full bg-white border border-orange-500 rounded px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-bold uppercase focus:outline-none"
-                              value={addingPCMArea.value}
-                              onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
-                              onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
-                              onBlur={() => {
-                                if (!addingPCMArea.value.trim()) setAddingPCMArea(null);
-                              }}
-                              autoFocus
-                              placeholder="..."
-                            />
-                          </div>
+                          <input
+                            ref={pcmInputRef}
+                            type="text"
+                            className="w-12 bg-white border border-orange-500 rounded px-1 py-0.5 text-[7px] font-bold uppercase focus:outline-none"
+                            value={addingPCMArea.value}
+                            onChange={(e) => setAddingPCMArea({ ...addingPCMArea, value: e.target.value })}
+                            onKeyDown={(e) => handlePCMAreaKeyDown(e, dateStr)}
+                            onBlur={() => {
+                              if (!addingPCMArea.value.trim()) setAddingPCMArea(null);
+                            }}
+                            autoFocus
+                            placeholder="..."
+                          />
                         ) : (
                           <button 
                             onClick={() => handleAddPCMAreaTag(dateStr)}
-                            className="w-5 h-5 md:w-6 md:h-6 rounded bg-white border border-slate-200 text-slate-400 hover:text-orange-500 hover:border-orange-500 transition-all shadow-sm flex items-center justify-center"
-                            title="Adicionar Área"
+                            className="w-4 h-4 rounded bg-white border border-slate-200 text-slate-400 hover:text-orange-500 hover:border-orange-500 transition-all flex items-center justify-center"
                           >
-                            <Plus size={10} />
+                            <Plus size={8} />
                           </button>
                         )}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Calendar */}
-          <div className="flex-1 bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar min-h-0">
-            <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar">
-              <div className="min-w-[1200px] w-max h-full">
+          <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-100 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
+            <div className="flex-1 custom-scrollbar calendar-scroller !overflow-visible">
+              <div className="min-w-[1000px] w-full h-full !overflow-visible">
                 <FullCalendar
+                  key={`calendar-${events.length}`}
                   ref={calendarRef}
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                   initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
                   locale={ptBrLocale}
                   headerToolbar={false}
                   events={events}
-                  slotMinTime="07:00:00"
-                  slotMaxTime="18:00:00"
+                  scrollTime="08:00:00"
                   allDaySlot={false}
                   height="100%"
                   expandRows={true}
@@ -740,62 +732,143 @@ export default function Armstrong() {
                           }
                         }}
                         className={cn(
-                          "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
-                          data.status === 'Concluída' ? "border-green-500 bg-green-50/50" : 
-                          data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/50" : 
-                          "border-red-500 bg-red-50/50",
-                          isSelected && "ring-2 ring-orange-500 ring-offset-1"
-                        )}
-                      >
+                          "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
+                          data.status === 'Concluída' ? "border-green-500 bg-green-50/40" : 
+                          data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/40" : 
+                          "border-red-500 bg-red-50/40",
+                          isSelected && "ring-2 ring-orange-500 ring-offset-0"
+                        )}>
                         {selectionMode && (
-                          <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
+                          <div className="absolute top-0.5 right-0.5">
                             {isSelected ? (
-                              <CheckSquare size={10} className="text-orange-500 md:w-3 md:h-3" />
+                              <CheckSquare size={8} className="text-orange-500" />
                             ) : (
-                              <Square size={10} className="text-slate-300 md:w-3 md:h-3" />
+                              <Square size={8} className="text-slate-300" />
                             )}
                           </div>
                         )}
-                        <div className="space-y-0.5 md:space-y-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <div className="flex items-center gap-1">
-                              <span className={cn(
-                                "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate",
-                                areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
-                              )}>
-                                {data.area}
-                              </span>
-                            </div>
+                        
+                        <div className="flex items-center justify-between gap-1">
+                          <span className={cn(
+                            "text-[6px] font-black uppercase tracking-tighter truncate",
+                            areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
+                          )}>
+                            {data.area}
+                          </span>
+                          <span className={cn(
+                            "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                            data.status === 'Concluída' ? "bg-green-500" : 
+                            data.status === 'Planejada' ? "bg-yellow-500" : 
+                            "bg-red-500"
+                          )}>
+                            {data.status}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-0">
+                          <h3 className="text-[7px] font-black text-slate-900 leading-tight uppercase line-clamp-1">
+                            {data.equipamento}
+                          </h3>
+                          <div className="flex items-center gap-1">
+                            <User size={6} className="text-slate-400" />
+                            <span className="text-[6px] text-slate-500 font-bold line-clamp-1">
+                              {data.responsavel}
+                            </span>
+                          </div>
+                          <div className={cn(
+                            "text-[5px] font-black uppercase tracking-tighter truncate",
+                            data.tipo_manutencao === 'Corretiva' ? "text-red-600" :
+                            data.tipo_manutencao === 'Preventiva' ? "text-blue-600" :
+                            "text-amber-600"
+                          )}>
+                            {data.tipo_manutencao}
+                          </div>
+                          <p className="text-[6px] font-bold text-slate-500 leading-tight line-clamp-1">
+                            {data.servico}
+                          </p>
+                        </div>
+
+                        <div className="details-on-hover">
+                          <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
                             <span className={cn(
-                              "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
+                              "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
                               data.status === 'Concluída' ? "bg-green-500" : 
                               data.status === 'Planejada' ? "bg-yellow-500" : 
                               "bg-red-500"
                             )}>
                               {data.status}
                             </span>
-                          </div>
-                          <div className="font-black text-[8px] md:text-[10px] text-slate-900 uppercase leading-tight line-clamp-2">
-                            {data.equipamento}
-                          </div>
-                          <div className="text-[7px] md:text-[9px] text-slate-500 font-medium line-clamp-1">
-                            {data.responsavel}
-                          </div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className={cn(
-                              "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white",
-                              data.tipo_manutencao === 'Corretiva' ? "bg-red-500" :
-                              data.tipo_manutencao === 'Preventiva' ? "bg-blue-500" :
-                              "bg-amber-500"
-                            )}>
-                              {data.tipo_manutencao}
+                            <span className="text-[11px] font-black text-slate-900 uppercase truncate">
+                              {data.equipamento}
                             </span>
                           </div>
+
+                          <div className="info-grid">
+                            <div>
+                              <span className="label">Título</span>
+                              <p className="text-ambev-blue">{data.titulo}</p>
+                            </div>
+                            <div>
+                              <span className="label">Área</span>
+                              <p className={cn(
+                                "font-bold",
+                                data.area === 'Packaging' ? "text-blue-600" :
+                                data.area === 'Processo Refri' ? "text-purple-600" :
+                                data.area === 'Processo Cerveja' ? "text-amber-600" :
+                                data.area === 'Meio ambiente' ? "text-emerald-600" :
+                                data.area === 'Utilidades' ? "text-cyan-600" :
+                                data.area === 'Subprodutos' ? "text-indigo-600" :
+                                data.area === 'ADM' ? "text-slate-600" :
+                                data.area === 'Outras áreas' ? "text-rose-600" :
+                                "text-slate-600"
+                              )}>{data.area}</p>
+                            </div>
+                            {data.sub_area && (
+                              <div>
+                                <span className="label">Sub-área</span>
+                                <p>{data.sub_area}</p>
+                              </div>
+                            )}
+                            <div>
+                              <span className="label">Responsável</span>
+                              <p>{data.responsavel}</p>
+                            </div>
+                            <div>
+                              <span className="label">Impacto Energético</span>
+                              <p className="text-green-600 font-black">{data.impacto_energetico || '-'}</p>
+                            </div>
+                            <div>
+                              <span className="label">Investimento</span>
+                              <p className="text-ambev-blue font-black">R$ {data.investimento_estimado || '0,00'}</p>
+                            </div>
+                            <div>
+                              <span className="label">Tipo</span>
+                              <p>{data.tipo_manutencao}</p>
+                            </div>
+                            <div>
+                              <span className="label">Horário</span>
+                              <p>{data.hora_inicio} - {data.hora_fim}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="label">Descrição Detalhada</span>
+                            <p className="text-slate-600 italic">{data.descricao || 'Sem descrição'}</p>
+                            {data.observacoes && (
+                              <>
+                                <span className="label mt-2">Observações</span>
+                                <p className="text-slate-500">{data.observacoes}</p>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t border-orange-100 hidden md:block">
-                          <p className="text-[8px] text-slate-600 font-bold uppercase truncate italic">
-                            {data.descricao}
-                          </p>
+
+                        <div className="mt-auto flex items-center justify-end gap-1 pt-0.5 border-t border-slate-100/50">
+                          <div className="flex items-center gap-0.5">
+                            <Clock size={6} className="text-slate-400" />
+                            <span className="text-[5px] font-black text-slate-600">
+                              {data.hora_inicio}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1211,8 +1284,8 @@ export default function Armstrong() {
                         value={formData.hora_inicio}
                         onChange={e => setFormData({...formData, hora_inicio: e.target.value})}
                       >
-                        {Array.from({ length: 13 }, (_, i) => {
-                          const h = String(i + 7).padStart(2, '0');
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const h = String(i).padStart(2, '0');
                           return <option key={h} value={`${h}:00`}>{h}:00</option>;
                         })}
                       </select>
@@ -1224,8 +1297,8 @@ export default function Armstrong() {
                         value={formData.hora_fim}
                         onChange={e => setFormData({...formData, hora_fim: e.target.value})}
                       >
-                        {Array.from({ length: 13 }, (_, i) => {
-                          const h = String(i + 7).padStart(2, '0');
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const h = String(i).padStart(2, '0');
                           return <option key={h} value={`${h}:00`}>{h}:00</option>;
                         })}
                       </select>
@@ -1341,99 +1414,6 @@ export default function Armstrong() {
         onClose={() => setPasswordModal({ ...passwordModal, isOpen: false })}
         onConfirm={handlePasswordConfirm}
       />
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-calendar .fc {
-          --fc-border-color: #f1f5f9;
-          --fc-today-bg-color: #fff7ed;
-          font-family: 'Inter', sans-serif;
-        }
-        .custom-calendar .fc-col-header-cell {
-          padding: 16px 0;
-          background: #fff;
-          border: none !important;
-        }
-        .custom-calendar .fc-col-header-cell-cushion {
-          text-transform: uppercase;
-          font-weight: 900;
-          font-size: 11px;
-          letter-spacing: 0.1em;
-          color: #64748b;
-        }
-        .custom-calendar .fc-timegrid-slot {
-          height: 60px !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .custom-calendar .fc-timegrid-slot-label-cushion {
-          font-weight: 700;
-          font-size: 12px;
-          color: #94a3b8;
-        }
-        .custom-calendar .fc-event {
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(242, 92, 5, 0.08);
-          transition: all 0.2s;
-          border: none !important;
-          margin: 2px !important;
-        }
-        .custom-calendar .fc-event:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(242, 92, 5, 0.12);
-          z-index: 50;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-          display: block !important;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-          border: 1px solid #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-        
-        /* FullCalendar Scrollbar Styling */
-        .fc-scroller::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-          display: block !important;
-        }
-        .fc-scroller::-webkit-scrollbar-track {
-          background: #f1f5f9;
-        }
-        .fc-scroller::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        
-        /* Mobile adjustments */
-        @media (max-width: 640px) {
-          .fc-header-toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-          }
-          .fc-toolbar-chunk {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-          }
-          .fc-view-h-scroll {
-            overflow-x: auto !important;
-          }
-          .fc-timegrid-slot {
-            height: 50px !important;
-          }
-        }
-      `}} />
     </div>
   );
 }

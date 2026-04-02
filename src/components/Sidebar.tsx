@@ -84,26 +84,28 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
 
   return (
     <div className={cn(
-      "h-screen bg-[#1e293b] text-white flex flex-col shadow-2xl transition-all duration-300 relative",
+      "h-screen bg-ambev-blue text-white flex flex-col shadow-2xl transition-all duration-300 relative",
       collapsed ? "w-20" : "w-72"
     )}>
       <div className={cn(
-        "p-6 border-b border-white/5 flex items-center justify-between overflow-hidden relative",
+        "p-6 border-b border-white/10 flex items-center justify-between overflow-hidden relative bg-black/10",
         collapsed && "px-0 justify-center"
       )}>
         <h1 className={cn(
-          "text-xl font-bold text-white flex items-center gap-2 transition-all duration-300",
+          "text-xl font-black text-white flex items-center gap-2 transition-all duration-300 tracking-tighter",
           collapsed ? "opacity-0 w-0" : "opacity-100"
         )}>
-          <Construction className="text-orange-500 shrink-0" />
-          <span className="truncate">G-Oficinas</span>
+          <div className="w-8 h-8 bg-ambev-gold rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-ambev-gold/20">
+            <Construction className="text-ambev-blue" size={20} />
+          </div>
+          <span className="truncate uppercase italic">Ambev <span className="text-ambev-gold">Ops</span></span>
         </h1>
         
         {/* Toggle Button - Desktop */}
         <button 
           onClick={onToggle}
           className={cn(
-            "absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-orange-600 transition-all z-50 hidden lg:flex",
+            "absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-ambev-gold text-ambev-blue rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all z-50 hidden lg:flex",
             collapsed && "right-7"
           )}
         >
@@ -123,7 +125,7 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
         {menuItems.map((group) => (
           <div key={group.group} className={cn("mb-8 px-4", collapsed && "px-0")}>
             <h2 className={cn(
-              "text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4 px-2 transition-all duration-300",
+              "text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4 px-2 transition-all duration-300",
               collapsed ? "opacity-0 h-0 mb-0 overflow-hidden" : "opacity-100"
             )}>
               {group.group}
@@ -137,15 +139,15 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
                   className={({ isActive }) => cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 group relative",
                     isActive 
-                      ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 translate-x-1" 
-                      : "text-gray-400 hover:bg-white/5 hover:text-white",
+                      ? "bg-ambev-gold text-ambev-blue shadow-lg shadow-ambev-gold/20 translate-x-1" 
+                      : "text-white/70 hover:bg-white/5 hover:text-white",
                     collapsed && "justify-center px-0 rounded-none translate-x-0"
                   )}
                   title={collapsed ? item.name : undefined}
                 >
                   <item.icon size={18} className={cn(
                     "transition-colors shrink-0",
-                    "group-hover:text-orange-500"
+                    "group-hover:text-ambev-gold"
                   )} />
                   <span className={cn(
                     "transition-all duration-300 truncate",
@@ -155,7 +157,7 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
                   </span>
                   {getPendingCount(item.path) > 0 && (
                     <span className={cn(
-                      "absolute bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-red-500/20 transition-all duration-300",
+                      "absolute bg-ambev-red text-white text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-ambev-red/20 transition-all duration-300",
                       collapsed ? "right-2 top-2" : "right-4"
                     )}>
                       {getPendingCount(item.path)}
@@ -169,17 +171,17 @@ export default function Sidebar({ collapsed, onToggle, onCloseMobile }: SidebarP
       </div>
 
       <div className={cn(
-        "p-6 border-t border-white/5 bg-black/10 transition-all duration-300",
+        "p-6 border-t border-white/10 bg-black/20 transition-all duration-300",
         collapsed ? "items-center justify-center p-4" : ""
       )}>
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0 shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
           <div className={cn(
             "text-xs transition-all duration-300",
             collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
           )}>
-            <p className="font-bold text-gray-400 uppercase tracking-tighter">ONLINE</p>
-            <p className="text-[10px] text-gray-500">v4.5</p>
+            <p className="font-black text-white/50 uppercase tracking-tighter">SISTEMA ATIVO</p>
+            <p className="text-[10px] text-ambev-gold font-bold">UNIDADE CERVEJARIA</p>
           </div>
         </div>
       </div>

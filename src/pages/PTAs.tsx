@@ -6,7 +6,7 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
-import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import PasswordModal from '../components/PasswordModal';
 
@@ -100,9 +100,9 @@ export default function PTAs() {
       title: p.responsavel,
       start: `${datePart}T${horaInicio}`,
       end: `${datePart}T${horaFim}`,
-      backgroundColor: isSelected ? '#3b82f6' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#f59e0b'),
-      borderColor: isSelected ? '#1d4ed8' : (p.status === 'aprovado' ? (equip?.color || '#3b82f6') : '#d97706'),
-      textColor: '#ffffff',
+      backgroundColor: isSelected ? '#005596' : (p.status === 'aprovado' ? (equip?.color || '#005596') : '#FFD100'),
+      borderColor: isSelected ? '#003d6b' : (p.status === 'aprovado' ? (equip?.color || '#005596') : '#eab308'),
+      textColor: p.status === 'pendente' && !isSelected ? '#1e293b' : '#ffffff',
       className: `event-status-${p.status}`,
       extendedProps: { ...p }
     };
@@ -201,75 +201,79 @@ export default function PTAs() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6 relative">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="bg-blue-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-blue-500/20">
-            <Truck className="text-white md:w-6 md:h-6" size={20} />
+    <div className="flex flex-col gap-2 p-2 h-screen overflow-hidden bg-[#f4f7f9]">
+      {/* Compact Header & Toolbar */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-ambev-blue p-2 rounded-lg shadow-sm shadow-ambev-blue/20 shrink-0">
+              <Truck className="text-ambev-gold w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-none">PTAs</h1>
+              <p className="text-slate-400 font-bold mt-0.5 uppercase tracking-widest text-[7px]">Plataformas de Trabalho em Altura</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight uppercase">PTAs</h1>
-            <p className="text-slate-500 font-bold mt-0.5 md:mt-1 uppercase tracking-widest text-[8px] md:text-[10px]">Plataformas de Trabalho em Altura</p>
-          </div>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full lg:w-auto">
-          <div className="flex flex-col items-end flex-1 lg:flex-none">
+
+          <div className="flex items-center gap-2">
             <button 
               onClick={navigateToNextPending}
-              className="w-full lg:w-auto flex items-center justify-center gap-2 bg-blue-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all active:scale-95"
+              className="flex items-center gap-1.5 bg-ambev-blue/5 px-2 py-1 rounded-lg border border-ambev-blue/10 hover:bg-ambev-blue/10 transition-all active:scale-95"
             >
-              <span className="text-[7px] md:text-[10px] font-black text-blue-500 uppercase tracking-widest">Solicitações pendentes:</span>
-              <span className="bg-blue-500 text-white text-[7px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 rounded-full">
+              <span className="text-[8px] font-black text-ambev-blue uppercase tracking-widest">Pendentes:</span>
+              <span className="bg-ambev-blue text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
                 {pendingPTAs.length}
               </span>
             </button>
+
+            <div className="h-6 w-px bg-slate-200 mx-1" />
+
+            <button 
+              onClick={() => setIsSelectionMode(!isSelectionMode)}
+              className={cn(
+                "font-black px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-widest text-[9px] border",
+                isSelectionMode ? "bg-ambev-blue text-white border-ambev-blue" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+              )}
+            >
+              {isSelectionMode ? 'Sair' : 'Selecionar'}
+            </button>
+
+            <button 
+              onClick={() => {
+                setIsEditing(false);
+                setFormData(INITIAL_FORM_DATA);
+                setIsModalOpen(true);
+              }}
+              className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-4 py-1.5 rounded-lg shadow-sm shadow-ambev-blue/20 transition-all flex items-center gap-1.5 active:scale-95 uppercase tracking-widest text-[9px]"
+            >
+              <Plus size={14} />
+              Nova Solicitação
+            </button>
+
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-1">
+              <button onClick={() => (window as any).fullCalendarPTA?.getApi().today()} className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
+                Hoje
+              </button>
+              <button onClick={() => (window as any).fullCalendarPTA?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronLeft size={12} />
+              </button>
+              <button onClick={() => (window as any).fullCalendarPTA?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+                <ChevronRight size={12} />
+              </button>
+            </div>
           </div>
-
-          <button 
-            onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={cn(
-              "flex-1 lg:flex-none font-black px-2 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-[8px] md:text-xs border",
-              isSelectionMode ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            )}
-          >
-            {isSelectionMode ? 'Sair da Seleção' : 'Selecionar Vários'}
-          </button>
-
-          <button 
-            onClick={() => {
-              setIsEditing(false);
-              setFormData(INITIAL_FORM_DATA);
-              setIsModalOpen(true);
-            }}
-            className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white font-black px-3 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl shadow-xl shadow-orange-500/20 transition-all flex items-center justify-center gap-2 active:scale-95 uppercase tracking-widest text-[8px] md:text-xs"
-          >
-            <Plus size={14} className="md:w-[18px] md:h-[18px]" />
-            Nova Solicitação
-          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl md:rounded-3xl shadow-sm border border-slate-100 p-1 md:p-4 overflow-hidden flex flex-col custom-calendar h-[850px]">
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
-          key={`calendar-${events.length}-${calendarView}`}
+          key={`calendar-${events.length}`}
           ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
           plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
-          initialView={calendarView}
-          viewClassNames={calendarView}
+          initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
           locale={ptBrLocale}
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: window.innerWidth < 768 ? 'multiMonthYear,timeGridDay' : 'multiMonthYear,timeGridWeek,timeGridDay'
-          }}
-          buttonText={{
-            multiMonthYear: 'Mês'
-          }}
-          multiMonthMaxColumns={window.innerWidth < 1024 ? 1 : (window.innerWidth < 1400 ? 2 : 3)}
+          headerToolbar={false}
           events={events}
-          slotMinTime="00:00:00"
-          slotMaxTime="23:59:59"
           scrollTime="08:00:00"
           allDaySlot={false}
           height="100%"
@@ -291,67 +295,115 @@ export default function PTAs() {
                   }
                 }}
                 className={cn(
-                  "p-1 md:p-2 h-full flex flex-col justify-between overflow-hidden border-l-2 md:border-l-4 transition-all relative",
+                  "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
                   data.status === 'aprovado' 
-                    ? (equip?.id === 'articulada' ? "border-blue-500 bg-blue-50/50" : "border-purple-500 bg-purple-50/50")
-                    : "border-yellow-500 bg-yellow-50/50",
-                  isSelected && "ring-2 ring-blue-500 ring-offset-1 bg-blue-500"
-                )}
-              >
+                    ? (equip?.id === 'articulada' ? "border-blue-500 bg-blue-50/40" : "border-purple-500 bg-purple-50/40")
+                    : "border-yellow-500 bg-yellow-50/40",
+                  isSelected && "ring-2 ring-blue-500 ring-offset-0"
+                )}>
                 {isSelectionMode && (
-                  <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1">
+                  <div className="absolute top-0.5 right-0.5">
                     {isSelected ? (
-                      <CheckCircle2 size={10} className="text-white md:w-3 md:h-3" />
+                      <CheckCircle2 size={8} className="text-blue-500" />
                     ) : (
-                      <div className="w-2.5 h-2.5 md:w-3 md:h-3 border border-slate-300 rounded-sm" />
+                      <div className="w-2 h-2 border border-slate-300 rounded-sm" />
                     )}
                   </div>
                 )}
-                <div className="space-y-0.5 md:space-y-1">
-                  <div className="flex items-center justify-between gap-1">
+                
+                <div className="flex items-center justify-between gap-1">
+                  <span className={cn(
+                    "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded",
+                    isSelected ? "text-white bg-white/20" : "text-blue-600 bg-blue-50"
+                  )}>
+                    {data.area}
+                  </span>
+                  <span className={cn(
+                    "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                    data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                  )}>
+                    {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                  </span>
+                </div>
+
+                <div className={cn(
+                  "font-black text-[9px] uppercase leading-none line-clamp-1",
+                  isSelected ? "text-white" : "text-slate-900"
+                )}>
+                  {data.responsavel}
+                </div>
+
+                <div className={cn(
+                  "text-[7px] font-bold line-clamp-1",
+                  isSelected ? "text-white/80" : "text-slate-500"
+                )}>
+                  {data.equipamento}
+                </div>
+
+                <div className="details-on-hover">
+                  <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
                     <span className={cn(
-                      "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
-                      isSelected ? "text-white bg-white/20" : "text-blue-600 bg-blue-50"
-                    )}>
-                      {data.area}
-                    </span>
-                    <span className={cn(
-                      "text-[6px] md:text-[7px] font-black px-0.5 md:px-1 rounded uppercase text-white shrink-0",
+                      "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
                       data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
                     )}>
                       {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
                     </span>
+                    <span className="text-[11px] font-black text-slate-900 uppercase truncate">
+                      {data.responsavel}
+                    </span>
                   </div>
-                  <div className={cn(
-                    "font-black text-[8px] md:text-[10px] uppercase leading-tight line-clamp-2",
-                    isSelected ? "text-white" : "text-slate-900"
-                  )}>
-                    {data.responsavel}
+
+                  <div className="info-grid">
+                    <div>
+                      <span className="label">Área</span>
+                      <p>{data.area}</p>
+                    </div>
+                    <div>
+                      <span className="label">Equipamento</span>
+                      <p>{data.equipamento}</p>
+                    </div>
+                    <div>
+                      <span className="label">Responsável</span>
+                      <p>{data.responsavel}</p>
+                    </div>
+                    <div>
+                      <span className="label">Prioridade</span>
+                      <p className={cn(
+                        "font-black",
+                        data.prioridade === 'Alta' ? "text-red-500" :
+                        data.prioridade === 'Média' ? "text-amber-500" :
+                        "text-blue-500"
+                      )}>{data.prioridade || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="label">Data</span>
+                      <p>{new Date(data.data).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div>
+                      <span className="label">Horário</span>
+                      <p>{data.hora_inicio} - {data.hora_fim}</p>
+                    </div>
                   </div>
-                  <div className={cn(
-                    "text-[7px] md:text-[9px] font-medium line-clamp-1",
-                    isSelected ? "text-white/80" : "text-slate-500"
-                  )}>
-                    {data.equipamento}
+                  <div>
+                    <span className="label">Descrição Detalhada</span>
+                    <p className="text-slate-600 italic">{data.descricao || 'Sem descrição'}</p>
                   </div>
                 </div>
                 
-                <div className={cn(
-                  "mt-0.5 md:mt-1 pt-0.5 md:pt-1 border-t hidden md:flex items-center justify-between gap-1",
-                  isSelected ? "border-white/20" : "border-blue-100"
-                )}>
+                <div className="flex items-center justify-between mt-auto">
                   <span className={cn(
-                    "text-[7px] md:text-[8px] font-black uppercase tracking-tighter truncate px-1 rounded",
-                    isSelected ? "text-white bg-white/10" : (equip?.id === 'articulada' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600")
+                    "text-[5px] font-black px-0.5 rounded uppercase text-white",
+                    equip?.id === 'articulada' ? "bg-blue-500" : "bg-purple-500"
                   )}>
                     {data.equipamento ? data.equipamento.split(' ')[1] : 'PTA'}
                   </span>
-                  <span className={cn(
-                    "text-[7px] md:text-[8px] font-black uppercase",
-                    isSelected ? "text-white/60" : "text-slate-600"
+                  <div className={cn(
+                    "flex items-center gap-0.5",
+                    isSelected ? "text-white/60" : "text-slate-400"
                   )}>
-                    {data.prioridade}
-                  </span>
+                    <Clock size={6} />
+                    <span className="text-[6px] font-bold">{data.hora_inicio}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -663,178 +715,6 @@ export default function PTAs() {
         onClose={() => setIsPasswordModalOpen(false)}
         onConfirm={handlePasswordSubmit}
       />
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-calendar .fc {
-          --fc-border-color: #f1f5f9;
-          --fc-today-bg-color: #eff6ff;
-          font-family: 'Inter', sans-serif;
-        }
-        .custom-calendar .fc-col-header-cell {
-          padding: 16px 0;
-          background: #fff;
-          border: none !important;
-          border-bottom: 2px solid #f1f5f9 !important;
-        }
-        .custom-calendar .fc-col-header-cell-cushion {
-          text-transform: uppercase;
-          font-weight: 900;
-          font-size: 11px;
-          letter-spacing: 0.1em;
-          color: #64748b;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-        }
-        .custom-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
-          color: #3b82f6;
-        }
-        .custom-calendar .fc-timegrid-slot {
-          height: 45px !important;
-          border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .custom-calendar .fc-timegrid-slot-label-cushion {
-          font-weight: 700;
-          font-size: 12px;
-          color: #94a3b8;
-        }
-        .custom-calendar .fc-event {
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
-          transition: all 0.2s;
-          border-width: 0 0 0 4px !important;
-          margin: 2px !important;
-        }
-        .custom-calendar .fc-event:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.12);
-          z-index: 50;
-        }
-        .custom-calendar .fc-toolbar-title {
-          font-weight: 900 !important;
-          text-transform: uppercase;
-          letter-spacing: -0.02em;
-          color: #1e293b;
-          font-size: 1.25rem !important;
-        }
-        .custom-calendar .fc-button {
-          background: #fff !important;
-          border: 1px solid #e2e8f0 !important;
-          color: #64748b !important;
-          font-weight: 800 !important;
-          text-transform: uppercase !important;
-          font-size: 10px !important;
-          border-radius: 12px !important;
-          padding: 10px 20px !important;
-          box-shadow: none !important;
-        }
-        .custom-calendar .fc-button-active {
-          background: #3b82f6 !important;
-          border-color: #3b82f6 !important;
-          color: #fff !important;
-        }
-        .fc-multimonth {
-          border: none !important;
-          background: transparent !important;
-        }
-        .fc-multimonth-month {
-          border: 1px solid #f1f5f9 !important;
-          border-radius: 16px !important;
-          margin: 4px !important;
-          padding: 8px !important;
-          background: #fff !important;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
-          flex: 1 1 300px !important;
-          min-width: 280px !important;
-        }
-        .fc-multimonth-title {
-          font-weight: 900 !important;
-          text-transform: uppercase !important;
-          font-size: 11px !important;
-          color: #1e293b !important;
-          margin-bottom: 4px !important;
-          text-align: center !important;
-        }
-        .fc-multimonth-daygrid-table {
-          font-size: 9px !important;
-        }
-        .fc-multimonth-daygrid-table th {
-          font-weight: 800 !important;
-          color: #94a3b8 !important;
-          text-transform: uppercase !important;
-          font-size: 7px !important;
-          padding: 4px 0 !important;
-        }
-        /* Dot styles for Year View */
-        .fc-multimonth .fc-daygrid-event {
-          padding: 0 !important;
-          margin: 0 !important;
-          width: 9px !important;
-          height: 9px !important;
-          border-radius: 50% !important;
-          border: none !important;
-          font-size: 0 !important;
-          display: inline-block !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-        }
-        .fc-multimonth .event-status-aprovado {
-          background-color: #22c55e !important;
-        }
-        .fc-multimonth .event-status-pendente {
-          background-color: #eab308 !important;
-        }
-        .fc-multimonth .fc-event-title {
-          display: none !important;
-        }
-        .fc-multimonth .fc-daygrid-event-h-hook {
-          background: transparent !important;
-        }
-        .fc-multimonth .fc-daygrid-day-events {
-          display: flex !important;
-          flex-wrap: wrap !important;
-          gap: 4px !important;
-          justify-content: center !important;
-          padding-bottom: 6px !important;
-          margin-top: auto !important;
-          width: 100% !important;
-        }
-        .fc-multimonth .fc-daygrid-day-frame {
-          min-height: 52px !important;
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          justify-content: flex-start !important;
-          padding: 4px 0 !important;
-        }
-        .fc-multimonth .fc-daygrid-day-top {
-          flex-direction: row !important;
-          justify-content: center !important;
-          margin-bottom: 0 !important;
-          width: 100% !important;
-          height: auto !important;
-        }
-        .fc-multimonth .fc-daygrid-day-number {
-          font-weight: 800 !important;
-          font-size: 13px !important;
-          padding: 4px 8px !important;
-          position: relative !important;
-          z-index: 1 !important;
-          color: #1e293b !important;
-          line-height: 1 !important;
-        }
-        .fc-multimonth .fc-day-today {
-          background: #eff6ff !important;
-        }
-        .fc-multimonth .fc-day-today .fc-daygrid-day-number {
-          color: #3b82f6 !important;
-          background: #dbeafe !important;
-          border-radius: 4px !important;
-        }
-        .custom-calendar .fc-theme-standard td, .custom-calendar .fc-theme-standard th {
-          border-color: #f1f5f9;
-        }
-      `}} />
     </div>
   );
 }

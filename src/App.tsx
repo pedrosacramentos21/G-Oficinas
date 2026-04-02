@@ -68,21 +68,23 @@ export default function App() {
             </div>
           )}
           {/* Mobile Header */}
-          <div className="lg:hidden bg-[#1e293b] text-white p-4 flex items-center justify-between shadow-md">
-            <h1 className="text-lg font-bold flex items-center gap-2">
-              <Construction className="text-orange-500" size={20} />
-              G-Oficinas
+          <div className="lg:hidden bg-ambev-blue text-white p-4 flex items-center justify-between shadow-md border-b border-white/10">
+            <h1 className="text-lg font-black flex items-center gap-2 uppercase italic tracking-tighter">
+              <div className="w-8 h-8 bg-ambev-gold rounded-lg flex items-center justify-center shrink-0">
+                <Construction className="text-ambev-blue" size={18} />
+              </div>
+              Ambev <span className="text-ambev-gold">Ops</span>
             </h1>
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 hover:bg-white/10 rounded-lg"
+              className="p-2 hover:bg-white/10 rounded-lg text-ambev-gold transition-colors"
             >
               <LayoutDashboard size={24} />
             </button>
           </div>
 
-          <main className="flex-1 overflow-y-auto p-3 md:p-6 lg:p-8 custom-scrollbar">
-            <div className="max-w-[1920px] mx-auto h-full">
+          <main className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="w-full h-full">
               <Routes>
                 <Route path="/andaimes/*" element={<Andaimes />} />
                 <Route path="/ptas" element={<PTAs />} />

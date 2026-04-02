@@ -4,6 +4,7 @@ export type Tipo = 'Montagem' | 'Desmontagem';
 export interface Solicitacao {
   id?: number;
   area: string;
+  sub_area?: string;
   responsavel: string;
   data: string; // YYYY-MM-DD
   hora_inicio: string; // HH:mm
@@ -11,6 +12,9 @@ export interface Solicitacao {
   tipo: Tipo;
   descricao: string;
   prioridade: Prioridade;
+  criticidade?: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  status?: string;
+  equipamento?: string;
 }
 
 export const AREAS = [

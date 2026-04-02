@@ -57,7 +57,7 @@ export default function Header({
 
         <button 
           onClick={onNewRequest}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
+          className="flex items-center gap-2 bg-ambev-blue hover:bg-ambev-blue/90 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
         >
           <Plus size={20} />
           Nova Solicitação

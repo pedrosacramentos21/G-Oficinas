@@ -14,7 +14,7 @@ export default function Indicators({ solicitacoes }: IndicatorsProps) {
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 p-6 bg-gray-50">
       {AREAS.map((area) => (
         <div key={area} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all group">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-hover:text-orange-500 transition-colors">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 group-hover:text-ambev-blue transition-colors">
             {area}
           </h3>
           <div className="flex items-baseline gap-1">
@@ -23,7 +23,7 @@ export default function Indicators({ solicitacoes }: IndicatorsProps) {
           </div>
           <div className="mt-3 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-orange-500 transition-all duration-500 ease-out" 
+              className="h-full bg-ambev-blue transition-all duration-500 ease-out" 
               style={{ width: `${Math.min((counts[area] || 0) * 10, 100)}%` }}
             />
           </div>

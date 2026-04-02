@@ -198,11 +198,11 @@ export default function SalaMotores() {
   };
 
   return (
-    <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible relative">
+    <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible relative bg-[#f4f7f9] p-4">
       <div className="shrink-0 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="bg-orange-500 p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-orange-500/20">
-            <Zap className="text-white md:w-6 md:h-6" size={20} />
+          <div className="bg-ambev-blue p-2.5 md:p-3 rounded-xl md:rounded-2xl shadow-lg shadow-ambev-blue/20">
+            <Zap className="text-ambev-gold md:w-6 md:h-6" size={20} />
           </div>
           <div>
             <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight uppercase">SALA DE MOTORES</h1>
@@ -278,7 +278,7 @@ export default function SalaMotores() {
             )}
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="flex-1 lg:flex-none bg-orange-500 hover:bg-orange-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95 whitespace-nowrap text-[10px] md:text-base uppercase tracking-widest"
+              className="flex-1 lg:flex-none bg-ambev-blue hover:bg-ambev-blue/90 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-ambev-blue/20 transition-all active:scale-95 whitespace-nowrap text-[10px] md:text-base uppercase tracking-widest"
             >
               <Plus size={16} className="md:w-5 md:h-5" />
               Nova Atividade
@@ -324,17 +324,77 @@ export default function SalaMotores() {
                                 {...provided.dragHandleProps}
                                 onClick={() => handleCardClick(item)}
                                 className={cn(
-                                  "bg-white p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden cursor-pointer",
-                                  isSelected && "ring-2 ring-orange-500 ring-offset-2 shadow-lg",
-                                  snapshot.isDragging && "shadow-2xl ring-2 ring-orange-500 rotate-2"
+                                  "bg-white p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer",
+                                  isSelected && "ring-2 ring-ambev-blue ring-offset-2 shadow-lg",
+                                  snapshot.isDragging && "shadow-2xl ring-2 ring-ambev-blue rotate-2"
                                 )}
                               >
                                 <div className={cn("absolute left-0 top-0 bottom-0 w-1 md:w-1.5", column.color)} />
                                 
+                                {/* Popover de Detalhes */}
+                                <div className="details-on-hover">
+                                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200">
+                                    <div className="bg-ambev-blue p-1.5 rounded-lg">
+                                      <Zap className="text-ambev-gold w-4 h-4" />
+                                    </div>
+                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Detalhes da Atividade</h3>
+                                  </div>
+
+                                  <div className="info-grid">
+                                    <div>
+                                      <span className="label">Área</span>
+                                      <p>{item.area}</p>
+                                    </div>
+                                    <div>
+                                      <span className="label">Sub-Área</span>
+                                      <p>{item.sub_area || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="label">TAG do Motor</span>
+                                      <p className="text-ambev-blue">{item.tag_motor || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <span className="label">Custo Evitado</span>
+                                      <p className="text-green-600 font-black">R$ {item.custo_evitado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    </div>
+                                    <div>
+                                      <span className="label">Status Atual</span>
+                                      <p className="uppercase font-black text-[10px]">{COLUMNS.find(c => c.id === item.status)?.name}</p>
+                                    </div>
+                                    <div>
+                                      <span className="label">Data</span>
+                                      <p>{item.data}</p>
+                                    </div>
+                                  </div>
+
+                                  {item.causa_raiz && (
+                                    <div className="mt-2 pt-2 border-t border-slate-50">
+                                      <span className="label">Causa Raiz da Falha</span>
+                                      <p className="text-[11px] italic text-slate-600 leading-relaxed">{item.causa_raiz}</p>
+                                    </div>
+                                  )}
+
+                                  {item.historico_status && item.historico_status.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-slate-50">
+                                      <span className="label">Histórico de Status</span>
+                                      <div className="space-y-1 mt-1">
+                                        {item.historico_status.slice(-3).map((h: any, i: number) => (
+                                          <div key={i} className="flex items-center gap-2 text-[9px] font-bold text-slate-500">
+                                            <div className={cn("w-1.5 h-1.5 rounded-full", COLUMNS.find(c => c.id === h.status)?.color || 'bg-slate-300')} />
+                                            <span className="uppercase">{COLUMNS.find(c => c.id === h.status)?.name}</span>
+                                            <span className="text-slate-300">•</span>
+                                            <span>{new Date(h.data).toLocaleDateString('pt-BR')}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
                                 {selectionMode && (
                                   <div className="absolute top-2 right-2 z-10">
                                     {isSelected ? (
-                                      <CheckSquare size={16} className="text-orange-500" />
+                                      <CheckSquare size={16} className="text-ambev-blue" />
                                     ) : (
                                       <Square size={16} className="text-slate-300" />
                                     )}
@@ -344,11 +404,11 @@ export default function SalaMotores() {
                                 <div className="space-y-3 md:space-y-4">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex flex-col gap-1">
-                                      <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-orange-500 transition-colors uppercase pr-6">
+                                      <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase pr-6">
                                         {item.titulo}
                                       </h3>
                                       {item.tag_motor && (
-                                        <span className="text-[7px] md:text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-50 px-1.5 py-0.5 rounded w-fit">
+                                        <span className="text-[7px] md:text-[9px] font-black text-ambev-blue uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded w-fit">
                                           TAG: {item.tag_motor}
                                         </span>
                                       )}

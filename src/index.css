@@ -3,13 +3,17 @@
 
 @layer base {
   body {
-    @apply bg-[#f8f9fa] text-[#1e293b];
+    @apply bg-[#f4f7f9] text-[#1e293b];
     font-family: 'Inter', sans-serif;
   }
 }
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-ambev-blue: #005596;
+  --color-ambev-gold: #FFD100;
+  --color-ambev-red: #E31837;
+  --color-ambev-dark: #1e293b;
 }
 
 @layer components {
@@ -25,5 +29,306 @@
     @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
     border: 2px solid transparent;
     background-clip: content-box;
+  }
+
+  /* FullCalendar Density Overrides */
+  .fc .fc-timegrid-slot {
+    height: 35px !important; /* Slightly increased slot height */
+  }
+
+  .high-slots .fc .fc-timegrid-slot {
+    height: 55px !important; /* Increased for better reading */
+  }
+
+  .fc .fc-timegrid-slot-label {
+    vertical-align: middle !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+  }
+
+  .fc .fc-col-header-cell {
+    padding: 4px 0 !important;
+    background: #f8fafc !important;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    color: #475569 !important;
+    text-decoration: none !important;
+  }
+
+  .fc-timegrid-event {
+    margin: 1px !important;
+    border-radius: 4px !important;
+  }
+
+  .fc-timegrid-event .fc-event-main {
+    padding: 0 !important;
+  }
+
+  .fc .fc-timegrid-axis-cushion {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+  }
+
+  .fc .fc-timegrid-now-indicator-arrow {
+    border-width: 4px 0 4px 5px !important;
+  }
+
+  /* Hover effect for calendar events - Adaptive & Smart */
+  .fc-timegrid-event {
+    cursor: pointer !important;
+    will-change: z-index;
+  }
+
+  /* Ensure the container allows overflow and doesn't trap z-index */
+  .fc-timegrid-cols, 
+  .fc-timegrid-col,
+  .fc-timegrid-col-events,
+  .fc-timegrid-col-frame,
+  .fc-timegrid-col-bg,
+  .fc-timegrid-body,
+  .fc-scrollgrid-sync-table,
+  .fc-scrollgrid-section-body,
+  .fc-scrollgrid-section,
+  .fc-scrollgrid,
+  .fc-view-harness,
+  .fc-view,
+  .fc-daygrid-body,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events {
+    z-index: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Allow overflow on internal event containers to show the popover */
+  .fc-timegrid-event-harness,
+  .fc-timegrid-event-harness-skeleton,
+  .fc-event-main,
+  .fc-event-main-frame,
+  .fc-event-main-container,
+  .fc-timegrid-event,
+  .fc-v-event {
+    overflow: visible !important;
+  }
+
+  /* Restore scrollbars and prevent layout shifts */
+  .fc-scroller,
+  .fc-scroller-harness,
+  .calendar-scroller {
+    overflow: auto !important;
+    scrollbar-gutter: stable;
+  }
+
+  /* Force hovered events to the front so child popovers are never covered */
+  .fc-timegrid-event:hover,
+  .fc-daygrid-event:hover,
+  .fc-event:hover {
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+    /* Ensure no layout changes occur on hover */
+    transform: none !important;
+    /* Lock dimensions to prevent expansion */
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    /* Permitted visual effects */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    filter: brightness(0.98);
+    cursor: pointer !important;
+  }
+
+  /* The harness itself should NEVER change its layout on hover */
+  .fc-timegrid-event-harness:hover {
+    /* Use a lower z-index to avoid triggering FullCalendar's expansion logic 
+       while still bringing it to the front of other non-hovered events. */
+    z-index: 100 !important;
+    /* Prevent any animated expansion */
+    transition: none !important;
+  }
+
+  /* Custom class for details shown as a "Comic Book Bubble" popover */
+  .details-on-hover {
+    display: flex !important;
+    visibility: hidden;
+    opacity: 0;
+    position: absolute !important;
+    width: 340px !important; 
+    min-width: 280px !important;
+    max-width: calc(100vw - 40px) !important;
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
+    user-select: text !important;
+    isolation: isolate !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) scale(0.95) !important;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s !important;
+    transition-delay: 0.05s !important;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    text-align: left !important;
+    white-space: normal !important;
+    color: #1e293b !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .group:hover .details-on-hover,
+  .fc-timegrid-event:hover .details-on-hover {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateY(-50%) scale(1) !important;
+    transition-delay: 0s !important; /* No delay on appearing */
+  }
+
+  /* Positioning logic: Pop to the side where there is more space */
+  /* For non-calendar elements, default to right */
+  .group .details-on-hover {
+    left: calc(100% + 10px) !important;
+    right: auto !important;
+  }
+
+  /* First 4 columns - Pop to the right */
+  .fc-timegrid-col:nth-child(-n+4) .details-on-hover,
+  .fc-daygrid-day:nth-child(-n+4) .details-on-hover {
+    left: calc(100% + 10px) !important;
+    right: auto !important;
+  }
+
+  /* Last 3 columns - Pop to the left */
+  .fc-timegrid-col:nth-child(n+5) .details-on-hover,
+  .fc-daygrid-day:nth-child(n+5) .details-on-hover {
+    right: calc(100% + 10px) !important;
+    left: auto !important;
+  }
+
+  /* Arrow positioning logic */
+  /* Add a small arrow pointing to the card - Comic Style */
+  .details-on-hover::after,
+  .details-on-hover::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    border-style: solid !important;
+  }
+
+  /* The border of the arrow */
+  .details-on-hover::before {
+    margin-top: -10px !important;
+    border-width: 10px !important;
+    z-index: -1 !important;
+  }
+
+  /* The fill of the arrow */
+  .details-on-hover::after {
+    margin-top: -8px !important;
+    border-width: 8px !important;
+    z-index: 1 !important;
+  }
+
+  .fc-timegrid-col:nth-child(-n+4) .details-on-hover::before,
+  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::before {
+    right: 100% !important;
+    border-color: transparent #1e293b transparent transparent !important;
+  }
+
+  .fc-timegrid-col:nth-child(-n+4) .details-on-hover::after,
+  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::after {
+    right: 100% !important;
+    border-color: transparent white transparent transparent !important;
+  }
+
+  .fc-timegrid-col:nth-child(n+5) .details-on-hover::before,
+  .fc-daygrid-day:nth-child(n+5) .details-on-hover::before {
+    left: 100% !important;
+    border-color: transparent transparent transparent #1e293b !important;
+  }
+
+  .fc-timegrid-col:nth-child(n+5) .details-on-hover::after,
+  .fc-daygrid-day:nth-child(n+5) .details-on-hover::after {
+    left: 100% !important;
+    border-color: transparent transparent transparent white !important;
+  }
+
+  /* Responsive adjustments for small screens */
+  @media (max-width: 1024px) {
+    .details-on-hover {
+      width: 280px !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .details-on-hover {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      right: auto !important;
+      transform: translate(-50%, -50%) scale(0.95) !important;
+      width: calc(100vw - 40px) !important;
+      max-width: 400px !important;
+      margin: 0 !important;
+    }
+
+    .fc-timegrid-event:hover .details-on-hover {
+      transform: translate(-50%, -50%) scale(1) !important;
+    }
+
+    .details-on-hover::before,
+    .details-on-hover::after {
+      display: none !important;
+    }
+  }
+
+  .fc-timegrid-event:hover .fc-event-main {
+    overflow: visible !important;
+  }
+
+  /* Removed line-clamp expansion on card hover to prevent flickering */
+  /* The popover is sufficient for details */
+
+  .fc-timegrid-event:hover .details-on-hover .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .fc-timegrid-event:hover .details-on-hover p {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.5;
+  }
+
+  .fc-timegrid-event:hover .details-on-hover .label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .fc-timegrid-event:hover .details-on-hover .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
   }
 }
