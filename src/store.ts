@@ -13,6 +13,7 @@ interface Andaime {
   solicitante: string;
   descricao_local: string;
   status: 'pendente' | 'aprovado';
+  esconder_no_backlog?: boolean;
 }
 
 interface PTA {

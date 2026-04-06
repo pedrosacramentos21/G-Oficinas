@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import { X, Layers, Lock, Unlock, Info, CheckCircle2, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import PasswordModal from './PasswordModal';
+import DeleteChoiceModal from './DeleteChoiceModal';
 
 const AREAS = [
   'Processo cerveja',
@@ -20,14 +21,16 @@ const HORARIOS = Array.from({ length: 24 }, (_, i) => {
   return `${hour}:00`;
 });
 
-export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boolean, onClose: () => void, andaime?: any }) {
+export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { isOpen: boolean, onClose: () => void, andaime?: any, isBacklog?: boolean }) {
   const { addAndaime, updateAndaime } = useStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteChoice, setShowDeleteChoice] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState('');
   const [showNotice, setShowNotice] = useState(false);
+  const [deleteChoice, setDeleteChoice] = useState<'backlog-only' | 'both' | null>(null);
   
   const initialFormState = {
     area: AREAS[0],
@@ -115,7 +118,11 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
     if (password === 'Itf2026') {
       if (showPasswordModal && passwordModalAction === 'delete') {
         try {
-          await useStore.getState().deleteAndaime(andaime.id, password);
+          if (deleteChoice === 'backlog-only') {
+            await updateAndaime(andaime.id, { esconder_no_backlog: true }, password);
+          } else {
+            await useStore.getState().deleteAndaime(andaime.id, password);
+          }
           onClose();
         } catch (err: any) {
           alert(err.message);
@@ -329,8 +336,12 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
               <button 
                 type="button"
                 onClick={() => {
-                  setPasswordModalAction('delete');
-                  setShowPasswordModal(true);
+                  if (isBacklog) {
+                    setShowDeleteChoice(true);
+                  } else {
+                    setPasswordModalAction('delete');
+                    setShowPasswordModal(true);
+                  }
                 }}
                 className="w-full sm:w-auto px-6 py-3.5 sm:py-3 bg-red-50 hover:bg-red-100 text-red-500 font-black rounded-xl transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 border border-red-100 order-3 sm:order-1"
               >
@@ -394,6 +405,17 @@ export default function AndaimeModal({ isOpen, onClose, andaime }: { isOpen: boo
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onConfirm={handleUnlock}
+      />
+
+      <DeleteChoiceModal
+        isOpen={showDeleteChoice}
+        onClose={() => setShowDeleteChoice(false)}
+        onConfirm={(choice) => {
+          setDeleteChoice(choice);
+          setShowDeleteChoice(false);
+          setPasswordModalAction('delete');
+          setShowPasswordModal(true);
+        }}
       />
     </div>
   );

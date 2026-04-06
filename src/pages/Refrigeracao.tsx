@@ -6,6 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
+import DeleteChoiceModal from '../components/DeleteChoiceModal';
 import { 
   Plus, 
   ChevronLeft, 
@@ -93,10 +94,15 @@ export default function Refrigeracao() {
   const [sortBy, setSortBy] = useState<'investimento' | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete' }>({
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'edit' | 'delete' | 'backlog-edit' | 'backlog-delete' | 'batch-delete' | 'backlog-batch-delete', deleteChoice?: 'backlog-only' | 'both' }>({
     isOpen: false,
     id: null,
     action: 'edit'
+  });
+  const [deleteChoiceModal, setDeleteChoiceModal] = useState<{ isOpen: boolean, id: number | null, ids: number[] | null }>({
+    isOpen: false,
+    id: null,
+    ids: null
   });
 
   const [formData, setFormData] = useState({
@@ -334,18 +340,22 @@ export default function Refrigeracao() {
         const currentBacklog = refrigeracaoBacklog.find(b => b.id === passwordModal.id);
         await deleteRefrigeracaoBacklog(passwordModal.id!, password);
         // Sync with calendar
-        const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area);
-        if (existingManutencao) {
-          await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+        if (passwordModal.deleteChoice !== 'backlog-only') {
+          const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === currentBacklog?.titulo && m.area === currentBacklog?.area);
+          if (existingManutencao) {
+            await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+          }
         }
       } else if (passwordModal.action === 'batch-delete') {
         const itemsToDelete = refrigeracaoManutencoes.filter(m => passwordModal.ids?.includes(m.id));
         await batchDeleteRefrigeracaoManutencoes(passwordModal.ids!, password);
         // Sync with backlog
-        for (const item of itemsToDelete) {
-          const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === item.titulo && b.area === item.area);
-          if (existingBacklog) {
-            await deleteRefrigeracaoBacklog(existingBacklog.id, password);
+        if (passwordModal.deleteChoice !== 'backlog-only') {
+          for (const item of itemsToDelete) {
+            const existingBacklog = refrigeracaoBacklog.find(b => b.titulo === item.titulo && b.area === item.area);
+            if (existingBacklog) {
+              await deleteRefrigeracaoBacklog(existingBacklog.id, password);
+            }
           }
         }
         setSelectionMode(false);
@@ -354,10 +364,12 @@ export default function Refrigeracao() {
         const itemsToDelete = refrigeracaoBacklog.filter(b => passwordModal.ids?.includes(b.id));
         await batchDeleteRefrigeracaoBacklog(passwordModal.ids!, password);
         // Sync with calendar
-        for (const item of itemsToDelete) {
-          const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
-          if (existingManutencao) {
-            await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+        if (passwordModal.deleteChoice !== 'backlog-only') {
+          for (const item of itemsToDelete) {
+            const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
+            if (existingManutencao) {
+              await deleteRefrigeracaoManutencao(existingManutencao.id, password);
+            }
           }
         }
         setSelectionMode(false);
@@ -370,6 +382,18 @@ export default function Refrigeracao() {
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const confirmDeleteChoice = (choice: 'backlog-only' | 'both') => {
+    const isBatch = deleteChoiceModal.ids !== null;
+    setDeleteChoiceModal({ ...deleteChoiceModal, isOpen: false });
+    setPasswordModal({ 
+      isOpen: true, 
+      id: deleteChoiceModal.id, 
+      ids: deleteChoiceModal.ids || undefined,
+      action: isBatch ? 'backlog-batch-delete' : 'backlog-delete',
+      deleteChoice: choice
+    });
   };
 
   const toggleSelection = (id: number) => {
@@ -560,12 +584,18 @@ export default function Refrigeracao() {
                   Sair
                 </button>
                 <button 
-                  onClick={() => setPasswordModal({ 
-                    isOpen: true, 
-                    ids: selectedIds, 
-                    action: activeTab === 'calendario' ? 'batch-delete' : 'backlog-batch-delete',
-                    id: null
-                  })}
+                  onClick={() => {
+                    if (activeTab === 'backlog') {
+                      setDeleteChoiceModal({ isOpen: true, id: null, ids: selectedIds });
+                    } else {
+                      setPasswordModal({ 
+                        isOpen: true, 
+                        ids: selectedIds, 
+                        action: 'batch-delete',
+                        id: null
+                      });
+                    }
+                  }}
                   disabled={selectedIds.length === 0}
                   className="bg-red-500 hover:bg-red-600 text-white font-black px-2 py-1 rounded-lg shadow-lg shadow-red-500/20 transition-all flex items-center gap-1 disabled:opacity-50 text-[8px] uppercase tracking-widest"
                 >
@@ -725,6 +755,11 @@ export default function Refrigeracao() {
                     const isWeekView = eventInfo.view.type === 'timeGridWeek';
                     const isMobile = window.innerWidth < 640;
                     
+                    const start = eventInfo.event.start;
+                    const end = eventInfo.event.end;
+                    const durationHours = end && start ? (end.getTime() - start.getTime()) / (1000 * 60 * 60) : 1;
+                    const isShort = durationHours <= 1.1; // 1 hour or less
+                    
                     const areaColorMap: Record<string, string> = {
                       'Packaging': 'text-blue-600 bg-blue-50 px-1 rounded',
                       'Processo Refri': 'text-purple-600 bg-purple-50 px-1 rounded',
@@ -782,7 +817,11 @@ export default function Refrigeracao() {
                           )}
                         </div>
 
-                        <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1", (isMonthView || (isWeekView && isMobile)) && "text-[7px]")}>
+                        <div className={cn(
+                          "font-black text-slate-900 uppercase leading-none line-clamp-1",
+                          isShort ? "text-[7px] sm:text-[8px]" : "text-[9px]",
+                          (isMonthView || (isWeekView && isMobile)) && "text-[7px]"
+                        )}>
                           {data.equipamento}
                         </div>
 
@@ -1369,11 +1408,17 @@ export default function Refrigeracao() {
                 <>
                   <button 
                     type="button"
-                    onClick={() => setPasswordModal({ 
-                      isOpen: true, 
-                      id: selectedItem.id, 
-                      action: selectedItem._source === 'calendar' ? 'delete' : 'backlog-delete' 
-                    })}
+                    onClick={() => {
+                      if (selectedItem._source === 'backlog') {
+                        setDeleteChoiceModal({ isOpen: true, id: selectedItem.id, ids: null });
+                      } else {
+                        setPasswordModal({ 
+                          isOpen: true, 
+                          id: selectedItem.id, 
+                          action: 'delete' 
+                        });
+                      }
+                    }}
                     className="w-full sm:flex-1 bg-red-50 hover:bg-red-100 text-red-500 font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-100 text-[10px] sm:text-xs uppercase tracking-widest order-2 sm:order-1"
                   >
                     <Trash2 size={18} />
@@ -1407,6 +1452,12 @@ export default function Refrigeracao() {
         isOpen={passwordModal.isOpen}
         onClose={() => setPasswordModal({ ...passwordModal, isOpen: false })}
         onConfirm={handlePasswordConfirm}
+      />
+
+      <DeleteChoiceModal
+        isOpen={deleteChoiceModal.isOpen}
+        onClose={() => setDeleteChoiceModal({ ...deleteChoiceModal, isOpen: false })}
+        onConfirm={confirmDeleteChoice}
       />
 
       <style dangerouslySetInnerHTML={{ __html: `

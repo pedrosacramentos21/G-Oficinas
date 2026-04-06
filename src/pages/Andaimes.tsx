@@ -9,6 +9,7 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock } from 'lucide-react';
 import AndaimeModal from '../components/AndaimeModal';
 import PasswordModal from '../components/PasswordModal';
+import DeleteChoiceModal from '../components/DeleteChoiceModal';
 import AndaimeBacklog from './AndaimeBacklog';
 import { cn } from '../lib/utils';
 
@@ -26,10 +27,15 @@ export default function Andaimes() {
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, action: 'approve' | 'delete' | 'batch-delete' }>({
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete', deleteChoice?: 'backlog-only' | 'both' }>({
     isOpen: false,
     id: null,
     action: 'approve'
+  });
+  const [deleteChoiceModal, setDeleteChoiceModal] = useState<{ isOpen: boolean, id: number | null, ids: number[] | null }>({
+    isOpen: false,
+    id: null,
+    ids: null
   });
 
   useEffect(() => {
@@ -61,27 +67,57 @@ export default function Andaimes() {
 
   const handleBatchDelete = () => {
     if (selectedIds.length === 0) return;
-    setPasswordModal({ isOpen: true, id: null, action: 'batch-delete' });
+    if (activeTab === 'backlog') {
+      setDeleteChoiceModal({ isOpen: true, id: null, ids: selectedIds });
+    } else {
+      setPasswordModal({ isOpen: true, id: null, ids: selectedIds, action: 'batch-delete' });
+    }
   };
 
   const handleAction = async (password: string) => {
     try {
       if (passwordModal.action === 'batch-delete') {
-        await batchDeleteAndaimes(selectedIds, password);
+        if (passwordModal.deleteChoice === 'backlog-only') {
+          // Update each to hidden instead of deleting
+          for (const id of passwordModal.ids || []) {
+            const { updateAndaime } = useStore.getState();
+            await updateAndaime(id, { esconder_no_backlog: true }, password);
+          }
+        } else {
+          await batchDeleteAndaimes(passwordModal.ids || selectedIds, password);
+        }
         setSelectedIds([]);
         setIsSelectionMode(false);
       } else if (passwordModal.id !== null) {
         if (passwordModal.action === 'approve') {
           await approveAndaime(passwordModal.id, password);
-        } else {
-          await deleteAndaime(passwordModal.id, password);
+        } else if (passwordModal.action === 'delete') {
+          if (passwordModal.deleteChoice === 'backlog-only') {
+            const { updateAndaime } = useStore.getState();
+            await updateAndaime(passwordModal.id, { esconder_no_backlog: true }, password);
+          } else {
+            await deleteAndaime(passwordModal.id, password);
+          }
         }
       }
-      setPasswordModal({ ...passwordModal, isOpen: false });
+      setPasswordModal({ ...passwordModal, isOpen: false, deleteChoice: undefined });
       setIsModalOpen(false);
+      fetchAndaimes();
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const confirmDeleteChoice = (choice: 'backlog-only' | 'both') => {
+    const isBatch = deleteChoiceModal.ids !== null;
+    setDeleteChoiceModal({ ...deleteChoiceModal, isOpen: false });
+    setPasswordModal({ 
+      isOpen: true, 
+      id: deleteChoiceModal.id, 
+      ids: deleteChoiceModal.ids || undefined,
+      action: isBatch ? 'batch-delete' : 'delete',
+      deleteChoice: choice
+    });
   };
 
   const events = andaimes.map(a => {
@@ -426,6 +462,7 @@ export default function Andaimes() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         andaime={selectedAndaime}
+        isBacklog={activeTab === 'backlog'}
       />
       <PasswordModal 
         isOpen={passwordModal.isOpen} 
