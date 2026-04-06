@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { 
@@ -515,7 +516,7 @@ export default function Armstrong() {
     )}>
       {/* Header & Toolbar */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-ambev-blue p-2 rounded-lg shadow-sm shadow-ambev-blue/20 shrink-0">
               <Thermometer className="text-ambev-gold w-4 h-4" />
@@ -526,7 +527,7 @@ export default function Armstrong() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
             <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button 
                 onClick={() => {
@@ -535,11 +536,11 @@ export default function Armstrong() {
                   setSelectedIds([]);
                 }}
                 className={cn(
-                  "flex items-center gap-1 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  "flex items-center gap-1 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
                   activeTab === 'calendario' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <CalendarIcon size={10} />
+                <CalendarIcon size={10} className="hidden xs:block" />
                 CALENDÁRIO
               </button>
               <button 
@@ -549,62 +550,86 @@ export default function Armstrong() {
                   setSelectedIds([]);
                 }}
                 className={cn(
-                  "flex items-center gap-1 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  "flex items-center gap-1 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
                   activeTab === 'backlog' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <LayoutGrid size={10} />
+                <LayoutGrid size={10} className="hidden xs:block" />
                 BACKLOG
               </button>
             </div>
 
-            <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden lg:block" />
+            <div className="h-4 w-[1px] bg-slate-200 mx-0.5 hidden sm:block" />
 
-            {selectionMode ? (
-              <>
+            <div className="flex items-center gap-1">
+              {selectionMode ? (
+                <>
+                  <button 
+                    onClick={() => {
+                      setSelectionMode(false);
+                      setSelectedIds([]);
+                    }}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest"
+                  >
+                    Sair
+                  </button>
+                  <button 
+                    onClick={() => setPasswordModal({ 
+                      isOpen: true, 
+                      ids: selectedIds, 
+                      action: activeTab === 'calendario' ? 'batch-delete' : 'backlog-batch-delete',
+                      id: null
+                    })}
+                    disabled={selectedIds.length === 0}
+                    className="bg-red-500 hover:bg-red-600 text-white font-black px-2 py-1 rounded-lg shadow-lg shadow-red-500/20 transition-all flex items-center gap-1 disabled:opacity-50 text-[8px] uppercase tracking-widest"
+                  >
+                    <Trash2 size={10} />
+                    <span className="hidden xs:inline">Excluir ({selectedIds.length})</span>
+                    <span className="xs:hidden">({selectedIds.length})</span>
+                  </button>
+                </>
+              ) : (
                 <button 
-                  onClick={() => {
-                    setSelectionMode(false);
-                    setSelectedIds([]);
-                  }}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest"
+                  onClick={() => setSelectionMode(true)}
+                  className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest flex items-center gap-1"
                 >
-                  Cancelar
+                  <CheckSquare size={10} />
+                  Selecionar
                 </button>
-                <button 
-                  onClick={() => setPasswordModal({ 
-                    isOpen: true, 
-                    ids: selectedIds, 
-                    action: activeTab === 'calendario' ? 'batch-delete' : 'backlog-batch-delete',
-                    id: null
-                  })}
-                  disabled={selectedIds.length === 0}
-                  className="bg-red-500 hover:bg-red-600 text-white font-black px-2 py-1 rounded-lg shadow-lg shadow-red-500/20 transition-all flex items-center gap-1 disabled:opacity-50 text-[8px] uppercase tracking-widest"
-                >
-                  <Trash2 size={10} />
-                  Excluir ({selectedIds.length})
-                </button>
-              </>
-            ) : (
+              )}
               <button 
-                onClick={() => setSelectionMode(true)}
-                className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black px-2 py-1 rounded-lg transition-all text-[8px] uppercase tracking-widest flex items-center gap-1"
+                onClick={openNewModal}
+                className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-3 py-1.5 rounded-lg shadow-lg shadow-ambev-blue/20 transition-all flex items-center gap-1 active:scale-95 uppercase tracking-widest text-[8px]"
               >
-                <CheckSquare size={10} />
-                Selecionar
+                <Plus size={12} />
+                <span className="hidden xs:inline">Nova Manutenção</span>
+                <span className="xs:hidden">Novo</span>
               </button>
-            )}
-            <button 
-              onClick={openNewModal}
-              className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-3 py-1.5 rounded-lg shadow-lg shadow-ambev-blue/20 transition-all flex items-center gap-1 active:scale-95 uppercase tracking-widest text-[8px]"
-            >
-              <Plus size={12} />
-              <span>Nova Manutenção</span>
-            </button>
-            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5">
+            </div>
+
+            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-0">
+              <button 
+                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Mês
+              </button>
+              <button 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Semana
+              </button>
+              <button 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Dia
+              </button>
+              <div className="w-px h-3 bg-slate-100 mx-0.5" />
               <button 
                 onClick={handleToday}
-                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all border-r border-slate-100"
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Hoje
               </button>
@@ -696,7 +721,7 @@ export default function Armstrong() {
                 <FullCalendar
                   key={`calendar-${events.length}`}
                   ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                  plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
                   initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
                   locale={ptBrLocale}
                   headerToolbar={false}
@@ -711,6 +736,9 @@ export default function Armstrong() {
                   eventContent={(eventInfo) => {
                     const data = eventInfo.event.extendedProps;
                     const isSelected = selectedIds.includes(data.id);
+                    const isMonthView = eventInfo.view.type === 'dayGridMonth';
+                    const isWeekView = eventInfo.view.type === 'timeGridWeek';
+                    const isMobile = window.innerWidth < 640;
                     
                     const areaColorMap: Record<string, string> = {
                       'Packaging': 'text-blue-600 bg-blue-50 px-1 rounded',
@@ -736,14 +764,15 @@ export default function Armstrong() {
                           data.status === 'Concluída' ? "border-green-500 bg-green-50/40" : 
                           data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/40" : 
                           "border-red-500 bg-red-50/40",
-                          isSelected && "ring-2 ring-orange-500 ring-offset-0"
+                          isSelected && "ring-2 ring-orange-500 ring-offset-0",
+                          (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
                         )}>
                         {selectionMode && (
                           <div className="absolute top-0.5 right-0.5">
                             {isSelected ? (
-                              <CheckSquare size={8} className="text-orange-500" />
+                              <CheckSquare size={isMobile ? 6 : 8} className="text-orange-500" />
                             ) : (
-                              <Square size={8} className="text-slate-300" />
+                              <Square size={isMobile ? 6 : 8} className="text-slate-300" />
                             )}
                           </div>
                         )}
@@ -751,30 +780,35 @@ export default function Armstrong() {
                         <div className="flex items-center justify-between gap-1">
                           <span className={cn(
                             "text-[6px] font-black uppercase tracking-tighter truncate",
-                            areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded"
+                            areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded",
+                            (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
                           )}>
                             {data.area}
                           </span>
-                          <span className={cn(
-                            "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
-                            data.status === 'Concluída' ? "bg-green-500" : 
-                            data.status === 'Planejada' ? "bg-yellow-500" : 
-                            "bg-red-500"
-                          )}>
-                            {data.status}
-                          </span>
+                          {!isMobile && (
+                            <span className={cn(
+                              "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                              data.status === 'Concluída' ? "bg-green-500" : 
+                              data.status === 'Planejada' ? "bg-yellow-500" : 
+                              "bg-red-500"
+                            )}>
+                              {data.status}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-0">
-                          <h3 className="text-[7px] font-black text-slate-900 leading-tight uppercase line-clamp-1">
+                          <h3 className={cn("text-[7px] font-black text-slate-900 leading-tight uppercase line-clamp-1", (isMonthView || (isWeekView && isMobile)) && "text-[6px]")}>
                             {data.equipamento}
                           </h3>
-                          <div className="flex items-center gap-1">
-                            <User size={6} className="text-slate-400" />
-                            <span className="text-[6px] text-slate-500 font-bold line-clamp-1">
-                              {data.responsavel}
-                            </span>
-                          </div>
+                          {!(isMonthView || (isWeekView && isMobile)) && (
+                            <div className="flex items-center gap-1">
+                              <User size={6} className="text-slate-400" />
+                              <span className="text-[6px] text-slate-500 font-bold line-clamp-1">
+                                {data.responsavel}
+                              </span>
+                            </div>
+                          )}
                           <div className={cn(
                             "text-[5px] font-black uppercase tracking-tighter truncate",
                             data.tipo_manutencao === 'Corretiva' ? "text-red-600" :

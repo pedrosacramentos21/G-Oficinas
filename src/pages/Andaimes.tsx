@@ -128,7 +128,7 @@ export default function Andaimes() {
     <div className="flex flex-col gap-2 p-2 h-screen overflow-hidden bg-[#f8f9fa]">
       {/* Compact Header & Toolbar */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-ambev-blue p-2 rounded-lg shadow-sm shadow-ambev-blue/20 shrink-0">
               <Layers className="text-ambev-gold w-4 h-4" />
@@ -139,65 +139,74 @@ export default function Andaimes() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button 
                 onClick={() => setActiveTab('calendario')}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  "flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
                   activeTab === 'calendario' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <CalendarIcon size={12} />
+                <CalendarIcon size={12} className="hidden xs:block" />
                 CALENDÁRIO
               </button>
               <button 
                 onClick={() => setActiveTab('backlog')}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-md font-black text-[9px] transition-all",
+                  "flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
                   activeTab === 'backlog' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                <LayoutGrid size={12} />
+                <LayoutGrid size={12} className="hidden xs:block" />
                 BACKLOG
               </button>
             </div>
 
-            <div className="h-6 w-px bg-slate-200 mx-1" />
+            <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
-            <button 
-              onClick={() => setIsSelectionMode(!isSelectionMode)}
-              className={cn(
-                "font-black px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-widest text-[9px] border",
-                isSelectionMode ? "bg-ambev-blue text-white border-ambev-blue" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-              )}
-            >
-              {isSelectionMode ? 'Sair' : 'Selecionar'}
-            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setIsSelectionMode(!isSelectionMode)}
+                className={cn(
+                  "font-black px-2 sm:px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-widest text-[8px] sm:text-[9px] border",
+                  isSelectionMode ? "bg-ambev-blue text-white border-ambev-blue" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                )}
+              >
+                {isSelectionMode ? 'Sair' : 'Selecionar'}
+              </button>
 
-            <button 
-              onClick={openNewRequest}
-              className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-4 py-1.5 rounded-lg shadow-sm shadow-ambev-blue/20 transition-all flex items-center gap-1.5 active:scale-95 uppercase tracking-widest text-[9px]"
-            >
-              <Plus size={14} />
-              Nova Solicitação
-            </button>
+              <button 
+                onClick={openNewRequest}
+                className="bg-ambev-blue hover:bg-ambev-blue/90 text-white font-black px-3 sm:px-4 py-1.5 rounded-lg shadow-sm shadow-ambev-blue/20 transition-all flex items-center gap-1.5 active:scale-95 uppercase tracking-widest text-[8px] sm:text-[9px]"
+              >
+                <Plus size={14} />
+                <span className="hidden xs:inline">Nova Solicitação</span>
+                <span className="xs:hidden">Novo</span>
+              </button>
+            </div>
 
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-1">
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
                 onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('dayGridMonth')} 
-                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Mês
               </button>
               <button 
-                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek')} 
-                className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('timeGridWeek')} 
+                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Semana
               </button>
+              <button 
+                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('timeGridDay')} 
+                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Dia
+              </button>
               <div className="w-px h-3 bg-slate-100 mx-0.5" />
-              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().today()} className="px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
+              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().today()} className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
                 Hoje
               </button>
               <button onClick={() => (window as any).fullCalendarAndaime?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
@@ -240,6 +249,8 @@ export default function Andaimes() {
                 const isMontagem = data.tipo_servico === 'Montagem';
                 const isSelected = selectedIds.includes(data.id);
                 const isMonthView = eventInfo.view.type === 'dayGridMonth';
+                const isWeekView = eventInfo.view.type === 'timeGridWeek';
+                const isMobile = window.innerWidth < 640;
                 
                 return (
                     <div 
@@ -253,15 +264,15 @@ export default function Andaimes() {
                         "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
                         data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40",
                         isSelected && "ring-2 ring-sky-500 ring-offset-0",
-                        isMonthView && "p-0.5 gap-0"
+                        (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
                       )}
                     >
                     {isSelectionMode && (
                       <div className="absolute top-0.5 right-0.5">
                         {isSelected ? (
-                          <CheckCircle2 size={8} className="text-sky-500" />
+                          <CheckCircle2 size={isMobile ? 6 : 8} className="text-sky-500" />
                         ) : (
-                          <div className="w-2 h-2 border border-slate-300 rounded-sm" />
+                          <div className={cn("border border-slate-300 rounded-sm", isMobile ? "w-1.5 h-1.5" : "w-2 h-2")} />
                         )}
                       </div>
                     )}
@@ -271,28 +282,31 @@ export default function Andaimes() {
                           "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded border",
                           data.area === 'Processo cerveja' ? "text-amber-700 bg-amber-50 border-amber-200" :
                           data.area === 'Packaging, Bblend e Xaroparia' ? "text-blue-700 bg-blue-50 border-blue-200" :
-                          "text-emerald-700 bg-emerald-50 border-emerald-200"
+                          "text-emerald-700 bg-emerald-50 border-emerald-200",
+                          (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
                         )}>
                           {data.area}
                         </span>
                         <div className="flex items-center gap-1">
-                          <span className="text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0">
+                          <span className={cn("text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0", (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5")}>
                             {data.quantidade_pontos} PTS
                           </span>
-                          <span className={cn(
-                            "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
-                            data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
-                          )}>
-                            {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
-                          </span>
+                          {!isMobile && (
+                            <span className={cn(
+                              "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                              data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                            )}>
+                              {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                            </span>
+                          )}
                         </div>
                       </div>
 
-                    <div className="font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1">
+                    <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1", (isMonthView || (isWeekView && isMobile)) && "text-[7px]")}>
                       {eventInfo.event.title}
                     </div>
 
-                    {!isMonthView && (
+                    {!(isMonthView || (isWeekView && isMobile)) && (
                       <div className="flex items-center gap-1">
                         <User size={6} className="text-slate-400" />
                         <span className="text-[7px] text-slate-500 font-bold line-clamp-1">
