@@ -76,6 +76,7 @@ export default function Refrigeracao() {
 
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalType, setModalType] = useState<'manutencao' | 'details'>('manutencao');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -183,6 +184,8 @@ export default function Refrigeracao() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (selectedItem && modalType === 'details') {
         setPasswordModal({ 
@@ -190,6 +193,7 @@ export default function Refrigeracao() {
           id: selectedItem.id, 
           action: selectedItem._source === 'calendar' ? 'edit' : 'backlog-edit' 
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -257,6 +261,8 @@ export default function Refrigeracao() {
       fetchRefrigeracao();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -797,17 +803,17 @@ export default function Refrigeracao() {
                           </div>
                         )}
                         
-                        <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
                           <span className={cn(
-                            "text-[6px] font-black uppercase tracking-tighter truncate",
+                            "text-[7px] font-black uppercase tracking-tighter truncate",
                             areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded",
-                            (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
+                            (isMonthView || (isWeekView && isMobile) || isShort) && "text-[6px] px-0.5"
                           )}>
                             {data.area}
                           </span>
-                          {!isMobile && (
+                          {!isMobile && !isShort && (
                             <span className={cn(
-                              "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
+                              "text-[6px] font-black px-0.5 rounded uppercase text-white shrink-0",
                               data.status === 'Concluída' ? "bg-green-500" : 
                               data.status === 'Planejada' ? "bg-yellow-500" : 
                               "bg-red-500"
@@ -818,30 +824,32 @@ export default function Refrigeracao() {
                         </div>
 
                         <div className={cn(
-                          "font-black text-slate-900 uppercase leading-none line-clamp-1",
-                          isShort ? "text-[7px] sm:text-[8px]" : "text-[9px]",
+                          "font-black text-slate-900 uppercase leading-tight line-clamp-2",
+                          isShort ? "text-[7px] sm:text-[8px]" : "text-[10px]",
                           (isMonthView || (isWeekView && isMobile)) && "text-[7px]"
                         )}>
-                          {data.equipamento}
+                          {data.equipamento || data.titulo}
                         </div>
 
-                        {!(isMonthView || (isWeekView && isMobile)) && (
-                          <div className="flex items-center gap-1">
-                            <User size={6} className="text-slate-400" />
-                            <span className="text-[7px] text-slate-500 font-bold line-clamp-1">
+                        {!(isMonthView || (isWeekView && isMobile) || isShort) && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <User size={7} className="text-slate-400" />
+                            <span className="text-[8px] text-slate-500 font-bold line-clamp-1">
                               {data.responsavel}
                             </span>
                           </div>
                         )}
 
-                        <div className={cn(
-                          "text-[6px] font-black uppercase tracking-tighter truncate",
-                          data.tipo_manutencao === 'Corretiva' ? "text-red-600" :
-                          data.tipo_manutencao === 'Preventiva' ? "text-blue-600" :
-                          "text-amber-600"
-                        )}>
-                          {data.tipo_manutencao}
-                        </div>
+                        {!isShort && (
+                          <div className={cn(
+                            "text-[7px] font-black uppercase tracking-tighter truncate mt-0.5",
+                            data.tipo_manutencao === 'Corretiva' ? "text-red-600" :
+                            data.tipo_manutencao === 'Preventiva' ? "text-blue-600" :
+                            "text-amber-600"
+                          )}>
+                            {data.tipo_manutencao}
+                          </div>
+                        )}
 
                         <div className="details-on-hover">
                           <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
@@ -1427,20 +1435,22 @@ export default function Refrigeracao() {
                   <button 
                     form="refrigeracao-form"
                     type="submit"
-                    className="w-full sm:flex-1 bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest order-1 sm:order-2"
+                    disabled={isSubmitting}
+                    className="w-full sm:flex-1 bg-sky-500 hover:bg-sky-600 text-white font-black py-3.5 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CheckCircle2 size={18} />
-                    SALVAR ALTERAÇÕES
+                    {isSubmitting ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                   </button>
                 </>
               ) : (
                 <button 
                   form="refrigeracao-form"
                   type="submit"
-                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.2em]"
+                  disabled={isSubmitting}
+                  className="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl shadow-sky-500/20 transition-all flex items-center justify-center gap-2 text-[10px] sm:text-xs uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 size={20} />
-                  Salvar Intervenção
+                  {isSubmitting ? 'SALVANDO...' : 'Salvar Intervenção'}
                 </button>
               )}
             </div>

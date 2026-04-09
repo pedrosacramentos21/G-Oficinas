@@ -31,6 +31,7 @@ export default function PTAs() {
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const INITIAL_FORM_DATA = {
     equipamento: EQUIPAMENTOS[0].name,
@@ -172,6 +173,8 @@ export default function PTAs() {
 
   const handleActualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (isEditing && selectedPTA) {
         await updatePTA(selectedPTA.id, formData, tempPassword);
@@ -187,6 +190,8 @@ export default function PTAs() {
       setTempPassword('');
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -614,9 +619,10 @@ export default function PTAs() {
                 <button 
                   type="submit"
                   form="pta-form"
-                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2"
+                  disabled={isSubmitting}
+                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  SALVAR
+                  {isSubmitting ? 'SALVANDO...' : 'SALVAR'}
                 </button>
               </div>
             </form>

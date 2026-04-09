@@ -64,6 +64,7 @@ export default function SalaMotores() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
@@ -138,6 +139,8 @@ export default function SalaMotores() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await addAtividadeSalaMotores(formData);
       setIsModalOpen(false);
@@ -154,6 +157,8 @@ export default function SalaMotores() {
       });
     } catch (error: any) {
       alert(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -648,9 +653,10 @@ export default function SalaMotores() {
                 <button 
                   type="submit"
                   form="nova-atividade-form"
-                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2"
+                  disabled={isSubmitting}
+                  className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl sm:rounded-2xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 text-xs sm:text-sm order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  SALVAR
+                  {isSubmitting ? 'SALVANDO...' : 'SALVAR'}
                 </button>
               </div>
             </form>
