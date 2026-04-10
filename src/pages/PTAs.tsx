@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
 import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatDate } from '../lib/utils';
 import PasswordModal from '../components/PasswordModal';
 
 const EQUIPAMENTOS = [
@@ -414,7 +414,7 @@ export default function PTAs() {
                     </div>
                     <div>
                       <span className="label">Data</span>
-                      <p>{new Date(data.data).toLocaleDateString('pt-BR')}</p>
+                      <p>{formatDate(data.data)}</p>
                     </div>
                     <div>
                       <span className="label">Horário</span>
@@ -676,7 +676,7 @@ export default function PTAs() {
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data</label>
                   <div className="flex items-center gap-2 text-sm sm:text-lg font-bold text-slate-700">
                     <CalendarIcon size={18} className="text-slate-400" />
-                    {new Date(selectedPTA.data).toLocaleDateString('pt-BR')}
+                    {formatDate(selectedPTA.data)}
                   </div>
                 </div>
 

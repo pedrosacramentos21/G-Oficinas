@@ -141,6 +141,7 @@ interface StoreState {
   updateAndaime: (id: number, andaime: Partial<Andaime>, password?: string) => Promise<void>;
   deleteAndaime: (id: number, password: string) => Promise<void>;
   batchDeleteAndaimes: (ids: number[], password: string) => Promise<void>;
+  batchApproveAndaimes: (ids: number[], password: string) => Promise<void>;
   fetchPTAs: () => Promise<void>;
   addPTA: (pta: any) => Promise<any>;
   approvePTA: (id: number, password: string) => Promise<void>;
@@ -260,6 +261,19 @@ export const useStore = create<StoreState>((set, get) => ({
   
   batchDeleteAndaimes: async (ids, password) => {
     const res = await fetch('/api/andaimes/batch-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchAndaimes();
+  },
+
+  batchApproveAndaimes: async (ids, password) => {
+    const res = await fetch('/api/andaimes/batch-approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, password }),

@@ -193,6 +193,24 @@ async function startServer() {
     }
   });
 
+  app.post('/api/andaimes/batch-approve', async (req, res) => {
+    const { ids, password } = req.body;
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    }
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .update({ status: 'aprovado' })
+        .in('id', ids);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch approve andaimes' });
+    }
+  });
+
   // API Routes for PTAs
   app.get('/api/ptas', async (req, res) => {
     try {

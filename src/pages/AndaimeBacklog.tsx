@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../store';
 import { Calendar, User, Clock, CheckCircle2, MapPin, Layers } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatDate } from '../lib/utils';
 
 const COLUMNS = [
   'Processo cerveja',
@@ -136,11 +136,11 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                         </div>
                         <div>
                           <span className="label">Data Montagem</span>
-                          <p>{new Date(item.data_montagem).toLocaleDateString('pt-BR')}</p>
+                          <p>{formatDate(item.data_montagem)}</p>
                         </div>
                         <div>
                           <span className="label">Data Desmontagem</span>
-                          <p>{item.data_desmontagem ? new Date(item.data_desmontagem).toLocaleDateString('pt-BR') : 'N/A'}</p>
+                          <p>{item.data_desmontagem ? formatDate(item.data_desmontagem) : 'N/A'}</p>
                         </div>
                       </div>
 
@@ -174,7 +174,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                         </div>
                         <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] font-bold text-gray-400">
                           <Calendar size={10} className="md:w-3 md:h-3" />
-                          <span>{item.data_montagem}</span>
+                          <span>{formatDate(item.data_montagem)}</span>
                         </div>
                         <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] font-bold text-gray-400">
                           <Clock size={10} className="md:w-3 md:h-3" />

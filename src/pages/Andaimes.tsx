@@ -6,12 +6,12 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock } from 'lucide-react';
+import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle } from 'lucide-react';
 import AndaimeModal from '../components/AndaimeModal';
 import PasswordModal from '../components/PasswordModal';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
 import AndaimeBacklog from './AndaimeBacklog';
-import { cn } from '../lib/utils';
+import { cn, formatDate } from '../lib/utils';
 
 const AREAS = [
   'Processo cerveja',
@@ -20,14 +20,15 @@ const AREAS = [
 ];
 
 export default function Andaimes() {
-  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes } = useStore();
+  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAndaime, setSelectedAndaime] = useState<any>(null);
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete', deleteChoice?: 'backlog-only' | 'both' }>({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve', deleteChoice?: 'backlog-only' | 'both' }>({
     isOpen: false,
     id: null,
     action: 'approve'
@@ -74,7 +75,13 @@ export default function Andaimes() {
     }
   };
 
+  const handleBatchApprove = () => {
+    if (selectedIds.length === 0) return;
+    setPasswordModal({ isOpen: true, id: null, ids: selectedIds, action: 'batch-approve' });
+  };
+
   const handleAction = async (password: string) => {
+    setIsSubmitting(true);
     try {
       if (passwordModal.action === 'batch-delete') {
         if (passwordModal.deleteChoice === 'backlog-only') {
@@ -86,6 +93,10 @@ export default function Andaimes() {
         } else {
           await batchDeleteAndaimes(passwordModal.ids || selectedIds, password);
         }
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+      } else if (passwordModal.action === 'batch-approve') {
+        await batchApproveAndaimes(passwordModal.ids || selectedIds, password);
         setSelectedIds([]);
         setIsSelectionMode(false);
       } else if (passwordModal.id !== null) {
@@ -105,6 +116,8 @@ export default function Andaimes() {
       fetchAndaimes();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -391,11 +404,11 @@ export default function Andaimes() {
                         </div>
                         <div>
                           <span className="label">Montagem</span>
-                          <p>{new Date(data.data_montagem).toLocaleDateString('pt-BR')}</p>
+                          <p>{formatDate(data.data_montagem)}</p>
                         </div>
                         <div>
                           <span className="label">Desmontagem</span>
-                          <p>{new Date(data.data_desmontagem).toLocaleDateString('pt-BR')}</p>
+                          <p>{formatDate(data.data_desmontagem)}</p>
                         </div>
                         <div>
                           <span className="label">Horário</span>
@@ -441,16 +454,27 @@ export default function Andaimes() {
           
           <div className="flex items-center gap-2 md:gap-4">
             <button 
+              onClick={handleBatchApprove}
+              disabled={isSubmitting}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all active:scale-95 disabled:opacity-50"
+            >
+              <CheckCircle size={14} />
+              <span className="hidden sm:inline">{isSubmitting ? 'Processando...' : 'Aprovar Lote'}</span>
+              <span className="sm:hidden">{isSubmitting ? '...' : 'Aprovar'}</span>
+            </button>
+            <button 
               onClick={handleBatchDelete}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all active:scale-95"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all active:scale-95 disabled:opacity-50"
             >
               <Trash2 size={14} />
-              <span className="hidden sm:inline">Excluir Lote</span>
-              <span className="sm:hidden">Excluir</span>
+              <span className="hidden sm:inline">{isSubmitting ? 'Processando...' : 'Excluir Lote'}</span>
+              <span className="sm:hidden">{isSubmitting ? '...' : 'Excluir'}</span>
             </button>
             <button 
               onClick={() => setSelectedIds([])}
-              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all px-2"
+              disabled={isSubmitting}
+              className="text-slate-400 hover:text-white font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all px-2 disabled:opacity-50"
             >
               Cancelar
             </button>
