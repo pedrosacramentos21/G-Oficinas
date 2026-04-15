@@ -14,6 +14,8 @@ interface Andaime {
   descricao_local: string;
   status: 'pendente' | 'aprovado';
   esconder_no_backlog?: boolean;
+  excedeu_limite?: boolean;
+  justificativa_excesso?: string;
 }
 
 interface PTA {

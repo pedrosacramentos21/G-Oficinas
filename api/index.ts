@@ -50,7 +50,7 @@ async function startServer() {
     const { 
       area, local_setor, tipo_servico, quantidade_pontos, 
       data_montagem, data_desmontagem, hora_inicio, hora_fim, 
-      solicitante, descricao_local 
+      solicitante, descricao_local, excedeu_limite, justificativa_excesso
     } = req.body;
 
     if (!data_desmontagem) {
@@ -59,6 +59,15 @@ async function startServer() {
 
     if (new Date(data_desmontagem) < new Date(data_montagem)) {
       return res.status(400).json({ error: 'A data de desmontagem não pode ser anterior à data de montagem.' });
+    }
+
+    const dateMontagem = new Date(data_montagem);
+    const dateDesmontagem = new Date(data_desmontagem);
+    const diffTime = Math.abs(dateDesmontagem.getTime() - dateMontagem.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 30) {
+      return res.status(400).json({ error: 'A data de desmontagem deve ser no máximo 30 dias após a data de montagem.' });
     }
     
     const status = 'pendente';
@@ -79,11 +88,31 @@ async function startServer() {
         .insert([{
           area, local_setor, tipo_servico, quantidade_pontos, 
           data_montagem, data_desmontagem, hora_inicio, hora_fim, 
-          solicitante, descricao_local, status
+          solicitante, descricao_local, status,
+          excedeu_limite, justificativa_excesso
         }])
         .select();
 
       if (error) throw error;
+
+      // Automatic disassembly record
+      if (tipo_servico === 'Montagem' && data_desmontagem) {
+        await supabase
+          .from('solicitacoes_andaime')
+          .insert([{
+            area, 
+            local_setor: `${local_setor} (DESMONTAGEM)`, 
+            tipo_servico: 'Desmontagem', 
+            quantidade_pontos: 0, 
+            data_montagem: data_desmontagem, 
+            data_desmontagem: data_desmontagem, 
+            hora_inicio: '08:00', 
+            hora_fim: '17:00', 
+            solicitante, 
+            descricao_local: `Desmontagem automática referente à solicitação #${data[0].id}`, 
+            status: 'pendente'
+          }]);
+      }
 
       if (conflicts && conflicts.length > 0) {
         res.json({ 

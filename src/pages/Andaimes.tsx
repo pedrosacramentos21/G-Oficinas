@@ -16,7 +16,8 @@ import { cn, formatDate } from '../lib/utils';
 const AREAS = [
   'Processo cerveja',
   'Packaging, Bblend e Xaroparia',
-  'Utilidades e Meio Ambiente'
+  'Utilidades',
+  'Meio Ambiente'
 ];
 
 export default function Andaimes() {
@@ -135,18 +136,31 @@ export default function Andaimes() {
 
   const events = andaimes.map(a => {
     const isSelected = selectedIds.includes(a.id);
+    const isDesmontagem = a.tipo_servico === 'Desmontagem';
+    const isExcedente = a.excedeu_limite;
     const date = a.data_montagem || new Date().toISOString().split('T')[0];
     const datePart = date.split('T')[0];
     
+    let backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#22c55e' : '#FFD100');
+    let borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#16a34a' : '#eab308');
+    
+    if (isExcedente && a.status === 'pendente') {
+      backgroundColor = isSelected ? '#005596' : '#ef4444';
+      borderColor = isSelected ? '#003d6b' : '#dc2626';
+    } else if (isDesmontagem) {
+      backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#94a3b8' : '#cbd5e1');
+      borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#64748b' : '#94a3b8');
+    }
+
     return {
       id: String(a.id),
       title: a.local_setor,
       start: `${datePart}T${a.hora_inicio || '08:00'}`,
       end: `${datePart}T${a.hora_fim || '17:00'}`,
-      backgroundColor: isSelected ? '#005596' : (a.status === 'aprovado' ? '#22c55e' : '#FFD100'),
-      borderColor: isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#16a34a' : '#eab308'),
-      textColor: a.status === 'pendente' && !isSelected ? '#1e293b' : '#ffffff',
-      className: `event-status-${a.status}`,
+      backgroundColor,
+      borderColor,
+      textColor: (a.status === 'pendente' || isExcedente) && !isSelected && !isDesmontagem ? '#ffffff' : '#ffffff',
+      className: `event-status-${a.status} ${isDesmontagem ? 'event-desmontagem' : ''} ${isExcedente ? 'event-excedente' : ''}`,
       extendedProps: a
     };
   });
@@ -300,6 +314,8 @@ export default function Andaimes() {
                 const isMonthView = eventInfo.view.type === 'dayGridMonth';
                 const isWeekView = eventInfo.view.type === 'timeGridWeek';
                 const isMobile = window.innerWidth < 640;
+                const isDesmontagem = data.tipo_servico === 'Desmontagem';
+                const isExcedente = data.excedeu_limite;
                 
                 return (
                     <div 
@@ -311,7 +327,9 @@ export default function Andaimes() {
                       }}
                       className={cn(
                         "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
-                        data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40",
+                        isExcedente && data.status === 'pendente' ? "border-red-500 bg-red-50/40" :
+                        isDesmontagem ? (data.status === 'aprovado' ? "border-slate-500 bg-slate-50/40" : "border-slate-300 bg-slate-50/40") :
+                        (data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40"),
                         isSelected && "ring-2 ring-sky-500 ring-offset-0",
                         (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
                       )}
@@ -331,7 +349,8 @@ export default function Andaimes() {
                           "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded border",
                           data.area === 'Processo cerveja' ? "text-amber-700 bg-amber-50 border-amber-200" :
                           data.area === 'Packaging, Bblend e Xaroparia' ? "text-blue-700 bg-blue-50 border-blue-200" :
-                          "text-emerald-700 bg-emerald-50 border-emerald-200",
+                          data.area === 'Utilidades' ? "text-emerald-700 bg-emerald-50 border-emerald-200" :
+                          "text-purple-700 bg-purple-50 border-purple-200",
                           (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
                         )}>
                           {data.area}
@@ -340,18 +359,24 @@ export default function Andaimes() {
                           <span className={cn("text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0", (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5")}>
                             {data.quantidade_pontos} PTS
                           </span>
+                          {isExcedente && (
+                            <span className="text-[6px] font-black bg-red-600 text-white px-1 rounded-sm shrink-0 animate-pulse">
+                              ! LIMITE
+                            </span>
+                          )}
                           {!isMobile && (
                             <span className={cn(
                               "text-[5px] font-black px-0.5 rounded uppercase text-white shrink-0",
-                              data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                              data.status === 'aprovado' ? "bg-green-500" : (isExcedente ? "bg-red-500" : "bg-yellow-500")
                             )}>
-                              {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                              {data.status === 'aprovado' ? 'APROVADO' : (isExcedente ? 'EXCEDENTE' : 'PENDENTE')}
                             </span>
                           )}
                         </div>
                       </div>
 
-                    <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1", (isMonthView || (isWeekView && isMobile)) && "text-[7px]")}>
+                    <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1 flex items-center gap-1", (isMonthView || (isWeekView && isMobile)) && "text-[7px]")}>
+                      {isDesmontagem && <Trash2 size={isMobile ? 8 : 10} className="text-slate-500 shrink-0" />}
                       {eventInfo.event.title}
                     </div>
 

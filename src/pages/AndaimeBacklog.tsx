@@ -6,13 +6,15 @@ import { cn, formatDate } from '../lib/utils';
 const COLUMNS = [
   'Processo cerveja',
   'Packaging, Bblend e Xaroparia',
-  'Utilidades e Meio Ambiente'
+  'Utilidades',
+  'Meio Ambiente'
 ];
 
 const GET_LIMIT = (column: string) => {
   if (column.includes('Processo')) return 10;
   if (column.includes('Packaging')) return 4;
   if (column.includes('Utilidades')) return 3;
+  if (column.includes('Meio Ambiente')) return 3;
   return 999;
 };
 
@@ -34,7 +36,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
         <p className="text-[10px] md:text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest">Gestão de solicitações por área operacional</p>
       </div>
 
-      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {COLUMNS.map(column => {
           const points = andaimes
             .filter(a => {
@@ -51,30 +53,46 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
           
           const limit = GET_LIMIT(column);
           const isOverLimit = points >= limit;
+          const percentage = Math.min((points / limit) * 100, 100);
           
           return (
-            <div key={column} className="bg-white rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm border border-slate-100 flex justify-between items-center">
-              <div className="space-y-1 min-w-0">
-                <h3 className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight truncate">{column}</h3>
-                <p className={cn(
-                  "text-lg md:text-2xl font-black leading-none",
-                  isOverLimit ? "text-red-600" : "text-slate-900"
-                )}>{points}</p>
+            <div key={column} className="bg-white rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm border border-slate-100 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight truncate">{column}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <p className={cn(
+                      "text-lg md:text-2xl font-black leading-none",
+                      isOverLimit ? "text-red-600" : "text-slate-900"
+                    )}>{points}</p>
+                    <span className="text-[8px] md:text-[10px] font-bold text-slate-400">/ {limit}</span>
+                  </div>
+                </div>
+                <div className={cn(
+                  "p-2 rounded-lg shrink-0",
+                  isOverLimit ? "bg-red-50" : "bg-blue-50"
+                )}>
+                  <MapPin className={cn(isOverLimit ? "text-red-500" : "text-ambev-blue")} size={14} />
+                </div>
               </div>
-              <div className={cn(
-                "p-2 md:p-3 rounded-lg md:rounded-xl shrink-0",
-                isOverLimit ? "bg-red-50" : "bg-blue-50"
-              )}>
-                <MapPin className={cn(isOverLimit ? "text-red-500" : "text-ambev-blue", "md:w-[18px] md:h-[18px]")} size={16} />
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full transition-all duration-500",
+                    isOverLimit ? "bg-red-500" : "bg-ambev-blue"
+                  )}
+                  style={{ width: `${percentage}%` }}
+                />
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="h-auto flex flex-col lg:flex-row gap-4 md:gap-6 lg:gap-8 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 custom-scrollbar">
-        {COLUMNS.map(column => (
-          <div key={column} className="flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border border-gray-200/50 min-h-[300px] lg:h-auto w-full lg:w-1/3 shrink-0 lg:shrink">
+      <div className="flex-1 min-h-0 overflow-x-auto pb-4 custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 min-w-[1000px] lg:min-w-0 h-full">
+          {COLUMNS.map(column => (
+            <div key={column} className="flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border border-gray-200/50 h-full min-h-[400px]">
             <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
               <h2 className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] truncate mr-2">{column}</h2>
               <span className="bg-white text-gray-900 text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-full shadow-sm shrink-0">
@@ -88,7 +106,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
               </span>
             </div>
 
-            <div className="max-h-[500px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-2 md:space-y-4">
+            <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-2 md:space-y-4">
               {andaimes
                 .filter(a => {
                   if (a.esconder_no_backlog) return false;
@@ -105,7 +123,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                   >
                     <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1 md:w-1.5",
-                      item.status === 'aprovado' ? "bg-green-500" : "bg-ambev-blue"
+                      item.status === 'aprovado' ? "bg-green-500" : (item.excedeu_limite ? "bg-red-500" : "bg-ambev-blue")
                     )} />
                     
                     {/* Popover de Detalhes */}
@@ -144,6 +162,13 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                         </div>
                       </div>
 
+                      {item.excedeu_limite && (
+                        <div className="mt-2 pt-2 border-t border-red-100">
+                          <span className="label text-red-600">Justificativa de Excesso</span>
+                          <p className="text-[11px] italic text-red-500 leading-relaxed">"{item.justificativa_excesso}"</p>
+                        </div>
+                      )}
+
                       {item.descricao_local && (
                         <div className="mt-2 pt-2 border-t border-slate-50">
                           <span className="label">Descrição do Local</span>
@@ -163,7 +188,11 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                         {item.status === 'aprovado' ? (
                           <CheckCircle2 size={14} className="text-green-500 shrink-0 md:w-4 md:h-4" />
                         ) : (
-                          <Clock size={14} className="text-ambev-blue shrink-0 md:w-4 md:h-4" />
+                          item.excedeu_limite ? (
+                            <div className="bg-red-500 text-white text-[6px] font-black px-1 rounded-sm animate-pulse uppercase">Excedente</div>
+                          ) : (
+                            <Clock size={14} className="text-ambev-blue shrink-0 md:w-4 md:h-4" />
+                          )
                         )}
                       </div>
 
@@ -191,12 +220,20 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                           "{item.descricao_local}"
                         </p>
                       )}
+
+                      {item.excedeu_limite && item.justificativa_excesso && (
+                        <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                          <p className="text-[6px] md:text-[8px] font-black text-red-600 uppercase tracking-widest mb-1">Justificativa:</p>
+                          <p className="text-[7px] md:text-[9px] font-medium text-red-500 italic line-clamp-1">"{item.justificativa_excesso}"</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

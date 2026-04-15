@@ -8,7 +8,8 @@ import DeleteChoiceModal from './DeleteChoiceModal';
 const AREAS = [
   'Processo cerveja',
   'Packaging, Bblend e Xaroparia',
-  'Utilidades e Meio Ambiente'
+  'Utilidades',
+  'Meio Ambiente'
 ];
 
 const TIPOS_SERVICO = [
@@ -30,6 +31,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
   const [showDeleteChoice, setShowDeleteChoice] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState('');
   const [showNotice, setShowNotice] = useState(false);
+  const [showLimitAlert, setShowLimitAlert] = useState(false);
   const [deleteChoice, setDeleteChoice] = useState<'backlog-only' | 'both' | null>(null);
   
   const initialFormState = {
@@ -42,11 +44,21 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     hora_inicio: '08:00',
     hora_fim: '17:00',
     solicitante: '',
-    descricao_local: ''
+    descricao_local: '',
+    excedeu_limite: false,
+    justificativa_excesso: ''
   };
 
   const [formData, setFormData] = useState(initialFormState);
   const [passwordModalAction, setPasswordModalAction] = useState<'unlock' | 'delete'>('unlock');
+  const { andaimes } = useStore();
+
+  const LIMITS: Record<string, number> = {
+    'Processo cerveja': 10,
+    'Packaging, Bblend e Xaroparia': 4,
+    'Utilidades': 3,
+    'Meio Ambiente': 3
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -63,7 +75,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
           hora_inicio: andaime.hora_inicio,
           hora_fim: andaime.hora_fim,
           solicitante: andaime.solicitante,
-          descricao_local: andaime.descricao_local
+          descricao_local: andaime.descricao_local,
+          excedeu_limite: andaime.excedeu_limite || false,
+          justificativa_excesso: andaime.justificativa_excesso || ''
         });
         setIsUnlocked(andaime.status !== 'aprovado');
       } else {
@@ -75,6 +89,25 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       }
     }
   }, [isOpen, andaime]);
+
+  useEffect(() => {
+    if (!andaime && formData.tipo_servico === 'Montagem') {
+      const currentPoints = andaimes
+        .filter(a => a.area === formData.area && a.status === 'aprovado' && a.tipo_servico !== 'Desmontagem' && !a.esconder_no_backlog)
+        .reduce((sum, a) => sum + a.quantidade_pontos, 0);
+      
+      const limit = LIMITS[formData.area] || 999;
+      const willExceed = currentPoints + formData.quantidade_pontos > limit;
+      
+      if (willExceed !== formData.excedeu_limite) {
+        setFormData(prev => ({ ...prev, excedeu_limite: willExceed }));
+        if (willExceed) {
+          setShowLimitAlert(true);
+          setTimeout(() => setShowLimitAlert(false), 5000);
+        }
+      }
+    }
+  }, [formData.area, formData.quantidade_pontos, formData.tipo_servico, andaimes, andaime]);
 
   if (!isOpen) return null;
 
@@ -88,6 +121,21 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
 
     if (new Date(formData.data_desmontagem) < new Date(formData.data_montagem)) {
       alert('A data de desmontagem não pode ser anterior à data de montagem.');
+      return;
+    }
+
+    const dateMontagem = new Date(formData.data_montagem);
+    const dateDesmontagem = new Date(formData.data_desmontagem);
+    const diffTime = Math.abs(dateDesmontagem.getTime() - dateMontagem.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 30) {
+      alert('A data de desmontagem deve ser no máximo 30 dias após a data de montagem.');
+      return;
+    }
+
+    if (formData.excedeu_limite && !formData.justificativa_excesso) {
+      alert('Por favor, insira uma justificativa para a montagem acima do limite de pontos.');
       return;
     }
 
@@ -146,6 +194,17 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+      {showLimitAlert && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top duration-500">
+          <div className="bg-red-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-red-500">
+            <Info size={20} className="animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest">Alerta de Contrato</span>
+              <span className="text-xs font-bold">Limite de pontos excedido para esta área!</span>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="bg-white rounded-t-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 flex flex-col max-h-[92vh] sm:max-h-[95vh] relative">
         {showSuccess ? (
           <div className="flex flex-col items-center justify-center p-12 text-center animate-in zoom-in duration-300 min-h-[400px]">
@@ -327,6 +386,29 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                     onChange={e => setFormData({...formData, descricao_local: e.target.value})}
                   />
                 </div>
+
+                {formData.excedeu_limite && (
+                  <div className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-2">
+                      <div className="flex items-center gap-2 text-red-600 mb-2">
+                        <Info size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Aviso: Limite de pontos excedido</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-red-500 uppercase leading-tight">
+                        O limite de pontos para a área {formData.area} ({LIMITS[formData.area]} pts) foi excedido. 
+                        É obrigatório inserir uma justificativa para esta solicitação.
+                      </p>
+                    </div>
+                    <label className="block text-xs font-black text-red-600 uppercase tracking-widest mb-2">Justificativa do Excesso <span className="text-red-500">*</span></label>
+                    <textarea 
+                      required
+                      className="w-full bg-red-50/30 border border-red-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none min-h-[80px]"
+                      placeholder="Descreva o motivo da necessidade acima do limite contratual..."
+                      value={formData.justificativa_excesso}
+                      onChange={e => setFormData({...formData, justificativa_excesso: e.target.value})}
+                    />
+                  </div>
+                )}
               </div>
             </form>
           </div>
