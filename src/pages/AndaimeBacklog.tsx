@@ -97,7 +97,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
               <h2 className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] truncate mr-2">{column}</h2>
               <span className="bg-white text-gray-900 text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-full shadow-sm shrink-0">
                 {andaimes.filter(a => {
-                  if (a.esconder_no_backlog) return false;
+                  if (a.esconder_no_backlog || a.tipo_servico === 'Desmontagem') return false;
                   if (column === 'Packaging, Bblend e Xaroparia') {
                     return a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia';
                   }
@@ -109,7 +109,7 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
             <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-2 md:space-y-4">
               {andaimes
                 .filter(a => {
-                  if (a.esconder_no_backlog) return false;
+                  if (a.esconder_no_backlog || a.tipo_servico === 'Desmontagem') return false;
                   if (column === 'Packaging, Bblend e Xaroparia') {
                     return a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia';
                   }

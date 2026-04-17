@@ -203,6 +203,18 @@ export default function Andaimes() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <button 
+              onClick={navigateToNextPending}
+              className="flex items-center gap-1.5 bg-ambev-blue/5 px-2 py-1 rounded-lg border border-ambev-blue/10 hover:bg-ambev-blue/10 transition-all active:scale-95"
+            >
+              <span className="text-[8px] font-black text-ambev-blue uppercase tracking-widest">Pendentes:</span>
+              <span className="bg-ambev-blue text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                {pendingAndaimes.length}
+              </span>
+            </button>
+
+            <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
+
             <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button 
                 onClick={() => setActiveTab('calendario')}
