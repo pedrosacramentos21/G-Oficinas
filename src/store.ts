@@ -13,6 +13,8 @@ interface Andaime {
   solicitante: string;
   descricao_local: string;
   status: 'pendente' | 'aprovado';
+  status_execucao?: 'Montagem Pendente' | 'Montagem em andamento' | 'Montagem concluída';
+  somente_backlog?: boolean;
   esconder_no_backlog?: boolean;
   excedeu_limite?: boolean;
   justificativa_excesso?: string;
@@ -144,6 +146,7 @@ interface StoreState {
   deleteAndaime: (id: number, password: string) => Promise<void>;
   batchDeleteAndaimes: (ids: number[], password: string) => Promise<void>;
   batchApproveAndaimes: (ids: number[], password: string) => Promise<void>;
+  updateStatusExecucaoAndaime: (id: number, status: string) => Promise<void>;
   fetchPTAs: () => Promise<void>;
   addPTA: (pta: any) => Promise<any>;
   approvePTA: (id: number, password: string) => Promise<void>;
@@ -286,7 +289,20 @@ export const useStore = create<StoreState>((set, get) => ({
     }
     get().fetchAndaimes();
   },
-
+  
+  updateStatusExecucaoAndaime: async (id, status) => {
+    const res = await fetch(`/api/andaimes/${id}/status-execucao`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchAndaimes();
+  },
+  
   fetchPTAs: async () => {
     try {
       const res = await fetch('/api/ptas');

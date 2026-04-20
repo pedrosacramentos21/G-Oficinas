@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle } from 'lucide-react';
+import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle, ChevronDown } from 'lucide-react';
 import AndaimeModal from '../components/AndaimeModal';
 import PasswordModal from '../components/PasswordModal';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
@@ -20,16 +20,29 @@ const AREAS = [
   'Meio Ambiente'
 ];
 
+const STATUS_EXECUCAO_OPTIONS = [
+  'Montagem Pendente',
+  'Montagem em andamento',
+  'Montagem concluída'
+] as const;
+
+const STATUS_COLORS: Record<string, string> = {
+  'Montagem Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
+  'Montagem em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
+  'Montagem concluída': 'text-green-600 bg-green-50 border-green-200'
+};
+
 export default function Andaimes() {
-  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes } = useStore();
+  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAndaime, setSelectedAndaime] = useState<any>(null);
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve', deleteChoice?: 'backlog-only' | 'both' }>({
+  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve' | 'adjust-backlog', deleteChoice?: 'backlog-only' | 'both' }>({
     isOpen: false,
     id: null,
     action: 'approve'
@@ -84,7 +97,16 @@ export default function Andaimes() {
   const handleAction = async (password: string) => {
     setIsSubmitting(true);
     try {
-      if (passwordModal.action === 'batch-delete') {
+      if (passwordModal.action === 'adjust-backlog') {
+        if (password === 'Itf2026') {
+          setPasswordModal({ ...passwordModal, isOpen: false });
+          setSelectedAndaime({ somente_backlog: true });
+          setIsModalOpen(true);
+          return;
+        } else {
+          throw new Error('Senha incorreta');
+        }
+      } else if (passwordModal.action === 'batch-delete') {
         if (passwordModal.deleteChoice === 'backlog-only') {
           // Update each to hidden instead of deleting
           for (const id of passwordModal.ids || []) {
@@ -134,7 +156,9 @@ export default function Andaimes() {
     });
   };
 
-  const events = andaimes.map(a => {
+  const events = andaimes
+    .filter(a => !a.somente_backlog)
+    .map(a => {
     const isSelected = selectedIds.includes(a.id);
     const isDesmontagem = a.tipo_servico === 'Desmontagem';
     const isExcedente = a.excedeu_limite;
@@ -185,6 +209,20 @@ export default function Andaimes() {
   const openEditRequest = (andaime: any) => {
     setSelectedAndaime(andaime);
     setIsModalOpen(true);
+  };
+
+  const handleAdjustBacklog = () => {
+    setPasswordModal({ isOpen: true, id: null, action: 'adjust-backlog' });
+  };
+
+  const handleStatusChange = async (e: React.MouseEvent, id: number, status: string) => {
+    e.stopPropagation();
+    try {
+      await updateStatusExecucaoAndaime(id, status);
+      setOpenDropdownId(null);
+    } catch (err: any) {
+      alert(err.message);
+    }
   };
 
   return (
@@ -346,6 +384,36 @@ export default function Andaimes() {
                         (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
                       )}
                     >
+                    {/* Execution Status Button */}
+                    <div className="absolute -top-1 -right-1 z-20 flex flex-col items-end">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdownId(openDropdownId === data.id ? null : data.id);
+                        }}
+                        className="bg-white border border-slate-200 rounded p-0.5 shadow-sm hover:bg-slate-50 transition-all text-slate-400"
+                      >
+                        <ChevronDown size={10} className={cn("transition-transform", openDropdownId === data.id && "rotate-180")} />
+                      </button>
+                      
+                      {openDropdownId === data.id && (
+                        <div className="mt-1 bg-white border border-slate-200 rounded-lg shadow-xl p-1 w-36 animate-in zoom-in-95 duration-100 flex flex-col gap-0.5">
+                          {STATUS_EXECUCAO_OPTIONS.map(status => (
+                            <button
+                              key={status}
+                              onClick={(e) => handleStatusChange(e, data.id, status)}
+                              className={cn(
+                                "text-left px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all hover:bg-slate-50",
+                                STATUS_COLORS[status]
+                              )}
+                            >
+                              {status}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {isSelectionMode && (
                       <div className="absolute top-0.5 right-0.5">
                         {isSelected ? (
@@ -353,6 +421,14 @@ export default function Andaimes() {
                         ) : (
                           <div className={cn("border border-slate-300 rounded-sm", isMobile ? "w-1.5 h-1.5" : "w-2 h-2")} />
                         )}
+                      </div>
+                    )}
+                    
+                    {data.status_execucao && (
+                      <div className="flex mb-0.5">
+                        <span className={cn("text-[5px] font-black px-1 rounded-full border uppercase tracking-widest leading-none", STATUS_COLORS[data.status_execucao])}>
+                          {data.status_execucao}
+                        </span>
                       </div>
                     )}
                     
@@ -476,7 +552,7 @@ export default function Andaimes() {
             />
           </div>
       ) : (
-        <AndaimeBacklog onCardClick={openEditRequest} />
+        <AndaimeBacklog onCardClick={openEditRequest} onAdjustBacklog={handleAdjustBacklog} />
       )}
 
       {/* Batch Action Bar */}

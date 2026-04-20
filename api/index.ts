@@ -50,7 +50,8 @@ async function startServer() {
     const { 
       area, local_setor, tipo_servico, quantidade_pontos, 
       data_montagem, data_desmontagem, hora_inicio, hora_fim, 
-      solicitante, descricao_local, excedeu_limite, justificativa_excesso
+      solicitante, descricao_local, excedeu_limite, justificativa_excesso,
+      somente_backlog
     } = req.body;
 
     if (!data_desmontagem) {
@@ -88,8 +89,9 @@ async function startServer() {
         .insert([{
           area, local_setor, tipo_servico, quantidade_pontos, 
           data_montagem, data_desmontagem, hora_inicio, hora_fim, 
-          solicitante, descricao_local, status,
-          excedeu_limite, justificativa_excesso
+          solicitante, descricao_local, status: somente_backlog ? 'aprovado' : status,
+          excedeu_limite, justificativa_excesso, somente_backlog,
+          status_execucao: 'Montagem Pendente'
         }])
         .select();
 
@@ -241,6 +243,21 @@ async function startServer() {
   });
 
   // API Routes for PTAs
+  app.patch('/api/andaimes/:id/status-execucao', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .update({ status_execucao: status })
+        .eq('id', id);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update status_execucao' });
+    }
+  });
+
   app.get('/api/ptas', async (req, res) => {
     try {
       const { data, error } = await supabase

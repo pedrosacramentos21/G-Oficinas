@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from '../store';
-import { Calendar, User, Clock, CheckCircle2, MapPin, Layers } from 'lucide-react';
+import { Calendar, User, Clock, CheckCircle2, MapPin, Layers, ChevronDown, ListCheck, Settings2 } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
 
 const COLUMNS = [
@@ -18,22 +18,55 @@ const GET_LIMIT = (column: string) => {
   return 999;
 };
 
+const STATUS_EXECUCAO_OPTIONS = [
+  'Montagem Pendente',
+  'Montagem em andamento',
+  'Montagem concluída'
+] as const;
+
+const STATUS_COLORS: Record<string, string> = {
+  'Montagem Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
+  'Montagem em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
+  'Montagem concluída': 'text-green-600 bg-green-50 border-green-200'
+};
+
 interface Props {
   onCardClick?: (andaime: any) => void;
+  onAdjustBacklog?: () => void;
 }
 
-export default function AndaimeBacklog({ onCardClick }: Props) {
-  const { andaimes, fetchAndaimes } = useStore();
+export default function AndaimeBacklog({ onCardClick, onAdjustBacklog }: Props) {
+  const { andaimes, fetchAndaimes, updateStatusExecucaoAndaime } = useStore();
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAndaimes();
   }, []);
 
+  const handleStatusChange = async (e: React.MouseEvent, id: number, status: string) => {
+    e.stopPropagation();
+    try {
+      await updateStatusExecucaoAndaime(id, status);
+      setOpenDropdownId(null);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible">
-      <div className="shrink-0">
-        <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
-        <p className="text-[10px] md:text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest">Gestão de solicitações por área operacional</p>
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
+          <p className="text-[10px] md:text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest">Gestão de solicitações por área operacional</p>
+        </div>
+        <button
+          onClick={onAdjustBacklog}
+          className="flex items-center gap-2 bg-ambev-blue text-white font-black px-4 py-2.5 rounded-xl shadow-lg shadow-ambev-blue/20 hover:bg-ambev-blue/90 transition-all active:scale-[0.98] uppercase tracking-widest text-[10px]"
+        >
+          <Settings2 size={16} />
+          Ajustar Backlog
+        </button>
       </div>
 
       <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -116,12 +149,42 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                   return a.area === column;
                 })
                 .map(item => (
-                  <div 
-                    key={item.id} 
-                    onClick={() => onCardClick?.(item)}
-                    className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]"
-                  >
-                    <div className={cn(
+                    <div 
+                      key={item.id} 
+                      onClick={() => onCardClick?.(item)}
+                      className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]"
+                    >
+                      {/* Execution Status Button */}
+                      <div className="absolute -top-2 -right-1 z-20 flex flex-col items-end">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenDropdownId(openDropdownId === item.id ? null : item.id);
+                          }}
+                          className="bg-white border border-slate-200 rounded-lg p-1 shadow-sm hover:bg-slate-50 transition-all text-slate-400 group-hover:text-slate-600"
+                        >
+                          <ChevronDown size={14} className={cn("transition-transform", openDropdownId === item.id && "rotate-180")} />
+                        </button>
+                        
+                        {openDropdownId === item.id && (
+                          <div className="mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-1 w-48 animate-in zoom-in-95 duration-100 flex flex-col gap-0.5">
+                            {STATUS_EXECUCAO_OPTIONS.map(status => (
+                              <button
+                                key={status}
+                                onClick={(e) => handleStatusChange(e, item.id, status)}
+                                className={cn(
+                                  "text-left px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-slate-50",
+                                  STATUS_COLORS[status]
+                                )}
+                              >
+                                {status}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1 md:w-1.5",
                       item.status === 'aprovado' ? "bg-green-500" : (item.excedeu_limite ? "bg-red-500" : "bg-ambev-blue")
                     )} />
@@ -177,12 +240,24 @@ export default function AndaimeBacklog({ onCardClick }: Props) {
                       )}
                     </div>
 
-                    <div className="space-y-2 md:space-y-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5 md:space-y-1 min-w-0">
-                          <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase truncate">
-                            {item.local_setor}
-                          </h3>
+                      <div className="space-y-2 md:space-y-4">
+                        <div className="flex items-start justify-between gap-2 overflow-visible">
+                          <div className="space-y-0.5 md:space-y-1 min-w-0">
+                            <div className="flex flex-wrap gap-1 mb-1">
+                              {item.status_execucao && (
+                                <span className={cn("text-[6px] md:text-[8px] font-black px-1.5 py-0.5 rounded-full border uppercase tracking-widest leading-none", STATUS_COLORS[item.status_execucao])}>
+                                  {item.status_execucao}
+                                </span>
+                              )}
+                              {item.somente_backlog && (
+                                <span className="text-[6px] md:text-[8px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200 uppercase tracking-widest leading-none">
+                                  Ajuste Backlog
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase truncate">
+                              {item.local_setor}
+                            </h3>
                           <p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">{item.tipo_servico}</p>
                         </div>
                         {item.status === 'aprovado' ? (

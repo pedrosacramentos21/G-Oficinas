@@ -46,7 +46,8 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     solicitante: '',
     descricao_local: '',
     excedeu_limite: false,
-    justificativa_excesso: ''
+    justificativa_excesso: '',
+    somente_backlog: false
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -66,20 +67,21 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       setPasswordModalAction('unlock');
       if (andaime) {
         setFormData({
-          area: andaime.area,
-          local_setor: andaime.local_setor,
-          tipo_servico: andaime.tipo_servico,
-          quantidade_pontos: andaime.quantidade_pontos,
-          data_montagem: andaime.data_montagem,
-          data_desmontagem: andaime.data_desmontagem,
-          hora_inicio: andaime.hora_inicio,
-          hora_fim: andaime.hora_fim,
-          solicitante: andaime.solicitante,
-          descricao_local: andaime.descricao_local,
+          area: andaime.area || AREAS[0],
+          local_setor: andaime.local_setor || '',
+          tipo_servico: andaime.tipo_servico || TIPOS_SERVICO[0],
+          quantidade_pontos: andaime.quantidade_pontos || 1,
+          data_montagem: andaime.data_montagem || new Date().toISOString().split('T')[0],
+          data_desmontagem: andaime.data_desmontagem || '',
+          hora_inicio: andaime.hora_inicio || '08:00',
+          hora_fim: andaime.hora_fim || '17:00',
+          solicitante: andaime.solicitante || '',
+          descricao_local: andaime.descricao_local || '',
           excedeu_limite: andaime.excedeu_limite || false,
-          justificativa_excesso: andaime.justificativa_excesso || ''
+          justificativa_excesso: andaime.justificativa_excesso || '',
+          somente_backlog: andaime.somente_backlog || false
         });
-        setIsUnlocked(andaime.status !== 'aprovado');
+        setIsUnlocked(!andaime.id || andaime.status !== 'aprovado');
       } else {
         setFormData(initialFormState);
         setIsUnlocked(true);
@@ -141,7 +143,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
 
     setIsSubmitting(true);
     try {
-      if (andaime) {
+      if (andaime?.id) {
         await updateAndaime(andaime.id, formData, unlockPassword);
         onClose();
       } else {
