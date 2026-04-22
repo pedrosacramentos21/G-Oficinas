@@ -14,7 +14,6 @@ import {
   Truck,
   ChevronLeft,
   ChevronRight,
-  LayoutDashboard,
   X
 } from 'lucide-react';
 import { cn } from '../lib/utils';

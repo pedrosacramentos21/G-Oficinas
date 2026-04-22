@@ -2,10 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
-import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle, ChevronDown } from 'lucide-react';
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isSameDay, 
+  parseISO, 
+  addMonths, 
+  subMonths,
+  getDaysInMonth
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle, ChevronDown, BarChart3, Construction } from 'lucide-react';
 import AndaimeModal from '../components/AndaimeModal';
 import PasswordModal from '../components/PasswordModal';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
@@ -34,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Andaimes() {
   const calendarRef = useRef<FullCalendar>(null);
   const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
-  const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
+  const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
   const [currentView, setCurrentView] = useState<string>(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -321,6 +332,16 @@ export default function Andaimes() {
                 <LayoutGrid size={12} className="hidden xs:block" />
                 BACKLOG
               </button>
+              <button 
+                onClick={() => setActiveTab('panorama')}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
+                  activeTab === 'panorama' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <BarChart3 size={12} className="hidden xs:block" />
+                PANORAMA
+              </button>
             </div>
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
@@ -346,26 +367,13 @@ export default function Andaimes() {
               </button>
             </div>
 
-              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
-                <button 
-                  onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-                  className={cn(
-                    "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                    currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                  )}
-                >
-                  Mês
-                </button>
-                <div className="w-px h-3 bg-slate-100 mx-0.5" />
-                <button 
-                  onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-                  className={cn(
-                    "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                    currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                  )}
-                >
-                  Semana
-                </button>
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
+              <button 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
+                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              >
+                Semana
+              </button>
               <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
@@ -387,11 +395,99 @@ export default function Andaimes() {
         </div>
       </div>
 
-      {activeTab === 'calendario' ? (
+      {activeTab === 'panorama' ? (
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Mensal</p>
+                <p className="text-2xl font-black text-slate-900">{andaimes.filter(a => {
+                  const d = parseISO(a.data_montagem);
+                  const now = new Date();
+                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                }).length} <span className="text-xs text-slate-400">Andaimes</span></p>
+             </div>
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Capacidade (Pontos)</p>
+                <p className="text-2xl font-black text-ambev-blue">{andaimes.reduce((sum, a) => sum + (a.quantidade_pontos || 0), 0)} <span className="text-xs text-slate-400">Total</span></p>
+             </div>
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pendentes</p>
+                <p className="text-2xl font-black text-amber-500">{andaimes.filter(a => a.status === 'pendente').length}</p>
+             </div>
+          </div>
+          
+          <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest">Cronograma de Próximas Atividades</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Listagem Geral</span>
+             </div>
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+                {Array.from(new Set(andaimes.map(a => a.data_montagem))).sort().map(dateStr => {
+                  const dayAndaimes = andaimes.filter(a => a.data_montagem === dateStr);
+                  if (dayAndaimes.length === 0) return null;
+                  const date = parseISO(dateStr);
+
+                  return (
+                    <div key={dateStr} className="flex gap-4">
+                       <div className="min-w-[60px] flex flex-col items-center pt-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase leading-none">{format(date, 'EEE', { locale: ptBR })}</span>
+                          <span className="text-xl font-black text-slate-800 tracking-tighter mt-1">{format(date, 'dd/MM')}</span>
+                       </div>
+                       <div className="flex-1 space-y-2">
+                          {dayAndaimes.map(a => (
+                            <div 
+                              key={a.id} 
+                              onClick={() => openEditRequest(a)}
+                              className={cn(
+                                "p-3 rounded-xl border border-dashed flex items-center justify-between hover:bg-slate-50 transition-all cursor-pointer group",
+                                a.status === 'aprovado' ? "border-green-200 bg-green-50/20" : "border-amber-200 bg-amber-50/20"
+                              )}
+                            >
+                               <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "p-2 rounded-lg border",
+                                    a.status === 'aprovado' ? "bg-green-100 text-green-600 border-green-200" : "bg-amber-100 text-amber-600 border-amber-200"
+                                  )}>
+                                     <Construction size={16} />
+                                  </div>
+                                  <div>
+                                     <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{a.area}</span>
+                                        <span className={cn(
+                                          "text-[7px] font-black px-1.5 rounded-full uppercase border",
+                                          a.status === 'aprovado' ? "bg-green-500 text-white border-green-600" : "bg-amber-500 text-white border-amber-600"
+                                        )}>{a.status}</span>
+                                     </div>
+                                     <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{a.quantidade_pontos} PTS - {a.local_setor}</h4>
+                                     <div className="flex items-center gap-3 mt-1">
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                           <User size={10} className="text-slate-300" />
+                                           {a.solicitante}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                           <Clock size={10} className="text-slate-300" />
+                                           {a.hora_inicio} - {a.hora_fim}
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                               <button className="p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-ambev-blue">
+                                  <Info size={16} />
+                               </button>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                  );
+                })}
+             </div>
+          </div>
+        </div>
+      ) : activeTab === 'calendario' ? (
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
             ref={calendarRef}
-            plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+            plugins={[timeGridPlugin, interactionPlugin]}
             initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={false}
@@ -402,7 +498,7 @@ export default function Andaimes() {
             expandRows={activeTab === 'calendario'}
             stickyHeaderDates={true}
             slotDuration="01:00:00"
-            dayMaxEvents={3}
+            dayMaxEvents={false}
             eventMaxStack={2}
             handleWindowResize={!isMobile}
             showNonCurrentDates={false}
@@ -427,28 +523,10 @@ export default function Andaimes() {
                 const data = eventInfo.event.extendedProps;
                 const isMontagem = data.tipo_servico === 'Montagem';
                 const isSelected = selectedIds.includes(data.id);
-                const isMonthView = eventInfo.view.type === 'dayGridMonth';
                 const isWeekView = eventInfo.view.type === 'timeGridWeek';
                 const isMobile = window.innerWidth < 640;
                 const isDesmontagem = data.tipo_servico === 'Desmontagem';
                 const isExcedente = data.excedeu_limite;
-
-                if (isMonthView) {
-                  return (
-                    <div className={cn(
-                      "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
-                      isExcedente && data.status === 'pendente' ? "bg-red-500 text-white" :
-                      isDesmontagem ? (data.status === 'aprovado' ? "bg-slate-400 text-white" : "bg-slate-200 text-slate-600") :
-                      (data.status === 'aprovado' ? "bg-green-500 text-white" : "bg-yellow-500 text-white"),
-                      isSelected && "ring-1 ring-white"
-                    )}>
-                      <div className="w-1 h-1 rounded-full bg-white shrink-0" />
-                      <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
-                        {data.quantidade_pontos}P - {eventInfo.event.title}
-                      </span>
-                    </div>
-                  );
-                }
                 
                 return (
                     <div 

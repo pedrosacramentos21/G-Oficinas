@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Construction, LayoutDashboard, AlertCircle } from 'lucide-react';
+import { Construction, LayoutDashboard, AlertCircle, BarChart3 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Andaimes from './pages/Andaimes';
 import PTAs from './pages/PTAs';

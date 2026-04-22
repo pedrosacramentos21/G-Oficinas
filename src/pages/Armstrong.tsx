@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
@@ -27,10 +26,16 @@ import {
   Trash2,
   CheckSquare,
   Square,
-  Thermometer
+  Thermometer,
+  BarChart3
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { cn } from '../lib/utils';
+import { 
+  format, 
+  parseISO 
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import PasswordModal from '../components/PasswordModal';
 import { MultiSelect } from '../components/MultiSelect';
 
@@ -74,13 +79,12 @@ export default function Armstrong() {
     batchDeleteArmstrongBacklog
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
+  const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalType, setModalType] = useState<'manutencao' | 'details'>('manutencao');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState('timeGridWeek');
   const calendarRef = useRef<any>(null);
   const [addingPCMArea, setAddingPCMArea] = useState<{ date: string, value: string } | null>(null);
   const pcmInputRef = useRef<HTMLInputElement>(null);
@@ -587,6 +591,20 @@ export default function Armstrong() {
                 <LayoutGrid size={10} className="hidden xs:block" />
                 BACKLOG
               </button>
+              <button 
+                onClick={() => {
+                  setActiveTab('panorama');
+                  setSelectionMode(false);
+                  setSelectedIds([]);
+                }}
+                className={cn(
+                  "flex items-center gap-1 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
+                  activeTab === 'panorama' ? "bg-white text-ambev-blue shadow-sm" : "text-gray-400 hover:text-gray-600"
+                )}
+              >
+                <BarChart3 size={10} className="hidden xs:block" />
+                PANORAMA
+              </button>
             </div>
 
             <div className="h-4 w-[1px] bg-slate-200 mx-0.5 hidden sm:block" />
@@ -645,30 +663,14 @@ export default function Armstrong() {
 
             <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-0">
               <button 
-                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-                className={cn(
-                  "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                  currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                )}
-              >
-                Mês
-              </button>
-              <div className="w-px h-3 bg-slate-100 mx-0.5" />
-              <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-                className={cn(
-                  "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                  currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                )}
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Semana
               </button>
               <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
-                className={cn(
-                  "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                  currentView === 'timeGridDay' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                )}
+                className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Dia
               </button>
@@ -690,7 +692,92 @@ export default function Armstrong() {
         </div>
       </div>
 
-      {activeTab === 'calendario' ? (
+      {activeTab === 'panorama' ? (
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Manutenções Armstrong (Mês)</p>
+                <p className="text-2xl font-black text-slate-900">{armstrongManutencoes.filter(m => {
+                  const d = parseISO(m.data);
+                  const now = new Date();
+                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                }).length} <span className="text-xs text-slate-400">Atividades</span></p>
+             </div>
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Itens no Backlog</p>
+                <p className="text-2xl font-black text-orange-500">{armstrongBacklog.length} <span className="text-xs text-slate-400">Total</span></p>
+             </div>
+          </div>
+          
+          <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest">Cronograma Geral de Vapor</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panorama Detalhado</span>
+             </div>
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+                {Array.from(new Set(armstrongManutencoes.map(m => m.data))).sort().map(dateStr => {
+                  const dayManutencoes = armstrongManutencoes.filter(m => m.data === dateStr);
+                  if (dayManutencoes.length === 0) return null;
+                  const date = parseISO(dateStr);
+
+                  return (
+                    <div key={dateStr} className="flex gap-4">
+                       <div className="min-w-[60px] flex flex-col items-center pt-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase leading-none">{format(date, 'EEE', { locale: ptBR })}</span>
+                          <span className="text-xl font-black text-slate-800 tracking-tighter mt-1">{format(date, 'dd/MM')}</span>
+                       </div>
+                       <div className="flex-1 space-y-2">
+                          {dayManutencoes.map(m => (
+                            <div 
+                              key={m.id} 
+                              onClick={() => openDetailsModal(m, 'calendar')}
+                              className={cn(
+                                "p-3 rounded-xl border border-dashed flex items-center justify-between hover:bg-slate-50 transition-all cursor-pointer group",
+                                m.status === 'Concluída' ? "border-orange-200 bg-orange-50/20" : "border-yellow-200 bg-yellow-50/20"
+                              )}
+                            >
+                               <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "p-2 rounded-lg border",
+                                    m.status === 'Concluída' ? "bg-orange-100 text-orange-600 border-orange-200" : "bg-yellow-100 text-yellow-600 border-yellow-200"
+                                  )}>
+                                     <Flame size={16} />
+                                  </div>
+                                  <div>
+                                     <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{m.area}</span>
+                                        <span className={cn(
+                                          "text-[7px] font-black px-1.5 rounded-full uppercase border",
+                                          m.status === 'Concluída' ? "bg-green-500 text-white border-green-600" : "bg-yellow-500 text-white border-yellow-600"
+                                        )}>{m.status}</span>
+                                     </div>
+                                     <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{m.titulo}</h4>
+                                     <p className="text-[9px] font-bold text-slate-500 mt-0.5 truncate max-w-md">{m.equipamento}</p>
+                                     <div className="flex items-center gap-3 mt-1">
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                           <User size={10} className="text-slate-300" />
+                                           {m.responsavel}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                           <Clock size={10} className="text-slate-300" />
+                                           {m.hora_inicio} - {m.hora_fim}
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                               <button className="p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-ambev-blue">
+                                  <Info size={16} />
+                               </button>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                  );
+                })}
+             </div>
+          </div>
+        </div>
+      ) : activeTab === 'calendario' ? (
         <div className="flex-1 flex flex-col gap-4 md:gap-6 overflow-hidden">
           {/* PCM Areas Panel - Compact */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-1 shrink-0 overflow-x-auto custom-scrollbar">
@@ -767,7 +854,7 @@ export default function Armstrong() {
                 <FullCalendar
                   key={`calendar-${events.length}`}
                   ref={calendarRef}
-                  plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+                  plugins={[timeGridPlugin, interactionPlugin]}
                   initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
                   locale={ptBrLocale}
                   headerToolbar={false}
@@ -778,35 +865,12 @@ export default function Armstrong() {
                   expandRows={true}
                   stickyHeaderDates={true}
                   slotDuration="01:00:00"
-                  dayMaxEvents={3}
-                  datesSet={(arg) => {
-                    setCurrentView(arg.view.type);
-                    setCurrentDate(arg.view.calendar.getDate());
-                  }}
                   eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
                   eventContent={(eventInfo) => {
                     const data = eventInfo.event.extendedProps;
                     const isSelected = selectedIds.includes(data.id);
-                    const isMonthView = eventInfo.view.type === 'dayGridMonth';
                     const isWeekView = eventInfo.view.type === 'timeGridWeek';
                     const isMobile = window.innerWidth < 640;
-                    
-                    if (isMonthView) {
-                      return (
-                        <div className={cn(
-                          "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
-                          data.status === 'Concluída' ? "bg-green-500 text-white" : 
-                          data.status === 'Planejada' ? "bg-yellow-500 text-slate-900 font-bold" : 
-                          "bg-red-500 text-white",
-                          isSelected && "ring-1 ring-white"
-                        )}>
-                          <div className="w-1 h-1 rounded-full bg-white shrink-0" />
-                          <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
-                            {eventInfo.event.title}
-                          </span>
-                        </div>
-                      );
-                    }
                     
                     const start = eventInfo.event.start;
                     const end = eventInfo.event.end;

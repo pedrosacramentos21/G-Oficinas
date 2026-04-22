@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
-import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, User, Clock, CheckCircle2, Trash2, Truck, Info, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
+import { 
+  format, 
+  parseISO 
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import PasswordModal from '../components/PasswordModal';
 
 const EQUIPAMENTOS = [
@@ -33,6 +37,7 @@ export default function PTAs() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentView, setCurrentView] = useState(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
+  const [activeTab, setActiveTab] = useState<'calendario' | 'panorama'>('calendario');
 
   const INITIAL_FORM_DATA = {
     equipamento: EQUIPAMENTOS[0].name,
@@ -230,6 +235,29 @@ export default function PTAs() {
               </span>
             </button>
 
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button 
+                onClick={() => setActiveTab('calendario')}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
+                  activeTab === 'calendario' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <CalendarIcon size={12} className="hidden xs:block" />
+                CALENDÁRIO
+              </button>
+              <button 
+                onClick={() => setActiveTab('panorama')}
+                className={cn(
+                  "flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-md font-black text-[8px] sm:text-[9px] transition-all",
+                  activeTab === 'panorama' ? "bg-white text-ambev-blue shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                <BarChart3 size={12} className="hidden xs:block" />
+                PANORAMA
+              </button>
+            </div>
+
             <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
             <div className="flex items-center gap-1">
@@ -259,21 +287,8 @@ export default function PTAs() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
-                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-                className={cn(
-                  "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                  currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                )}
-              >
-                Mês
-              </button>
-              <div className="w-px h-3 bg-slate-100 mx-0.5" />
-              <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-                className={cn(
-                  "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
-                  currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
-                )}
+                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Semana
               </button>
@@ -298,10 +313,94 @@ export default function PTAs() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
+      {activeTab === 'panorama' ? (
+        <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Equipamentos em Uso</p>
+                <p className="text-2xl font-black text-slate-900">{ptas.filter(p => {
+                  const d = parseISO(p.data);
+                  const now = new Date();
+                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && p.status === 'aprovado';
+                }).length} <span className="text-xs text-slate-400">Este Mês</span></p>
+             </div>
+             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Aprovações Pendentes</p>
+                <p className="text-2xl font-black text-amber-500">{ptas.filter(p => p.status === 'pendente').length}</p>
+             </div>
+          </div>
+          
+          <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest">Cronograma de Uso de Máquinas</h3>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panorama Geral</span>
+             </div>
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+                {Array.from(new Set(ptas.map(p => p.data))).sort().map(dateStr => {
+                  const dayPTAs = ptas.filter(p => p.data === dateStr);
+                  if (dayPTAs.length === 0) return null;
+                  const date = parseISO(dateStr);
+
+                  return (
+                    <div key={dateStr} className="flex gap-4">
+                       <div className="min-w-[60px] flex flex-col items-center pt-1">
+                          <span className="text-[10px] font-black text-slate-400 uppercase leading-none">{format(date, 'EEE', { locale: ptBR })}</span>
+                          <span className="text-xl font-black text-slate-800 tracking-tighter mt-1">{format(date, 'dd/MM')}</span>
+                       </div>
+                       <div className="flex-1 space-y-2">
+                          {dayPTAs.map(p => (
+                            <div 
+                              key={p.id} 
+                              onClick={() => {
+                                setSelectedPTA(p);
+                                setIsDetailModalOpen(true);
+                              }}
+                              className={cn(
+                                "p-3 rounded-xl border border-dashed flex items-center justify-between hover:bg-slate-50 transition-all cursor-pointer group",
+                                p.status === 'aprovado' ? "border-blue-200 bg-blue-50/20" : "border-amber-200 bg-amber-50/20"
+                              )}
+                            >
+                               <div className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "p-2 rounded-lg border",
+                                    p.status === 'aprovado' ? "bg-blue-100 text-blue-600 border-blue-200" : "bg-amber-100 text-amber-600 border-amber-200"
+                                  )}>
+                                     <Truck size={16} />
+                                  </div>
+                                  <div>
+                                     <div className="flex items-center gap-2">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{p.equipamento}</span>
+                                        <span className={cn(
+                                          "text-[7px] font-black px-1.5 rounded-full uppercase border",
+                                          p.status === 'aprovado' ? "bg-green-500 text-white border-green-600" : "bg-amber-500 text-white border-amber-600"
+                                        )}>{p.status}</span>
+                                     </div>
+                                     <h4 className="text-xs font-black text-slate-800 uppercase mt-0.5">{p.responsavel} - {p.area}</h4>
+                                     <div className="flex items-center gap-3 mt-1">
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                           <Clock size={10} className="text-slate-300" />
+                                           {p.hora_inicio} - {p.hora_fim}
+                                        </div>
+                                     </div>
+                                  </div>
+                               </div>
+                               <button className="p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-ambev-blue">
+                                  <Info size={16} />
+                               </button>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                  );
+                })}
+             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
           ref={calendarRef}
-          plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+          plugins={[timeGridPlugin, interactionPlugin]}
           initialView={currentView}
           locale={ptBrLocale}
           headerToolbar={false}
@@ -312,7 +411,6 @@ export default function PTAs() {
           expandRows={true}
           stickyHeaderDates={true}
           slotDuration="01:00:00"
-          dayMaxEvents={3}
           handleWindowResize={window.innerWidth >= 640}
           rerenderDelay={10}
           datesSet={(arg) => {
@@ -327,26 +425,8 @@ export default function PTAs() {
             const data = eventInfo.event.extendedProps;
             const equip = EQUIPAMENTOS.find(e => e.name === data.equipamento);
             const isSelected = selectedIds.includes(data.id);
-            const isMonthView = eventInfo.view.type === 'dayGridMonth';
             const isWeekView = eventInfo.view.type === 'timeGridWeek';
             const isMobile = window.innerWidth < 640;
-
-            if (isMonthView) {
-              return (
-                <div className={cn(
-                  "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
-                  data.status === 'aprovado' 
-                    ? (equip?.id === 'articulada' ? "bg-blue-500 text-white" : "bg-purple-500 text-white")
-                    : "bg-yellow-500 text-slate-900 font-bold",
-                  isSelected && "ring-1 ring-white"
-                )}>
-                  <div className="w-1 h-1 rounded-full bg-white shrink-0" />
-                  <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
-                    {data.responsavel}
-                  </span>
-                </div>
-              );
-            }
             
             return (
               <div 
@@ -481,6 +561,7 @@ export default function PTAs() {
           }}
         />
       </div>
+      )}
 
       {/* Batch Action Bar */}
       {selectedIds.length > 0 && (
