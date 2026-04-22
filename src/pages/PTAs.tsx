@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
@@ -258,8 +259,21 @@ export default function PTAs() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
+                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
+                className={cn(
+                  "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                  currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+                )}
+              >
+                Mês
+              </button>
+              <div className="w-px h-3 bg-slate-100 mx-0.5" />
+              <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+                className={cn(
+                  "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                  currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+                )}
               >
                 Semana
               </button>
@@ -287,7 +301,7 @@ export default function PTAs() {
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
           ref={calendarRef}
-          plugins={[timeGridPlugin, interactionPlugin]}
+          plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
           initialView={currentView}
           locale={ptBrLocale}
           headerToolbar={false}
@@ -298,6 +312,7 @@ export default function PTAs() {
           expandRows={true}
           stickyHeaderDates={true}
           slotDuration="01:00:00"
+          dayMaxEvents={3}
           handleWindowResize={window.innerWidth >= 640}
           rerenderDelay={10}
           datesSet={(arg) => {
@@ -312,8 +327,26 @@ export default function PTAs() {
             const data = eventInfo.event.extendedProps;
             const equip = EQUIPAMENTOS.find(e => e.name === data.equipamento);
             const isSelected = selectedIds.includes(data.id);
+            const isMonthView = eventInfo.view.type === 'dayGridMonth';
             const isWeekView = eventInfo.view.type === 'timeGridWeek';
             const isMobile = window.innerWidth < 640;
+
+            if (isMonthView) {
+              return (
+                <div className={cn(
+                  "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
+                  data.status === 'aprovado' 
+                    ? (equip?.id === 'articulada' ? "bg-blue-500 text-white" : "bg-purple-500 text-white")
+                    : "bg-yellow-500 text-slate-900 font-bold",
+                  isSelected && "ring-1 ring-white"
+                )}>
+                  <div className="w-1 h-1 rounded-full bg-white shrink-0" />
+                  <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
+                    {data.responsavel}
+                  </span>
+                </div>
+              );
+            }
             
             return (
               <div 

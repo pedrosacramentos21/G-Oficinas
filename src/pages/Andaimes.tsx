@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle, ChevronDown } from 'lucide-react';
@@ -345,13 +346,26 @@ export default function Andaimes() {
               </button>
             </div>
 
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
-              <button 
-                onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
-              >
-                Semana
-              </button>
+              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
+                <button 
+                  onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
+                  className={cn(
+                    "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                    currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+                  )}
+                >
+                  Mês
+                </button>
+                <div className="w-px h-3 bg-slate-100 mx-0.5" />
+                <button 
+                  onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
+                  className={cn(
+                    "px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                    currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+                  )}
+                >
+                  Semana
+                </button>
               <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
@@ -377,7 +391,7 @@ export default function Andaimes() {
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
             ref={calendarRef}
-            plugins={[timeGridPlugin, interactionPlugin]}
+            plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
             initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={false}
@@ -388,7 +402,7 @@ export default function Andaimes() {
             expandRows={activeTab === 'calendario'}
             stickyHeaderDates={true}
             slotDuration="01:00:00"
-            dayMaxEvents={false}
+            dayMaxEvents={3}
             eventMaxStack={2}
             handleWindowResize={!isMobile}
             showNonCurrentDates={false}
@@ -413,10 +427,28 @@ export default function Andaimes() {
                 const data = eventInfo.event.extendedProps;
                 const isMontagem = data.tipo_servico === 'Montagem';
                 const isSelected = selectedIds.includes(data.id);
+                const isMonthView = eventInfo.view.type === 'dayGridMonth';
                 const isWeekView = eventInfo.view.type === 'timeGridWeek';
                 const isMobile = window.innerWidth < 640;
                 const isDesmontagem = data.tipo_servico === 'Desmontagem';
                 const isExcedente = data.excedeu_limite;
+
+                if (isMonthView) {
+                  return (
+                    <div className={cn(
+                      "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
+                      isExcedente && data.status === 'pendente' ? "bg-red-500 text-white" :
+                      isDesmontagem ? (data.status === 'aprovado' ? "bg-slate-400 text-white" : "bg-slate-200 text-slate-600") :
+                      (data.status === 'aprovado' ? "bg-green-500 text-white" : "bg-yellow-500 text-white"),
+                      isSelected && "ring-1 ring-white"
+                    )}>
+                      <div className="w-1 h-1 rounded-full bg-white shrink-0" />
+                      <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
+                        {data.quantidade_pontos}P - {eventInfo.event.title}
+                      </span>
+                    </div>
+                  );
+                }
                 
                 return (
                     <div 

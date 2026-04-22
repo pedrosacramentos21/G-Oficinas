@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
@@ -78,6 +79,7 @@ export default function Refrigeracao() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [modalType, setModalType] = useState<'manutencao' | 'details'>('manutencao');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState('timeGridWeek');
   const calendarRef = useRef<any>(null);
   const [addingPCMArea, setAddingPCMArea] = useState<{ date: string, value: string } | null>(null);
   const pcmInputRef = useRef<HTMLInputElement>(null);
@@ -629,14 +631,30 @@ export default function Refrigeracao() {
 
           <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-0">
             <button 
+              onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
+              className={cn(
+                "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                currentView === 'dayGridMonth' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+              )}
+            >
+              Mês
+            </button>
+            <div className="w-px h-3 bg-slate-100 mx-0.5" />
+            <button 
               onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
-              className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              className={cn(
+                "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                currentView === 'timeGridWeek' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+              )}
             >
               Semana
             </button>
             <button 
               onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
-              className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
+              className={cn(
+                "px-1.5 py-1 hover:bg-slate-50 rounded-md font-black text-[8px] uppercase tracking-widest transition-all",
+                currentView === 'timeGridDay' ? "bg-ambev-blue text-white shadow-sm" : "text-slate-600"
+              )}
             >
               Dia
             </button>
@@ -734,7 +752,7 @@ export default function Refrigeracao() {
                 <FullCalendar
                   key={`calendar-${events.length}`}
                   ref={calendarRef}
-                  plugins={[timeGridPlugin, interactionPlugin]}
+                  plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
                   initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
                   locale={ptBrLocale}
                   headerToolbar={false}
@@ -745,12 +763,35 @@ export default function Refrigeracao() {
                   expandRows={true}
                   stickyHeaderDates={true}
                   slotDuration="01:00:00"
+                  dayMaxEvents={3}
+                  datesSet={(arg) => {
+                    setCurrentView(arg.view.type);
+                    setCurrentDate(arg.view.calendar.getDate());
+                  }}
                   eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
                   eventContent={(eventInfo) => {
                     const data = eventInfo.event.extendedProps;
                     const isSelected = selectedIds.includes(data.id);
+                    const isMonthView = eventInfo.view.type === 'dayGridMonth';
                     const isWeekView = eventInfo.view.type === 'timeGridWeek';
                     const isMobile = window.innerWidth < 640;
+                    
+                    if (isMonthView) {
+                      return (
+                        <div className={cn(
+                          "flex items-center gap-1 w-full px-1 py-0.5 rounded transition-all truncate",
+                          data.status === 'Concluída' ? "bg-green-500 text-white" : 
+                          data.status === 'Planejada' ? "bg-yellow-500 text-slate-900 font-bold" : 
+                          "bg-red-500 text-white",
+                          isSelected && "ring-1 ring-white"
+                        )}>
+                          <div className="w-1 h-1 rounded-full bg-white shrink-0" />
+                          <span className="text-[7px] font-black uppercase tracking-tighter truncate leading-none">
+                            {eventInfo.event.title}
+                          </span>
+                        </div>
+                      );
+                    }
                     
                     const start = eventInfo.event.start;
                     const end = eventInfo.event.end;
