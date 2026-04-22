@@ -1,6 +1,5 @@
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Solicitacao } from '../types';
@@ -48,7 +47,7 @@ export default function CalendarView({
   return (
     <div className="flex-1 p-6 bg-white overflow-hidden">
       <FullCalendarComponent
-        plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
+        plugins={[timeGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
         headerToolbar={false}
         events={events}

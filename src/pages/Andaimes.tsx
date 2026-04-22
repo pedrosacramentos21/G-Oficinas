@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { Plus, LayoutGrid, Calendar as CalendarIcon, Info, Layers, CheckCircle2, Trash2, ChevronLeft, ChevronRight, User, Clock, CheckCircle, ChevronDown } from 'lucide-react';
@@ -349,12 +347,6 @@ export default function Andaimes() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
-                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
-              >
-                Mês
-              </button>
-              <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
@@ -385,7 +377,7 @@ export default function Andaimes() {
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
             ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
+            plugins={[timeGridPlugin, interactionPlugin]}
             initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={false}
@@ -393,10 +385,10 @@ export default function Andaimes() {
             scrollTime="08:00:00"
             allDaySlot={false}
             height="100%"
-            expandRows={activeTab === 'calendario' && currentView !== 'dayGridMonth'}
-            stickyHeaderDates={currentView !== 'dayGridMonth'}
+            expandRows={activeTab === 'calendario'}
+            stickyHeaderDates={true}
             slotDuration="01:00:00"
-            dayMaxEvents={true}
+            dayMaxEvents={false}
             eventMaxStack={2}
             handleWindowResize={!isMobile}
             showNonCurrentDates={false}
@@ -421,27 +413,11 @@ export default function Andaimes() {
                 const data = eventInfo.event.extendedProps;
                 const isMontagem = data.tipo_servico === 'Montagem';
                 const isSelected = selectedIds.includes(data.id);
-                const isMonthView = eventInfo.view.type === 'dayGridMonth';
                 const isWeekView = eventInfo.view.type === 'timeGridWeek';
                 const isMobile = window.innerWidth < 640;
                 const isDesmontagem = data.tipo_servico === 'Desmontagem';
                 const isExcedente = data.excedeu_limite;
                 
-                // Extremely simplified view for Month View to prevent freezing
-                if (isMonthView) {
-                  return (
-                    <div className={cn(
-                      "flex items-center gap-1 px-1 py-0.5 rounded-sm border truncate w-full",
-                      isExcedente && data.status === 'pendente' ? "bg-red-500 text-white border-red-600" :
-                      isDesmontagem ? "bg-slate-400 text-white border-slate-500" :
-                      (data.status === 'aprovado' ? "bg-green-500 text-white border-green-600" : "bg-yellow-500 text-white border-yellow-600")
-                    )}>
-                      <span className="text-[7px] font-black">{data.quantidade_pontos}P</span>
-                      <span className="text-[7px] font-bold truncate uppercase">{eventInfo.event.title}</span>
-                    </div>
-                  );
-                }
-
                 return (
                     <div 
                       onClick={(e) => {
@@ -456,7 +432,7 @@ export default function Andaimes() {
                         isDesmontagem ? (data.status === 'aprovado' ? "border-slate-500 bg-slate-50/40" : "border-slate-300 bg-slate-50/40") :
                         (data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40"),
                         isSelected && "ring-2 ring-sky-500 ring-offset-0",
-                        (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
+                        (isWeekView && isMobile) && "p-0.5 gap-0"
                       )}
                     >
                     {/* Execution Status Button */}
@@ -514,12 +490,12 @@ export default function Andaimes() {
                           data.area === 'Packaging, Bblend e Xaroparia' ? "text-blue-700 bg-blue-50 border-blue-200" :
                           data.area === 'Utilidades' ? "text-emerald-700 bg-emerald-50 border-emerald-200" :
                           "text-purple-700 bg-purple-50 border-purple-200",
-                          (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
+                          (isWeekView && isMobile) && "text-[5px] px-0.5"
                         )}>
                           {data.area}
                         </span>
                         <div className="flex items-center gap-1">
-                          <span className={cn("text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0", (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5")}>
+                          <span className={cn("text-[6px] font-black bg-slate-900 text-white px-1 rounded-sm shrink-0", (isWeekView && isMobile) && "text-[5px] px-0.5")}>
                             {data.quantidade_pontos} PTS
                           </span>
                           {isExcedente && (
@@ -538,12 +514,12 @@ export default function Andaimes() {
                         </div>
                       </div>
 
-                    <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1 flex items-center gap-1", (isMonthView || (isWeekView && isMobile)) && "text-[7px]")}>
+                    <div className={cn("font-black text-[9px] text-slate-900 uppercase leading-none line-clamp-1 flex items-center gap-1", (isWeekView && isMobile) && "text-[7px]")}>
                       {isDesmontagem && <Trash2 size={isMobile ? 8 : 10} className="text-slate-500 shrink-0" />}
                       {eventInfo.event.title}
                     </div>
 
-                    {!(isMonthView || (isWeekView && isMobile)) && (
+                    {!(isWeekView && isMobile) && (
                       <div className="flex items-center gap-1">
                         <User size={6} className="text-slate-400" />
                         <span className="text-[7px] text-slate-500 font-bold line-clamp-1">
@@ -552,7 +528,7 @@ export default function Andaimes() {
                       </div>
                     )}
 
-                    {!(isMonthView || (isWeekView && isMobile)) && (
+                    {!(isWeekView && isMobile) && (
                       <div className="details-on-hover">
                         <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
                           <span className={cn(

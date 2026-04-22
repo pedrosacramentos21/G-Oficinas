@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import { useStore } from '../store';
@@ -260,12 +258,6 @@ export default function PTAs() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
-                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-                className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
-              >
-                Mês
-              </button>
-              <button 
                 onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
@@ -295,7 +287,7 @@ export default function PTAs() {
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
           ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
+          plugins={[timeGridPlugin, interactionPlugin]}
           initialView={currentView}
           locale={ptBrLocale}
           headerToolbar={false}
@@ -303,14 +295,10 @@ export default function PTAs() {
           scrollTime="08:00:00"
           allDaySlot={false}
           height="100%"
-          expandRows={currentView !== 'dayGridMonth'}
-          stickyHeaderDates={currentView !== 'dayGridMonth'}
+          expandRows={true}
+          stickyHeaderDates={true}
           slotDuration="01:00:00"
-          dayMaxEvents={true}
-          eventMaxStack={2}
           handleWindowResize={window.innerWidth >= 640}
-          showNonCurrentDates={false}
-          fixedWeekCount={false}
           rerenderDelay={10}
           datesSet={(arg) => {
             setCurrentView(arg.view.type);
@@ -324,7 +312,6 @@ export default function PTAs() {
             const data = eventInfo.event.extendedProps;
             const equip = EQUIPAMENTOS.find(e => e.name === data.equipamento);
             const isSelected = selectedIds.includes(data.id);
-            const isMonthView = eventInfo.view.type === 'dayGridMonth';
             const isWeekView = eventInfo.view.type === 'timeGridWeek';
             const isMobile = window.innerWidth < 640;
             
@@ -342,7 +329,7 @@ export default function PTAs() {
                     ? (equip?.id === 'articulada' ? "border-blue-500 bg-blue-50/40" : "border-purple-500 bg-purple-50/40")
                     : "border-yellow-500 bg-yellow-50/40",
                   isSelected && "ring-2 ring-blue-500 ring-offset-0",
-                  (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
+                  (isWeekView && isMobile) && "p-0.5 gap-0"
                 )}>
                 {isSelectionMode && (
                   <div className="absolute top-0.5 right-0.5">
@@ -358,7 +345,7 @@ export default function PTAs() {
                   <span className={cn(
                     "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded",
                     isSelected ? "text-white bg-white/20" : "text-blue-600 bg-blue-50",
-                    (isMonthView || (isWeekView && isMobile)) && "text-[5px] px-0.5"
+                    (isWeekView && isMobile) && "text-[5px] px-0.5"
                   )}>
                     {data.area}
                   </span>
@@ -375,12 +362,12 @@ export default function PTAs() {
                 <div className={cn(
                   "font-black text-[9px] uppercase leading-none line-clamp-1",
                   isSelected ? "text-white" : "text-slate-900",
-                  (isMonthView || (isWeekView && isMobile)) && "text-[7px]"
+                  (isWeekView && isMobile) && "text-[7px]"
                 )}>
                   {data.responsavel}
                 </div>
 
-                {!(isMonthView || (isWeekView && isMobile)) && (
+                {!(isWeekView && isMobile) && (
                   <div className={cn(
                     "text-[7px] font-bold line-clamp-1",
                     isSelected ? "text-white/80" : "text-slate-500"
@@ -389,7 +376,7 @@ export default function PTAs() {
                   </div>
                 )}
 
-                {!(isMonthView || (isWeekView && isMobile)) && (
+                {!(isWeekView && isMobile) && (
                   <div className="details-on-hover">
                     <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
                       <span className={cn(

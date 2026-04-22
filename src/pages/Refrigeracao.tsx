@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBrLocale from '@fullcalendar/core/locales/pt-br';
 import DeleteChoiceModal from '../components/DeleteChoiceModal';
@@ -631,12 +629,6 @@ export default function Refrigeracao() {
 
           <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-0">
             <button 
-              onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
-              className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
-            >
-              Mês
-            </button>
-            <button 
               onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
               className="px-1.5 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
             >
@@ -742,7 +734,7 @@ export default function Refrigeracao() {
                 <FullCalendar
                   key={`calendar-${events.length}`}
                   ref={calendarRef}
-                  plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
+                  plugins={[timeGridPlugin, interactionPlugin]}
                   initialView={window.innerWidth < 768 ? "timeGridDay" : "timeGridWeek"}
                   locale={ptBrLocale}
                   headerToolbar={false}
@@ -757,7 +749,6 @@ export default function Refrigeracao() {
                   eventContent={(eventInfo) => {
                     const data = eventInfo.event.extendedProps;
                     const isSelected = selectedIds.includes(data.id);
-                    const isMonthView = eventInfo.view.type === 'dayGridMonth';
                     const isWeekView = eventInfo.view.type === 'timeGridWeek';
                     const isMobile = window.innerWidth < 640;
                     
@@ -791,7 +782,7 @@ export default function Refrigeracao() {
                           data.status === 'Planejada' ? "border-yellow-500 bg-yellow-50/40" : 
                           "border-red-500 bg-red-50/40",
                           isSelected && "ring-2 ring-sky-500 ring-offset-0",
-                          (isMonthView || (isWeekView && isMobile)) && "p-0.5 gap-0"
+                          (isWeekView && isMobile) && "p-0.5 gap-0"
                         )}>
                         {selectionMode && (
                           <div className="absolute top-0.5 right-0.5">
@@ -807,7 +798,7 @@ export default function Refrigeracao() {
                           <span className={cn(
                             "text-[7px] font-black uppercase tracking-tighter truncate",
                             areaColorMap[data.area] || "text-slate-600 bg-slate-50 px-1 rounded",
-                            (isMonthView || (isWeekView && isMobile) || isShort) && "text-[6px] px-0.5"
+                            ((isWeekView && isMobile) || isShort) && "text-[6px] px-0.5"
                           )}>
                             {data.area}
                           </span>
@@ -826,12 +817,12 @@ export default function Refrigeracao() {
                         <div className={cn(
                           "font-black text-slate-900 uppercase leading-tight line-clamp-2",
                           isShort ? "text-[7px] sm:text-[8px]" : "text-[10px]",
-                          (isMonthView || (isWeekView && isMobile)) && "text-[7px]"
+                          (isWeekView && isMobile) && "text-[7px]"
                         )}>
                           {data.equipamento || data.titulo}
                         </div>
 
-                        {!(isMonthView || (isWeekView && isMobile) || isShort) && (
+                        {!( (isWeekView && isMobile) || isShort) && (
                           <div className="flex items-center gap-1 mt-0.5">
                             <User size={7} className="text-slate-400" />
                             <span className="text-[8px] text-slate-500 font-bold line-clamp-1">
