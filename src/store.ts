@@ -13,7 +13,7 @@ interface Andaime {
   solicitante: string;
   descricao_local: string;
   status: 'pendente' | 'aprovado';
-  status_execucao?: 'Montagem Pendente' | 'Montagem em andamento' | 'Montagem concluída';
+  status_execucao?: 'Pendente' | 'Em andamento' | 'Concluído';
   somente_backlog?: boolean;
   esconder_no_backlog?: boolean;
   excedeu_limite?: boolean;

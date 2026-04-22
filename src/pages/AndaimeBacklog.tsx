@@ -19,15 +19,15 @@ const GET_LIMIT = (column: string) => {
 };
 
 const STATUS_EXECUCAO_OPTIONS = [
-  'Montagem Pendente',
-  'Montagem em andamento',
-  'Montagem concluída'
+  'Pendente',
+  'Em andamento',
+  'Concluído'
 ] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  'Montagem Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
-  'Montagem em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
-  'Montagem concluída': 'text-green-600 bg-green-50 border-green-200'
+  'Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
+  'Em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
+  'Concluído': 'text-green-600 bg-green-50 border-green-200'
 };
 
 interface Props {

@@ -21,15 +21,15 @@ const AREAS = [
 ];
 
 const STATUS_EXECUCAO_OPTIONS = [
-  'Montagem Pendente',
-  'Montagem em andamento',
-  'Montagem concluída'
+  'Pendente',
+  'Em andamento',
+  'Concluído'
 ] as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  'Montagem Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
-  'Montagem em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
-  'Montagem concluída': 'text-green-600 bg-green-50 border-green-200'
+  'Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
+  'Em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
+  'Concluído': 'text-green-600 bg-green-50 border-green-200'
 };
 
 export default function Andaimes() {
@@ -207,11 +207,7 @@ export default function Andaimes() {
     const calendarApi = (window as any).fullCalendarAndaime?.getApi();
     if (calendarApi) {
       calendarApi.gotoDate(andaime.data_montagem);
-      // If in day view, it's already there. If in week/month, it helps.
     }
-    
-    setSelectedAndaime(andaime);
-    setIsModalOpen(true);
   };
 
   const navigateToPrevPending = () => {
@@ -232,9 +228,6 @@ export default function Andaimes() {
     if (calendarApi) {
       calendarApi.gotoDate(andaime.data_montagem);
     }
-    
-    setSelectedAndaime(andaime);
-    setIsModalOpen(true);
   };
 
   const totalPoints = pointsPerArea.reduce((sum, a) => sum + a.points, 0);
@@ -404,7 +397,10 @@ export default function Andaimes() {
             slotDuration="01:00:00"
             dayMaxEvents={true}
             eventMaxStack={2}
-            handleWindowResize={false}
+            handleWindowResize={!isMobile}
+            showNonCurrentDates={false}
+            fixedWeekCount={false}
+            rerenderDelay={10}
             datesSet={(arg) => {
                 setCurrentView(arg.view.type);
                 // Force a small delay to ensure rendering completion
@@ -555,18 +551,19 @@ export default function Andaimes() {
                       </div>
                     )}
 
-                    <div className="details-on-hover">
-                      <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
-                        <span className={cn(
-                          "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
-                          data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
-                        )}>
-                          {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
-                        </span>
-                        <span className="text-[11px] font-black text-slate-900 uppercase truncate">
-                          {eventInfo.event.title}
-                        </span>
-                      </div>
+                    {!(isMonthView || (isWeekView && isMobile)) && (
+                      <div className="details-on-hover">
+                        <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
+                          <span className={cn(
+                            "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
+                            data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                          )}>
+                            {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                          </span>
+                          <span className="text-[11px] font-black text-slate-900 uppercase truncate">
+                            {eventInfo.event.title}
+                          </span>
+                        </div>
 
                       <div className="info-grid">
                         <div>
@@ -611,6 +608,7 @@ export default function Andaimes() {
                         <p className="text-slate-600 italic">{data.descricao_local || 'Sem descrição'}</p>
                       </div>
                     </div>
+                    )}
 
                     <div className="flex items-center justify-between mt-auto">
                       <span className={cn(

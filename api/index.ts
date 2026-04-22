@@ -296,11 +296,27 @@ async function startServer() {
     const { id } = req.params;
     const { status } = req.body;
     try {
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('solicitacoes_andaime')
         .update({ status_execucao: status })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
+      
       if (error) throw error;
+
+      // Se for Desmontagem e marcar como Concluído, remover a montagem original do backlog
+      if (status === 'Concluído' && updated.tipo_servico === 'Desmontagem') {
+        const match = updated.descricao_local?.match(/#(\d+)/);
+        if (match) {
+          const originalId = parseInt(match[1]);
+          await supabase
+            .from('solicitacoes_andaime')
+            .update({ esconder_no_backlog: true })
+            .eq('id', originalId);
+        }
+      }
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to update status_execucao' });
