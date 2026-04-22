@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -21,6 +21,7 @@ const HORARIOS = Array.from({ length: 24 }, (_, i) => {
 });
 
 export default function PTAs() {
+  const calendarRef = useRef<FullCalendar>(null);
   const { ptas, fetchPTAs, addPTA, approvePTA, updatePTA, deletePTA, batchDeletePTAs } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -32,6 +33,7 @@ export default function PTAs() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentView, setCurrentView] = useState(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
 
   const INITIAL_FORM_DATA = {
     equipamento: EQUIPAMENTOS[0].name,
@@ -61,11 +63,9 @@ export default function PTAs() {
     const pta = pendingPTAs[nextIndex];
     
     // Find the event in the calendar and scroll to it
-    const calendarApi = (window as any).fullCalendarPTA?.getApi();
+    const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) {
       calendarApi.gotoDate(pta.data);
-      // We can't easily scroll to a specific time in FullCalendar without a ref, 
-      // but gotoDate gets us to the right day.
     }
     
     setSelectedPTA(pta);
@@ -260,31 +260,31 @@ export default function PTAs() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
-                onClick={() => (window as any).fullCalendarPTA?.getApi().changeView('dayGridMonth')} 
+                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Mês
               </button>
               <button 
-                onClick={() => (window as any).fullCalendarPTA?.getApi().changeView('timeGridWeek')} 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Semana
               </button>
               <button 
-                onClick={() => (window as any).fullCalendarPTA?.getApi().changeView('timeGridDay')} 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Dia
               </button>
               <div className="w-px h-3 bg-slate-100 mx-0.5" />
-              <button onClick={() => (window as any).fullCalendarPTA?.getApi().today()} className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
+              <button onClick={() => calendarRef.current?.getApi().today()} className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
                 Hoje
               </button>
-              <button onClick={() => (window as any).fullCalendarPTA?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+              <button onClick={() => calendarRef.current?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
                 <ChevronLeft size={12} />
               </button>
-              <button onClick={() => (window as any).fullCalendarPTA?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+              <button onClick={() => calendarRef.current?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
                 <ChevronRight size={12} />
               </button>
             </div>
@@ -294,19 +294,31 @@ export default function PTAs() {
 
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
-          key={`calendar-${events.length}`}
-          ref={(ref) => { (window as any).fullCalendarPTA = ref; }}
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
-          initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
+          initialView={currentView}
           locale={ptBrLocale}
           headerToolbar={false}
           events={events}
           scrollTime="08:00:00"
           allDaySlot={false}
           height="100%"
-          expandRows={true}
-          stickyHeaderDates={true}
+          expandRows={currentView !== 'dayGridMonth'}
+          stickyHeaderDates={currentView !== 'dayGridMonth'}
           slotDuration="01:00:00"
+          dayMaxEvents={true}
+          eventMaxStack={2}
+          handleWindowResize={window.innerWidth >= 640}
+          showNonCurrentDates={false}
+          fixedWeekCount={false}
+          rerenderDelay={10}
+          datesSet={(arg) => {
+            setCurrentView(arg.view.type);
+            // Force a small delay to ensure rendering completion
+            setTimeout(() => {
+              window.dispatchEvent(new Event('resize'));
+            }, 100);
+          }}
           eventClick={handleEventClick}
           eventContent={(eventInfo) => {
             const data = eventInfo.event.extendedProps;
@@ -377,55 +389,57 @@ export default function PTAs() {
                   </div>
                 )}
 
-                <div className="details-on-hover">
-                  <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
-                    <span className={cn(
-                      "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
-                      data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
-                    )}>
-                      {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
-                    </span>
-                    <span className="text-[11px] font-black text-slate-900 uppercase truncate">
-                      {data.responsavel}
-                    </span>
-                  </div>
+                {!(isMonthView || (isWeekView && isMobile)) && (
+                  <div className="details-on-hover">
+                    <div className="flex items-center gap-2 mb-2 border-b border-slate-200 pb-2">
+                      <span className={cn(
+                        "text-[10px] font-black px-2 py-0.5 rounded uppercase text-white",
+                        data.status === 'aprovado' ? "bg-green-500" : "bg-yellow-500"
+                      )}>
+                        {data.status === 'aprovado' ? 'APROVADO' : 'PENDENTE'}
+                      </span>
+                      <span className="text-[11px] font-black text-slate-900 uppercase truncate">
+                        {data.responsavel}
+                      </span>
+                    </div>
 
-                  <div className="info-grid">
-                    <div>
-                      <span className="label">Área</span>
-                      <p>{data.area}</p>
+                    <div className="info-grid">
+                      <div>
+                        <span className="label">Área</span>
+                        <p>{data.area}</p>
+                      </div>
+                      <div>
+                        <span className="label">Equipamento</span>
+                        <p>{data.equipamento}</p>
+                      </div>
+                      <div>
+                        <span className="label">Responsável</span>
+                        <p>{data.responsavel}</p>
+                      </div>
+                      <div>
+                        <span className="label">Prioridade</span>
+                        <p className={cn(
+                          "font-black",
+                          data.prioridade === 'Alta' ? "text-red-500" :
+                          data.prioridade === 'Média' ? "text-amber-500" :
+                          "text-blue-500"
+                        )}>{data.prioridade || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="label">Data</span>
+                        <p>{formatDate(data.data)}</p>
+                      </div>
+                      <div>
+                        <span className="label">Horário</span>
+                        <p>{data.hora_inicio} - {data.hora_fim}</p>
+                      </div>
                     </div>
                     <div>
-                      <span className="label">Equipamento</span>
-                      <p>{data.equipamento}</p>
-                    </div>
-                    <div>
-                      <span className="label">Responsável</span>
-                      <p>{data.responsavel}</p>
-                    </div>
-                    <div>
-                      <span className="label">Prioridade</span>
-                      <p className={cn(
-                        "font-black",
-                        data.prioridade === 'Alta' ? "text-red-500" :
-                        data.prioridade === 'Média' ? "text-amber-500" :
-                        "text-blue-500"
-                      )}>{data.prioridade || '-'}</p>
-                    </div>
-                    <div>
-                      <span className="label">Data</span>
-                      <p>{formatDate(data.data)}</p>
-                    </div>
-                    <div>
-                      <span className="label">Horário</span>
-                      <p>{data.hora_inicio} - {data.hora_fim}</p>
+                      <span className="label">Descrição Detalhada</span>
+                      <p className="text-slate-600 italic">{data.descricao || 'Sem descrição'}</p>
                     </div>
                   </div>
-                  <div>
-                    <span className="label">Descrição Detalhada</span>
-                    <p className="text-slate-600 italic">{data.descricao || 'Sem descrição'}</p>
-                  </div>
-                </div>
+                )}
                 
                 <div className="flex items-center justify-between mt-auto">
                   <span className={cn(

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -33,9 +33,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Andaimes() {
+  const calendarRef = useRef<FullCalendar>(null);
   const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
-  const [currentView, setCurrentView] = useState<string>('');
+  const [currentView, setCurrentView] = useState<string>(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -204,7 +205,7 @@ export default function Andaimes() {
     setPendingIndex(nextIdx);
     const andaime = pendingAndaimes[nextIdx];
     
-    const calendarApi = (window as any).fullCalendarAndaime?.getApi();
+    const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) {
       calendarApi.gotoDate(andaime.data_montagem);
     }
@@ -224,7 +225,7 @@ export default function Andaimes() {
     setPendingIndex(nextIdx);
     const andaime = pendingAndaimes[nextIdx];
     
-    const calendarApi = (window as any).fullCalendarAndaime?.getApi();
+    const calendarApi = calendarRef.current?.getApi();
     if (calendarApi) {
       calendarApi.gotoDate(andaime.data_montagem);
     }
@@ -348,31 +349,31 @@ export default function Andaimes() {
 
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 ml-auto sm:ml-1">
               <button 
-                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('dayGridMonth')} 
+                onClick={() => calendarRef.current?.getApi().changeView('dayGridMonth')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Mês
               </button>
               <button 
-                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('timeGridWeek')} 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridWeek')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Semana
               </button>
               <button 
-                onClick={() => (window as any).fullCalendarAndaime?.getApi().changeView('timeGridDay')} 
+                onClick={() => calendarRef.current?.getApi().changeView('timeGridDay')} 
                 className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all"
               >
                 Dia
               </button>
               <div className="w-px h-3 bg-slate-100 mx-0.5" />
-              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().today()} className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
+              <button onClick={() => calendarRef.current?.getApi().today()} className="px-1.5 sm:px-2 py-1 hover:bg-slate-50 rounded-md text-slate-600 font-black text-[8px] uppercase tracking-widest transition-all">
                 Hoje
               </button>
-              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+              <button onClick={() => calendarRef.current?.getApi().prev()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
                 <ChevronLeft size={12} />
               </button>
-              <button onClick={() => (window as any).fullCalendarAndaime?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
+              <button onClick={() => calendarRef.current?.getApi().next()} className="p-1 hover:bg-slate-50 rounded-md text-slate-600 transition-all">
                 <ChevronRight size={12} />
               </button>
             </div>
@@ -383,7 +384,7 @@ export default function Andaimes() {
       {activeTab === 'calendario' ? (
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
-            ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
+            ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
             initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
