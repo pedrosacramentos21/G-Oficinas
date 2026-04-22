@@ -57,28 +57,13 @@ export default function Andaimes() {
     fetchAndaimes();
   }, [fetchAndaimes]);
 
-  const pendingAndaimes = andaimes.filter(a => a.status === 'pendente');
+  const pendingAndaimes = React.useMemo(() => andaimes.filter(a => a.status === 'pendente'), [andaimes]);
 
-  const navigateToNextPending = () => {
-    if (pendingAndaimes.length === 0) return;
-    const nextIndex = (pendingIndex + 1) % pendingAndaimes.length;
-    setPendingIndex(nextIndex);
-    const andaime = pendingAndaimes[nextIndex];
-    
-    const calendarApi = (window as any).fullCalendarAndaime?.getApi();
-    if (calendarApi) {
-      calendarApi.gotoDate(andaime.data_montagem);
-    }
-    
-    setSelectedAndaime(andaime);
-    setIsModalOpen(true);
-  };
-
-  const toggleSelection = (id: number) => {
+  const toggleSelection = React.useCallback((id: number) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
-  };
+  }, []);
 
   const handleBatchDelete = () => {
     if (selectedIds.length === 0) return;
@@ -156,48 +141,73 @@ export default function Andaimes() {
     });
   };
 
-  const events = andaimes
-    .filter(a => !a.somente_backlog)
-    .map(a => {
-    const isSelected = selectedIds.includes(a.id);
-    const isDesmontagem = a.tipo_servico === 'Desmontagem';
-    const isExcedente = a.excedeu_limite;
-    const date = a.data_montagem || new Date().toISOString().split('T')[0];
-    const datePart = date.split('T')[0];
-    
-    let backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#22c55e' : '#FFD100');
-    let borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#16a34a' : '#eab308');
-    
-    if (isExcedente && a.status === 'pendente') {
-      backgroundColor = isSelected ? '#005596' : '#ef4444';
-      borderColor = isSelected ? '#003d6b' : '#dc2626';
-    } else if (isDesmontagem) {
-      backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#94a3b8' : '#cbd5e1');
-      borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#64748b' : '#94a3b8');
-    }
-
-    return {
-      id: String(a.id),
-      title: a.local_setor,
-      start: `${datePart}T${a.hora_inicio || '08:00'}`,
-      end: `${datePart}T${a.hora_fim || '17:00'}`,
-      backgroundColor,
-      borderColor,
-      textColor: (a.status === 'pendente' || isExcedente) && !isSelected && !isDesmontagem ? '#ffffff' : '#ffffff',
-      className: `event-status-${a.status} ${isDesmontagem ? 'event-desmontagem' : ''} ${isExcedente ? 'event-excedente' : ''}`,
-      extendedProps: a
-    };
-  });
-
-  console.log('Andaimes state:', andaimes);
-  console.log('Andaimes events:', events);
-
-  const pointsPerArea = AREAS.map(area => ({
+  const pointsPerArea = React.useMemo(() => AREAS.map(area => ({
     name: area,
     points: andaimes
       .filter(a => a.area === area && a.status === 'aprovado' && a.tipo_servico !== 'Desmontagem')
       .reduce((sum, a) => sum + a.quantidade_pontos, 0)
-  }));
+  })), [andaimes]);
+
+  const events = React.useMemo(() => {
+    return andaimes
+      .filter(a => !a.somente_backlog)
+      .map(a => {
+        const isSelected = selectedIds.includes(a.id);
+        const isDesmontagem = a.tipo_servico === 'Desmontagem';
+        const isExcedente = a.excedeu_limite;
+        const date = a.data_montagem || new Date().toISOString().split('T')[0];
+        const datePart = date.split('T')[0];
+        
+        let backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#22c55e' : '#FFD100');
+        let borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#16a34a' : '#eab308');
+        
+        if (isExcedente && a.status === 'pendente') {
+          backgroundColor = isSelected ? '#005596' : '#ef4444';
+          borderColor = isSelected ? '#003d6b' : '#dc2626';
+        } else if (isDesmontagem) {
+          backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#94a3b8' : '#cbd5e1');
+          borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#64748b' : '#94a3b8');
+        }
+
+        return {
+          id: String(a.id),
+          title: a.local_setor,
+          start: `${datePart}T${a.hora_inicio || '08:00'}`,
+          end: `${datePart}T${a.hora_fim || '17:00'}`,
+          backgroundColor,
+          borderColor,
+          textColor: (a.status === 'pendente' || isExcedente) && !isSelected && !isDesmontagem ? '#ffffff' : '#ffffff',
+          className: `event-status-${a.status} ${isDesmontagem ? 'event-desmontagem' : ''} ${isExcedente ? 'event-excedente' : ''}`,
+          extendedProps: a
+        };
+      });
+  }, [andaimes, selectedIds]);
+
+  const navigateToNextPending = () => {
+    if (pendingAndaimes.length === 0) return;
+    
+    // If modal is open and we are looking at a pending one, move to next
+    let nextIdx = pendingIndex;
+    if (isModalOpen && selectedAndaime && selectedAndaime.status === 'pendente') {
+      nextIdx = (pendingIndex + 1) % pendingAndaimes.length;
+    } else {
+      // Find current index or start from 0
+      nextIdx = selectedAndaime ? pendingAndaimes.findIndex(a => a.id === selectedAndaime.id) : 0;
+      if (nextIdx === -1) nextIdx = 0;
+    }
+    
+    setPendingIndex(nextIdx);
+    const andaime = pendingAndaimes[nextIdx];
+    
+    const calendarApi = (window as any).fullCalendarAndaime?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(andaime.data_montagem);
+      // If in day view, it's already there. If in week/month, it helps.
+    }
+    
+    setSelectedAndaime(andaime);
+    setIsModalOpen(true);
+  };
 
   const totalPoints = pointsPerArea.reduce((sum, a) => sum + a.points, 0);
 
@@ -349,6 +359,9 @@ export default function Andaimes() {
             expandRows={true}
             stickyHeaderDates={true}
             slotDuration="01:00:00"
+            dayMaxEvents={true}
+            eventMaxStack={2}
+            handleWindowResize={true}
             eventClick={(info) => {
               if (isSelectionMode) {
                 toggleSelection(parseInt(info.event.id));

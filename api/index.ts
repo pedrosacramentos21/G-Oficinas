@@ -74,6 +74,54 @@ async function startServer() {
     const status = 'pendente';
     
     try {
+      // Scheduling restrictions
+      // 1. Max 3 total bookings per area per week
+      // 2. Max 2 consecutive days per area per week
+      
+      const mon = new Date(dateMontagem);
+      const day = mon.getDay();
+      const diffToMon = mon.getDate() - day + (day === 0 ? -6 : 1);
+      const weekStart = new Date(mon.setDate(diffToMon)).toISOString().split('T')[0];
+      const weekEnd = new Date(mon.setDate(mon.getDate() + 6)).toISOString().split('T')[0];
+
+      const { data: weekAndaimes, error: weekError } = await supabase
+        .from('solicitacoes_andaime')
+        .select('data_montagem')
+        .eq('area', area)
+        .eq('tipo_servico', 'Montagem')
+        .gte('data_montagem', weekStart)
+        .lte('data_montagem', weekEnd)
+        .not('status', 'eq', 'reprovado');
+
+      if (weekError) throw weekError;
+
+      if (weekAndaimes) {
+        // Count unique days in the week
+        const uniqueDays = new Set(weekAndaimes.map(a => a.data_montagem.split('T')[0]));
+        uniqueDays.add(data_montagem.split('T')[0]);
+
+        if (uniqueDays.size > 3) {
+          return res.status(400).json({ error: 'Não é permitido realizar mais de 3 agendamentos na mesma semana para uma mesma área a fim de garantir a rotatividade no atendimento.' });
+        }
+
+        // Check for 3 consecutive days
+        const sortedDays = Array.from(uniqueDays).sort();
+        let consecutive = 1;
+        for (let i = 1; i < sortedDays.length; i++) {
+          const d1 = new Date(sortedDays[i-1]);
+          const d2 = new Date(sortedDays[i]);
+          const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+          if (diff === 1) {
+            consecutive++;
+            if (consecutive > 2) {
+              return res.status(400).json({ error: 'Não é permitido agendar por mais de 2 dias consecutivos na mesma semana para uma mesma área.' });
+            }
+          } else {
+            consecutive = 1;
+          }
+        }
+      }
+
       // Conflict detection
       const { data: conflicts, error: conflictError } = await supabase
         .from('solicitacoes_andaime')

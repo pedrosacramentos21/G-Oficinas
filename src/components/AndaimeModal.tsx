@@ -141,6 +141,51 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       return;
     }
 
+    // Scheduling restrictions validation (Frontend)
+    if (formData.tipo_servico === 'Montagem') {
+      const mon = new Date(formData.data_montagem);
+      const day = mon.getDay();
+      const diffToMon = mon.getDate() - day + (day === 0 ? -6 : 1);
+      const weekStart = new Date(new Date(mon).setDate(diffToMon));
+      const weekEnd = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6));
+
+      const weekStartStr = weekStart.toISOString().split('T')[0];
+      const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+      const weekAndaimes = andaimes.filter(a => 
+        a.area === formData.area && 
+        a.tipo_servico === 'Montagem' && 
+        a.data_montagem >= weekStartStr && 
+        a.data_montagem <= weekEndStr &&
+        a.id !== andaime?.id
+      );
+
+      const uniqueDays = new Set(weekAndaimes.map(a => a.data_montagem.split('T')[0]));
+      uniqueDays.add(formData.data_montagem);
+
+      if (uniqueDays.size > 3) {
+        alert('Não é permitido realizar mais de 3 agendamentos na mesma semana para uma mesma área a fim de garantir a rotatividade no atendimento.');
+        return;
+      }
+
+      const sortedDays = Array.from(uniqueDays).sort();
+      let consecutive = 1;
+      for (let i = 1; i < sortedDays.length; i++) {
+        const d1 = new Date(sortedDays[i-1]);
+        const d2 = new Date(sortedDays[i]);
+        const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+        if (diff === 1) {
+          consecutive++;
+          if (consecutive > 2) {
+            alert('Não é permitido agendar por mais de 2 dias consecutivos na mesma semana para uma mesma área.');
+            return;
+          }
+        } else {
+          consecutive = 1;
+        }
+      }
+    }
+
     setIsSubmitting(true);
     try {
       if (andaime?.id) {
