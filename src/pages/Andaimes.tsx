@@ -346,7 +346,6 @@ export default function Andaimes() {
       {activeTab === 'calendario' ? (
         <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
-            key={`calendar-${events.length}`}
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
             plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
             initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
@@ -356,7 +355,7 @@ export default function Andaimes() {
             scrollTime="08:00:00"
             allDaySlot={false}
             height="100%"
-            expandRows={true}
+            expandRows={activeTab === 'calendario'}
             stickyHeaderDates={true}
             slotDuration="01:00:00"
             dayMaxEvents={true}
@@ -380,6 +379,21 @@ export default function Andaimes() {
                 const isDesmontagem = data.tipo_servico === 'Desmontagem';
                 const isExcedente = data.excedeu_limite;
                 
+                // Extremely simplified view for Month View to prevent freezing
+                if (isMonthView) {
+                  return (
+                    <div className={cn(
+                      "flex items-center gap-1 px-1 py-0.5 rounded-sm border truncate w-full",
+                      isExcedente && data.status === 'pendente' ? "bg-red-500 text-white border-red-600" :
+                      isDesmontagem ? "bg-slate-400 text-white border-slate-500" :
+                      (data.status === 'aprovado' ? "bg-green-500 text-white border-green-600" : "bg-yellow-500 text-white border-yellow-600")
+                    )}>
+                      <span className="text-[7px] font-black">{data.quantidade_pontos}P</span>
+                      <span className="text-[7px] font-bold truncate uppercase">{eventInfo.event.title}</span>
+                    </div>
+                  );
+                }
+
                 return (
                     <div 
                       onClick={(e) => {
