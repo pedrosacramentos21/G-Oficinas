@@ -79,8 +79,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
           descricao_local: andaime.descricao_local || '',
           excedeu_limite: andaime.excedeu_limite || false,
           justificativa_excesso: andaime.justificativa_excesso || '',
-          somente_backlog: andaime.somente_backlog || false
-        });
+          somente_backlog: andaime.somente_backlog || false,
+          data_montagem_original: andaime.data_montagem_original || undefined
+        } as any);
         setIsUnlocked(!andaime.id || andaime.status !== 'aprovado');
       } else {
         setFormData(initialFormState);
@@ -366,7 +367,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Data da Montagem</label>
+                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">
+                    {formData.tipo_servico === 'Desmontagem' ? 'Data da Desmontagem' : 'Data da Montagem'}
+                  </label>
                   <input 
                     type="date"
                     required
@@ -374,6 +377,11 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                     value={formData.data_montagem}
                     onChange={e => setFormData({...formData, data_montagem: e.target.value})}
                   />
+                  {formData.tipo_servico === 'Desmontagem' && (andaime as any)?.data_montagem_original && (
+                    <p className="mt-1 text-[9px] font-black text-amber-600 uppercase tracking-wider">
+                      Montagem Original: {new Date((andaime as any).data_montagem_original).toLocaleDateString('pt-BR')}
+                    </p>
+                  )}
                 </div>
 
                 <div>

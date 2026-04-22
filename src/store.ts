@@ -18,6 +18,7 @@ interface Andaime {
   esconder_no_backlog?: boolean;
   excedeu_limite?: boolean;
   justificativa_excesso?: string;
+  data_montagem_original?: string;
 }
 
 interface PTA {

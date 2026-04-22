@@ -91,16 +91,7 @@
   .fc-timegrid-col-events,
   .fc-timegrid-col-frame,
   .fc-timegrid-col-bg,
-  .fc-timegrid-body,
-  .fc-scrollgrid-sync-table,
-  .fc-scrollgrid-section-body,
-  .fc-scrollgrid-section,
-  .fc-scrollgrid,
-  .fc-view-harness,
-  .fc-view,
-  .fc-daygrid-body,
-  .fc-daygrid-day-frame,
-  .fc-daygrid-day-events {
+  .fc-timegrid-body {
     z-index: auto !important;
     overflow: visible !important;
   }

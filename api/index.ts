@@ -156,6 +156,7 @@ async function startServer() {
             quantidade_pontos: 0, 
             data_montagem: data_desmontagem, 
             data_desmontagem: data_desmontagem, 
+            data_montagem_original: data_montagem, // Use original montagem date
             hora_inicio: '08:00', 
             hora_fim: '17:00', 
             solicitante, 

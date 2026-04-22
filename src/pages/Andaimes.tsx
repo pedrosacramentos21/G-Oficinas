@@ -35,6 +35,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Andaimes() {
   const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog'>('calendario');
+  const [currentView, setCurrentView] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAndaime, setSelectedAndaime] = useState<any>(null);
@@ -55,6 +57,9 @@ export default function Andaimes() {
 
   useEffect(() => {
     fetchAndaimes();
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [fetchAndaimes]);
 
   const pendingAndaimes = React.useMemo(() => andaimes.filter(a => a.status === 'pendente'), [andaimes]);
@@ -209,6 +214,29 @@ export default function Andaimes() {
     setIsModalOpen(true);
   };
 
+  const navigateToPrevPending = () => {
+    if (pendingAndaimes.length === 0) return;
+    
+    let nextIdx = pendingIndex;
+    if (isModalOpen && selectedAndaime && selectedAndaime.status === 'pendente') {
+      nextIdx = (pendingIndex - 1 + pendingAndaimes.length) % pendingAndaimes.length;
+    } else {
+      nextIdx = selectedAndaime ? pendingAndaimes.findIndex(a => a.id === selectedAndaime.id) : 0;
+      if (nextIdx === -1) nextIdx = 0;
+    }
+    
+    setPendingIndex(nextIdx);
+    const andaime = pendingAndaimes[nextIdx];
+    
+    const calendarApi = (window as any).fullCalendarAndaime?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(andaime.data_montagem);
+    }
+    
+    setSelectedAndaime(andaime);
+    setIsModalOpen(true);
+  };
+
   const totalPoints = pointsPerArea.reduce((sum, a) => sum + a.points, 0);
 
   const openNewRequest = () => {
@@ -251,15 +279,31 @@ export default function Andaimes() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button 
-              onClick={navigateToNextPending}
-              className="flex items-center gap-1.5 bg-ambev-blue/5 px-2 py-1 rounded-lg border border-ambev-blue/10 hover:bg-ambev-blue/10 transition-all active:scale-95"
+            <div 
+              className="flex items-center bg-ambev-blue/5 rounded-lg border border-ambev-blue/10 overflow-hidden"
             >
-              <span className="text-[8px] font-black text-ambev-blue uppercase tracking-widest">Pendentes:</span>
-              <span className="bg-ambev-blue text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
-                {pendingAndaimes.length}
-              </span>
-            </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigateToPrevPending(); }}
+                className="p-1.5 hover:bg-ambev-blue/10 text-ambev-blue transition-all active:scale-90 border-r border-ambev-blue/10"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button 
+                onClick={navigateToNextPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-ambev-blue/10 transition-all group"
+              >
+                <span className="text-[8px] font-black text-ambev-blue uppercase tracking-widest">Pendentes:</span>
+                <span className="bg-ambev-blue text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+                  {pendingAndaimes.length}
+                </span>
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); navigateToNextPending(); }}
+                className="p-1.5 hover:bg-ambev-blue/10 text-ambev-blue transition-all active:scale-90 border-l border-ambev-blue/10"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
@@ -348,19 +392,26 @@ export default function Andaimes() {
           <FullCalendar
             ref={(ref) => { (window as any).fullCalendarAndaime = ref; }}
             plugins={[dayGridPlugin, timeGridPlugin, multiMonthPlugin, interactionPlugin]}
-            initialView={window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek'}
+            initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'}
             locale={ptBrLocale}
             headerToolbar={false}
             events={events}
             scrollTime="08:00:00"
             allDaySlot={false}
             height="100%"
-            expandRows={activeTab === 'calendario'}
-            stickyHeaderDates={true}
+            expandRows={activeTab === 'calendario' && currentView !== 'dayGridMonth'}
+            stickyHeaderDates={currentView !== 'dayGridMonth'}
             slotDuration="01:00:00"
             dayMaxEvents={true}
             eventMaxStack={2}
-            handleWindowResize={true}
+            handleWindowResize={false}
+            datesSet={(arg) => {
+                setCurrentView(arg.view.type);
+                // Force a small delay to ensure rendering completion
+                setTimeout(() => {
+                  window.dispatchEvent(new Event('resize'));
+                }, 100);
+            }}
             eventClick={(info) => {
               if (isSelectionMode) {
                 toggleSelection(parseInt(info.event.id));
@@ -544,7 +595,7 @@ export default function Andaimes() {
                         </div>
                         <div>
                           <span className="label">Montagem</span>
-                          <p>{formatDate(data.data_montagem)}</p>
+                          <p>{formatDate(data.data_montagem_original || data.data_montagem)}</p>
                         </div>
                         <div>
                           <span className="label">Desmontagem</span>
