@@ -25,6 +25,7 @@ const HORARIOS = Array.from({ length: 24 }, (_, i) => {
 
 export default function PTAs() {
   const calendarRef = useRef<FullCalendar>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
   const { ptas, fetchPTAs, addPTA, approvePTA, updatePTA, deletePTA, batchDeletePTAs } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -56,6 +57,19 @@ export default function PTAs() {
 
   useEffect(() => {
     fetchPTAs();
+
+    // Auto-resize for calendar when container changes (e.g. sidebar toggle)
+    const observer = new ResizeObserver(() => {
+      if (calendarRef.current) {
+        calendarRef.current.getApi().updateSize();
+      }
+    });
+
+    if (calendarContainerRef.current) {
+      observer.observe(calendarContainerRef.current);
+    }
+
+    return () => observer.disconnect();
   }, [fetchPTAs]);
 
   const pendingPTAs = ptas.filter(p => p.status === 'pendente');
@@ -397,7 +411,7 @@ export default function PTAs() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
+        <div ref={calendarContainerRef} className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin]}

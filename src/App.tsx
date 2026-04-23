@@ -83,8 +83,8 @@ export default function App() {
             </button>
           </div>
 
-          <main className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="w-full h-full">
+          <main className="flex-1 overflow-y-auto custom-scrollbar min-w-0">
+            <div className="w-full h-full min-w-0">
               <Routes>
                 <Route path="/andaimes/*" element={<Andaimes />} />
                 <Route path="/ptas" element={<PTAs />} />

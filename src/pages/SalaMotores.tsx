@@ -329,7 +329,7 @@ export default function SalaMotores() {
                                 {...provided.dragHandleProps}
                                 onClick={() => handleCardClick(item)}
                                 className={cn(
-                                  "bg-white p-4 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer",
+                                  "bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer",
                                   isSelected && "ring-2 ring-ambev-blue ring-offset-2 shadow-lg",
                                   snapshot.isDragging && "shadow-2xl ring-2 ring-ambev-blue rotate-2"
                                 )}
@@ -406,10 +406,10 @@ export default function SalaMotores() {
                                   </div>
                                 )}
 
-                                <div className="space-y-3 md:space-y-4">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex flex-col gap-1">
-                                      <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase pr-6">
+                                <div className="space-y-3 md:space-y-4 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 min-w-0">
+                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                      <h3 className="font-black text-gray-900 text-xs md:text-sm leading-tight group-hover:text-ambev-blue transition-colors uppercase truncate">
                                         {item.titulo}
                                       </h3>
                                       {item.tag_motor && (
@@ -442,15 +442,15 @@ export default function SalaMotores() {
                                     </div>
                                   </div>
 
-                                  <div className="flex flex-col gap-1 pt-2 border-t border-gray-50">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-1 text-green-600 font-black text-[9px] md:text-[10px]">
+                                  <div className="flex flex-col gap-1 pt-2 border-t border-gray-50 mt-auto">
+                                    <div className="flex items-center justify-between gap-1 flex-wrap">
+                                      <div className="flex items-center gap-1 text-green-600 font-black text-[9px] md:text-[10px] shrink-0">
                                         <DollarSign size={10} className="md:w-3 md:h-3" />
                                         {item.custo_evitado.toLocaleString('pt-BR')}
                                       </div>
                                       
                                       {!selectionMode && (
-                                        <div className="flex gap-1">
+                                        <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
                                           {column.id !== 'pendente' && (
                                             <button 
                                               onClick={(e) => {

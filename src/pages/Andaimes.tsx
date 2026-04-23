@@ -44,6 +44,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function Andaimes() {
   const calendarRef = useRef<FullCalendar>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
   const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
   const [currentView, setCurrentView] = useState<string>(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
@@ -70,7 +71,22 @@ export default function Andaimes() {
     fetchAndaimes();
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // Auto-resize for calendar when container changes (e.g. sidebar toggle)
+    const observer = new ResizeObserver(() => {
+      if (calendarRef.current) {
+        calendarRef.current.getApi().updateSize();
+      }
+    });
+
+    if (calendarContainerRef.current) {
+      observer.observe(calendarContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
   }, [fetchAndaimes]);
 
   const pendingAndaimes = React.useMemo(() => andaimes.filter(a => a.status === 'pendente'), [andaimes]);
@@ -484,7 +500,7 @@ export default function Andaimes() {
           </div>
         </div>
       ) : activeTab === 'calendario' ? (
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
+        <div ref={calendarContainerRef} className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
           <FullCalendar
             ref={calendarRef}
             plugins={[timeGridPlugin, interactionPlugin]}

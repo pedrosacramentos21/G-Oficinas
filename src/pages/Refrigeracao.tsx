@@ -85,6 +85,7 @@ export default function Refrigeracao() {
   const [modalType, setModalType] = useState<'manutencao' | 'details'>('manutencao');
   const [currentDate, setCurrentDate] = useState(new Date());
   const calendarRef = useRef<any>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
   const [addingPCMArea, setAddingPCMArea] = useState<{ date: string, value: string } | null>(null);
   const pcmInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,6 +129,19 @@ export default function Refrigeracao() {
 
   useEffect(() => {
     fetchRefrigeracao();
+
+    // Auto-resize for calendar when container changes (e.g. sidebar toggle)
+    const observer = new ResizeObserver(() => {
+      if (calendarRef.current) {
+        calendarRef.current.getApi().updateSize();
+      }
+    });
+
+    if (calendarContainerRef.current) {
+      observer.observe(calendarContainerRef.current);
+    }
+
+    return () => observer.disconnect();
   }, [fetchRefrigeracao]);
 
   const handlePrev = () => {
@@ -833,7 +847,7 @@ export default function Refrigeracao() {
           </div>
 
           {/* Calendar */}
-          <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-100 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
+          <div ref={calendarContainerRef} className="flex-1 bg-white rounded-xl shadow-sm border border-slate-100 p-0.5 flex flex-col custom-calendar high-slots min-h-0 !overflow-visible">
             <div className="flex-1 custom-scrollbar calendar-scroller !overflow-visible">
               <div className="min-w-[1000px] w-full h-full !overflow-visible">
                 <FullCalendar
