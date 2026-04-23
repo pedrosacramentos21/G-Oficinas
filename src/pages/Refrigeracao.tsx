@@ -700,7 +700,7 @@ export default function Refrigeracao() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cronograma Geral</span>
              </div>
              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
-                {Array.from(new Set(refrigeracaoManutencoes.map(m => m.data))).sort().map(dateStr => {
+                {Array.from(new Set(refrigeracaoManutencoes.map(m => m.data))).sort((a, b) => b.localeCompare(a)).map(dateStr => {
                   const dayManutencoes = refrigeracaoManutencoes.filter(m => m.data === dateStr);
                   if (dayManutencoes.length === 0) return null;
                   const date = parseISO(dateStr);
@@ -850,6 +850,10 @@ export default function Refrigeracao() {
                   expandRows={true}
                   stickyHeaderDates={true}
                   slotDuration="01:00:00"
+                  dayMaxEvents={false}
+                  dayMaxEventRows={false}
+                  eventMaxStack={undefined}
+                  slotEventOverlap={false}
                   eventClick={(info) => openDetailsModal(info.event.extendedProps, 'calendar')}
                   eventContent={(eventInfo) => {
                     const data = eventInfo.event.extendedProps;

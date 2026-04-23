@@ -336,7 +336,7 @@ export default function PTAs() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panorama Geral</span>
              </div>
              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
-                {Array.from(new Set(ptas.map(p => p.data))).sort().map(dateStr => {
+                {Array.from(new Set(ptas.map(p => p.data))).sort((a, b) => b.localeCompare(a)).map(dateStr => {
                   const dayPTAs = ptas.filter(p => p.data === dateStr);
                   if (dayPTAs.length === 0) return null;
                   const date = parseISO(dateStr);
@@ -411,6 +411,10 @@ export default function PTAs() {
           expandRows={true}
           stickyHeaderDates={true}
           slotDuration="01:00:00"
+          dayMaxEvents={false}
+          dayMaxEventRows={false}
+          eventMaxStack={undefined}
+          slotEventOverlap={false}
           handleWindowResize={window.innerWidth >= 640}
           rerenderDelay={10}
           datesSet={(arg) => {

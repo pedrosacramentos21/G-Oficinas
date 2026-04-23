@@ -422,7 +422,7 @@ export default function Andaimes() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Listagem Geral</span>
              </div>
              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
-                {Array.from(new Set(andaimes.map(a => a.data_montagem))).sort().map(dateStr => {
+                {Array.from(new Set(andaimes.map(a => a.data_montagem))).sort((a, b) => b.localeCompare(a)).map(dateStr => {
                   const dayAndaimes = andaimes.filter(a => a.data_montagem === dateStr);
                   if (dayAndaimes.length === 0) return null;
                   const date = parseISO(dateStr);
@@ -499,7 +499,9 @@ export default function Andaimes() {
             stickyHeaderDates={true}
             slotDuration="01:00:00"
             dayMaxEvents={false}
-            eventMaxStack={2}
+            dayMaxEventRows={false}
+            eventMaxStack={undefined}
+            slotEventOverlap={false}
             handleWindowResize={!isMobile}
             showNonCurrentDates={false}
             fixedWeekCount={false}
