@@ -196,9 +196,9 @@ export default function Andaimes() {
         if (isExcedente && a.status === 'pendente') {
           backgroundColor = isSelected ? '#005596' : '#ef4444';
           borderColor = isSelected ? '#003d6b' : '#dc2626';
-        } else if (isDesmontagem) {
-          backgroundColor = isSelected ? '#005596' : (a.status === 'aprovado' ? '#94a3b8' : '#cbd5e1');
-          borderColor = isSelected ? '#003d6b' : (a.status === 'aprovado' ? '#64748b' : '#94a3b8');
+        } else if (isDesmontagem && a.status === 'aprovado') {
+          backgroundColor = isSelected ? '#003d6b' : '#005596';
+          borderColor = isSelected ? '#002540' : '#003d6b';
         }
 
         return {
