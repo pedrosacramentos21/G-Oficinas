@@ -29,21 +29,31 @@ export default function App() {
         }
 
         if (!pingRes.ok) {
-          setConnectionError(`O servidor está respondendo com erro: ${pingRes.status}`);
+          const bodyText = await pingRes.text().catch(() => '');
+          if (bodyText.includes('Forbidden') || pingRes.status === 403) {
+            setConnectionError(`Erro 403: Acesso Negado ao Servidor. Verifique as configurações de deploy e CORS.`);
+          } else {
+            setConnectionError(`O servidor está respondendo com erro: ${pingRes.status}`);
+          }
           return;
         }
 
         // Step 2: Server is UP, now check database connectivity
         const healthRes = await fetch('/api/health');
         if (!healthRes.ok) {
-          const data = await healthRes.json().catch(() => ({}));
-          const msg = data.message || '';
+          let msg = '';
+          try {
+            const data = await healthRes.json();
+            msg = data.message || '';
+          } catch (e) {
+            msg = await healthRes.text().catch(() => `Erro ${healthRes.status}`);
+          }
           
-          if (msg.includes('environment variables are missing')) {
-            setConnectionError('Erro: Chaves do Supabase não configuradas nas variáveis de ambiente.');
-          } else if (msg.includes('relation') || msg.includes('does not exist')) {
+          if (msg.includes('environment variables are missing') || msg.includes('Supabase environment variables')) {
+            setConnectionError('Erro: Chaves do Supabase não configuradas nas variáveis de ambiente em produção.');
+          } else if (msg.includes('relation') || msg.includes('does not exist') || msg.includes('não encontrada')) {
             setConnectionError('Erro: Tabelas do Supabase não encontradas. Execute o script supabase_migration.sql no editor SQL do Supabase.');
-          } else if (msg.includes('Database error')) {
+          } else if (msg.includes('Database error') || msg.includes('Supabase database error')) {
             setConnectionError(`Erro no banco de dados: ${msg}`);
           } else {
             setConnectionError(msg || `Erro na conexão com o banco de dados: ${healthRes.status}`);

@@ -24,7 +24,7 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // API health check
+  // Health check endpoint
   app.get('/api/health', async (req, res) => {
     try {
       if (!supabaseUrl || !supabaseKey) {
@@ -33,7 +33,11 @@ async function startServer() {
       const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
       if (error) {
         console.error('Database connection error:', error);
-        return res.status(500).json({ status: 'error', message: `Database error: ${error.message}` });
+        // Include specialized error messages for common Supabase errors
+        if (error.code === '42P01') {
+          return res.status(500).json({ status: 'error', message: 'Tabela solicitacoes_andaime não encontrada no banco de dados Supabase.' });
+        }
+        return res.status(500).json({ status: 'error', message: `Supabase database error: ${error.message}` });
       }
       res.json({ status: 'ok' });
     } catch (error: any) {
@@ -1151,6 +1155,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // In production (Vercel), we serve static files from /dist
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -1158,16 +1163,28 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server version: 1.0.1`);
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-    console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`Supabase URL configured: ${!!supabaseUrl}`);
-    console.log(`Supabase Key configured: ${!!supabaseKey}`);
+  return app;
+}
+
+const appPromise = startServer();
+
+// For local development (tsx api/index.ts)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  appPromise.then(app => {
+    const PORT = Number(process.env.PORT) || 3000;
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server version: 1.0.2`);
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+      console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
+    });
+  }).catch(err => {
+    console.error('FATAL: Failed to start server:', err);
+    process.exit(1);
   });
 }
 
-startServer().catch(err => {
-  console.error('FATAL: Failed to start server:', err);
-  process.exit(1);
-});
+// Export for Vercel
+export default async (req: any, res: any) => {
+  const app = await appPromise;
+  return app(req, res);
+};
