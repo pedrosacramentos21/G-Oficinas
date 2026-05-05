@@ -45,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function Andaimes() {
   const calendarRef = useRef<FullCalendar>(null);
   const calendarContainerRef = useRef<HTMLDivElement>(null);
-  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
+  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchUpdateAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
   const [currentView, setCurrentView] = useState<string>(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -125,11 +125,7 @@ export default function Andaimes() {
         }
       } else if (passwordModal.action === 'batch-delete') {
         if (passwordModal.deleteChoice === 'backlog-only') {
-          // Update each to hidden instead of deleting
-          for (const id of passwordModal.ids || []) {
-            const { updateAndaime } = useStore.getState();
-            await updateAndaime(id, { esconder_no_backlog: true }, password);
-          }
+          await batchUpdateAndaimes(passwordModal.ids || selectedIds, { esconder_no_backlog: true }, password);
         } else {
           await batchDeleteAndaimes(passwordModal.ids || selectedIds, password);
         }
@@ -793,6 +789,11 @@ export default function Andaimes() {
         onClose={() => setPasswordModal({ ...passwordModal, isOpen: false })}
         onConfirm={handleAction}
         onDelete={() => setPasswordModal(prev => ({ ...prev, action: 'delete' }))}
+      />
+      <DeleteChoiceModal
+        isOpen={deleteChoiceModal.isOpen}
+        onClose={() => setDeleteChoiceModal({ ...deleteChoiceModal, isOpen: false })}
+        onConfirm={confirmDeleteChoice}
       />
     </div>
   );

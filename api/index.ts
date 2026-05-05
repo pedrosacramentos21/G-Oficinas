@@ -6,9 +6,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+let supabase: any;
+try {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } else {
+    console.error('Supabase credentials missing at startup');
+  }
+} catch (e) {
+  console.error('Failed to initialize Supabase client:', e);
+}
 
 const MASTER_PASSWORD = 'Itf2026';
 
@@ -21,14 +30,19 @@ async function startServer() {
 
   // Basic ping to check if server is running at all
   app.get('/api/ping', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      server: 'ready',
+      env: process.env.NODE_ENV
+    });
   });
 
   // Health check endpoint
   app.get('/api/health', async (req, res) => {
     try {
-      if (!supabaseUrl || !supabaseKey) {
-        return res.status(500).json({ status: 'error', message: 'Supabase environment variables are missing' });
+      if (!supabase) {
+        return res.status(500).json({ status: 'error', message: 'Supabase client not initialized. Check environment variables.' });
       }
       const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
       if (error) {
@@ -49,6 +63,7 @@ async function startServer() {
   // API Routes for Andaimes
   app.get('/api/andaimes', async (req, res) => {
     try {
+      if (!supabase) throw new Error('Supabase not initialized');
       const { data, error } = await supabase
         .from('solicitacoes_andaime')
         .select('*')
@@ -57,8 +72,8 @@ async function startServer() {
       
       if (error) throw error;
       res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch andaimes' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to fetch andaimes' });
     }
   });
 
@@ -121,7 +136,7 @@ async function startServer() {
         }
 
         // Check for 3 consecutive days
-        const sortedDays = Array.from(uniqueDays).sort();
+        const sortedDays = Array.from(uniqueDays).sort() as string[];
         let consecutive = 1;
         for (let i = 1; i < sortedDays.length; i++) {
           const d1 = new Date(sortedDays[i-1]);
@@ -304,6 +319,24 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to batch approve andaimes' });
+    }
+  });
+
+  app.post('/api/andaimes/batch-update', async (req, res) => {
+    const { ids, updates, password } = req.body;
+    if (password !== MASTER_PASSWORD) {
+      return res.status(401).json({ error: 'Senha mestre incorreta.' });
+    }
+    try {
+      const { error } = await supabase
+        .from('solicitacoes_andaime')
+        .update(updates)
+        .in('id', ids);
+      
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch update andaimes' });
     }
   });
 

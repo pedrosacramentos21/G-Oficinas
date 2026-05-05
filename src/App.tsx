@@ -67,9 +67,9 @@ export default function App() {
         } else {
           setConnectionError('O servidor respondeu com um status inválido.');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Connection check overall failure:', err);
-        setConnectionError('Erro inesperado na verificação de conexão.');
+        setConnectionError(`Erro inesperado na verificação de conexão: ${err?.message || 'Erro desconhecido'}`);
       }
     };
     
