@@ -945,6 +945,30 @@ async function startServer() {
   });
 
   // API Routes for Refrigeracao
+  app.post('/api/armstrong/backlog/batch-update', async (req, res) => {
+    const { ids, updates, password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta' });
+    try {
+      const { error } = await supabase.from('armstrong_backlog').update(updates).in('id', ids);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch update armstrong backlog' });
+    }
+  });
+
+  app.post('/api/refrigeracao/backlog/batch-update', async (req, res) => {
+    const { ids, updates, password } = req.body;
+    if (password !== MASTER_PASSWORD) return res.status(401).json({ error: 'Senha mestre incorreta' });
+    try {
+      const { error } = await supabase.from('refrigeracao_backlog').update(updates).in('id', ids);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to batch update refrigeracao backlog' });
+    }
+  });
+
   app.get('/api/refrigeracao/manutencoes', async (req, res) => {
     try {
       const { data, error } = await supabase

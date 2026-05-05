@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Construction, LayoutDashboard, AlertCircle, BarChart3 } from 'lucide-react';
+import { Construction, LayoutDashboard, AlertCircle, BarChart3, Database } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Andaimes from './pages/Andaimes';
 import PTAs from './pages/PTAs';
@@ -8,14 +8,45 @@ import SalaMotores from './pages/SalaMotores';
 import Oficina from './pages/Oficina';
 import Armstrong from './pages/Armstrong';
 import Refrigeracao from './pages/Refrigeracao';
+import { syncLocalStorageToSupabase } from './lib/recovery';
 import { cn } from './lib/utils';
 
 export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [connectionError, setConnectionError] = React.useState<string | null>(null);
+  const [hasLocalData, setHasLocalData] = React.useState(false);
+  const [isRecovering, setIsRecovering] = React.useState(false);
 
   React.useEffect(() => {
+    // Check for local data that could be recovered
+    const keys = [
+      'andaimes_data', 
+      'ptas_data', 
+      'ptas_activities',
+      'sala_motores_activities', 
+      'sala_motores_data',
+      'atividades_sala_motores',
+      'armstrong_manutencoes', 
+      'armstrong_data',
+      'armstrong_backlog', 
+      'refrigeracao_manutencoes', 
+      'refrigeracao_data',
+      'refrigeracao_backlog',
+      'oficina_servicos'
+    ];
+    const foundData = keys.some(key => {
+      const data = localStorage.getItem(key);
+      try {
+        if (!data) return false;
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) && parsed.length > 0;
+      } catch {
+        return false;
+      }
+    });
+    setHasLocalData(foundData);
+
     const checkConnection = async () => {
       try {
         // Step 1: Check if the server is even running
@@ -112,6 +143,32 @@ export default function App() {
             <div className="bg-red-500 text-white px-4 py-2 flex items-center gap-2 text-sm font-medium animate-pulse">
               <AlertCircle size={16} />
               {connectionError}
+            </div>
+          )}
+          {hasLocalData && !connectionError && (
+            <div className="bg-ambev-gold text-ambev-blue px-4 py-2 flex items-center justify-between gap-2 text-sm font-bold shadow-md">
+              <div className="flex items-center gap-2">
+                <Database size={16} />
+                Histórico local detectado! Deseja sincronizar com o novo banco de dados?
+              </div>
+              <button 
+                onClick={async () => {
+                  setIsRecovering(true);
+                  try {
+                    const count = await syncLocalStorageToSupabase();
+                    alert(`${count} registros recuperados com sucesso!`);
+                    setHasLocalData(false);
+                  } catch (err: any) {
+                    alert('Erro ao recuperar dados: ' + err.message);
+                  } finally {
+                    setIsRecovering(false);
+                  }
+                }}
+                disabled={isRecovering}
+                className="bg-ambev-blue text-white px-3 py-1 rounded-md text-xs hover:bg-ambev-blue/90 transition-colors disabled:opacity-50"
+              >
+                {isRecovering ? 'SINCRONIZANDO...' : 'RECUPERAR AGORA'}
+              </button>
             </div>
           )}
           {/* Mobile Header */}

@@ -76,7 +76,8 @@ export default function Armstrong() {
     updateArmstrongBacklog,
     deleteArmstrongBacklog,
     batchDeleteArmstrongManutencoes,
-    batchDeleteArmstrongBacklog
+    batchDeleteArmstrongBacklog,
+    batchUpdateArmstrongBacklog
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
@@ -388,10 +389,12 @@ export default function Armstrong() {
         setSelectionMode(false);
         setSelectedIds([]);
       } else if (passwordModal.action === 'backlog-batch-delete') {
-        const itemsToDelete = armstrongBacklog.filter(b => passwordModal.ids?.includes(b.id));
-        await batchDeleteArmstrongBacklog(passwordModal.ids!, password);
-        // Sync with calendar
-        if (passwordModal.deleteChoice !== 'backlog-only') {
+        if (passwordModal.deleteChoice === 'backlog-only') {
+          await batchUpdateArmstrongBacklog(passwordModal.ids!, { esconder_no_backlog: true }, password);
+        } else {
+          const itemsToDelete = armstrongBacklog.filter(b => passwordModal.ids?.includes(b.id));
+          await batchDeleteArmstrongBacklog(passwordModal.ids!, password);
+          // Sync with calendar
           for (const item of itemsToDelete) {
             const existingManutencao = armstrongManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
             if (existingManutencao) {
@@ -518,6 +521,7 @@ export default function Armstrong() {
   // Backlog Indicators
   const filteredBacklog = armstrongBacklog
     .filter(b => {
+      if (b.esconder_no_backlog) return false;
       const matchArea = filterArea.length === 0 || filterArea.includes(b.area);
       const matchSubArea = filterSubArea.length === 0 || filterSubArea.includes(b.sub_area);
       const matchTipo = filterTipo.length === 0 || filterTipo.includes(b.tipo_manutencao);
@@ -710,12 +714,8 @@ export default function Armstrong() {
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Manutenções Armstrong (Mês)</p>
-                <p className="text-2xl font-black text-slate-900">{armstrongManutencoes.filter(m => {
-                  const d = parseISO(m.data);
-                  const now = new Date();
-                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                }).length} <span className="text-xs text-slate-400">Atividades</span></p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Manutenções Armstrong (Total)</p>
+                <p className="text-2xl font-black text-slate-900">{armstrongManutencoes.length} <span className="text-xs text-slate-400">Atividades</span></p>
              </div>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Itens no Backlog</p>

@@ -14,6 +14,12 @@ CREATE TABLE IF NOT EXISTS solicitacoes_andaime (
     solicitante TEXT NOT NULL,
     descricao_local TEXT,
     status TEXT DEFAULT 'pendente',
+    status_execucao TEXT,
+    somente_backlog BOOLEAN DEFAULT FALSE,
+    esconder_no_backlog BOOLEAN DEFAULT FALSE,
+    excedeu_limite BOOLEAN DEFAULT FALSE,
+    justificativa_excesso TEXT,
+    data_montagem_original TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -78,6 +84,7 @@ CREATE TABLE IF NOT EXISTS armstrong_manutencao (
     impacto_energetico TEXT,
     investimento_estimado TEXT,
     status TEXT DEFAULT 'Planejada',
+    tipo_manutencao TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -100,6 +107,12 @@ CREATE TABLE IF NOT EXISTS armstrong_backlog (
     data_prevista TEXT,
     status TEXT DEFAULT 'Não planejada',
     observacoes TEXT,
+    descricao TEXT,
+    equipamento TEXT,
+    responsavel TEXT,
+    hora_inicio TEXT,
+    hora_fim TEXT,
+    tipo_manutencao TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -116,9 +129,10 @@ CREATE TABLE IF NOT EXISTS refrigeracao_manutencao (
     hora_fim TEXT NOT NULL,
     descricao TEXT,
     observacoes TEXT,
-    impacto_energetico TEXT,
     investimento_estimado TEXT,
     status TEXT DEFAULT 'Planejada',
+    tipo_manutencao TEXT,
+    nivel_criticidade TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -136,11 +150,17 @@ CREATE TABLE IF NOT EXISTS refrigeracao_backlog (
     area TEXT NOT NULL,
     sub_area TEXT,
     titulo TEXT NOT NULL,
-    impacto_energetico TEXT,
     investimento_estimado TEXT,
     data_prevista TEXT,
     status TEXT DEFAULT 'Não planejada',
     observacoes TEXT,
+    descricao TEXT,
+    equipamento TEXT,
+    responsavel TEXT,
+    hora_inicio TEXT,
+    hora_fim TEXT,
+    tipo_manutencao TEXT,
+    nivel_criticidade TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -172,7 +172,7 @@ interface StoreState {
   updateArmstrongBacklog: (id: number, updates: Partial<ArmstrongBacklog>, password?: string) => Promise<void>;
   deleteArmstrongBacklog: (id: number, password: string) => Promise<void>;
   batchDeleteArmstrongBacklog: (ids: number[], password: string) => Promise<void>;
-
+  batchUpdateArmstrongBacklog: (ids: number[], updates: any, password: string) => Promise<void>;
   fetchRefrigeracao: () => Promise<void>;
   addRefrigeracaoManutencao: (manutencao: Omit<RefrigeracaoManutencao, 'id'>) => Promise<void>;
   updateRefrigeracaoManutencao: (id: number, updates: Partial<RefrigeracaoManutencao>, password?: string) => Promise<void>;
@@ -184,6 +184,7 @@ interface StoreState {
   updateRefrigeracaoBacklog: (id: number, updates: Partial<RefrigeracaoBacklog>, password?: string) => Promise<void>;
   deleteRefrigeracaoBacklog: (id: number, password: string) => Promise<void>;
   batchDeleteRefrigeracaoBacklog: (ids: number[], password: string) => Promise<void>;
+  batchUpdateRefrigeracaoBacklog: (ids: number[], updates: any, password: string) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -647,6 +648,19 @@ export const useStore = create<StoreState>((set, get) => ({
     get().fetchArmstrong();
   },
 
+  batchUpdateArmstrongBacklog: async (ids, updates, password) => {
+    const res = await fetch('/api/armstrong/backlog/batch-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, updates, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchArmstrong();
+  },
+
   fetchRefrigeracao: async () => {
     try {
       const [manutencoesRes, pcmAreasRes, backlogRes] = await Promise.all([
@@ -789,6 +803,19 @@ export const useStore = create<StoreState>((set, get) => ({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids, password }),
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error);
+    }
+    get().fetchRefrigeracao();
+  },
+
+  batchUpdateRefrigeracaoBacklog: async (ids, updates, password) => {
+    const res = await fetch('/api/refrigeracao/backlog/batch-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids, updates, password }),
     });
     if (!res.ok) {
       const error = await res.json();

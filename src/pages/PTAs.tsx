@@ -331,12 +331,8 @@ export default function PTAs() {
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Equipamentos em Uso</p>
-                <p className="text-2xl font-black text-slate-900">{ptas.filter(p => {
-                  const d = parseISO(p.data);
-                  const now = new Date();
-                  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && p.status === 'aprovado';
-                }).length} <span className="text-xs text-slate-400">Este Mês</span></p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total de Solicitações Históricas</p>
+                <p className="text-2xl font-black text-slate-900">{ptas.length} <span className="text-xs text-slate-400">Registros</span></p>
              </div>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Aprovações Pendentes</p>

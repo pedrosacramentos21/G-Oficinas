@@ -20,6 +20,7 @@ const COLUMNS = [
 ];
 
 const MONTHS = [
+  { value: -1, label: 'Todos' },
   { value: 0, label: 'Janeiro' },
   { value: 1, label: 'Fevereiro' },
   { value: 2, label: 'Março' },
@@ -92,6 +93,9 @@ export default function SalaMotores() {
   const filteredActivities = salaMotores.filter(a => {
     // Atividades Pendentes e Em Andamento sempre aparecem, pois podem transitar entre meses
     if (a.status === 'pendente' || a.status === 'em_andamento') return true;
+
+    // Se "Todos" estiver selecionado, não filtra por mês
+    if (selectedMonth === -1) return true;
 
     // Para Concluído e Entregue, filtramos pelo mês em que a ação foi finalizada
     // Priorizamos as datas de conclusão/entrega automáticas, senão usamos a data de registro
