@@ -216,12 +216,15 @@ export const useStore = create<StoreState>((set, get) => ({
 
   fetchAndaimes: async () => {
     try {
+      console.log('Fetching andaimes...');
       const res = await fetch('/api/andaimes');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Erro ao buscar andaimes' }));
+        console.error('Andaimes fetch error status:', res.status, err);
         throw new Error(err.error || 'Erro ao buscar andaimes');
       }
       const data = await res.json();
+      console.log(`Fetched ${Array.isArray(data) ? data.length : 0} andaimes`);
       if (Array.isArray(data)) {
         set({ andaimes: data, error: null });
       } else {
@@ -340,12 +343,15 @@ export const useStore = create<StoreState>((set, get) => ({
   
   fetchPTAs: async () => {
     try {
+      console.log('Fetching PTAs...');
       const res = await fetch('/api/ptas');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Erro ao buscar PTAs' }));
+        console.error('PTAs fetch error status:', res.status, err);
         throw new Error(err.error || 'Erro ao buscar PTAs');
       }
       const data = await res.json();
+      console.log(`Fetched ${Array.isArray(data) ? data.length : 0} PTAs`);
       if (Array.isArray(data)) {
         set({ ptas: data, error: null });
       } else {
