@@ -117,6 +117,11 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.quantidade_pontos || formData.quantidade_pontos <= 0) {
+      alert('A quantidade de pontos deve ser maior que 0.');
+      return;
+    }
+
     if (!formData.data_desmontagem) {
       alert('A data de desmontagem prevista deve ser preenchida antes de enviar a solicitação.');
       return;

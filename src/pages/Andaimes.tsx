@@ -733,7 +733,13 @@ export default function Andaimes() {
             />
           </div>
       ) : (
-        <AndaimeBacklog onCardClick={openEditRequest} onAdjustBacklog={handleAdjustBacklog} />
+        <AndaimeBacklog 
+          onCardClick={openEditRequest} 
+          onAdjustBacklog={handleAdjustBacklog} 
+          isSelectionMode={isSelectionMode}
+          selectedIds={selectedIds}
+          onToggleSelection={toggleSelection}
+        />
       )}
 
       {/* Batch Action Bar */}

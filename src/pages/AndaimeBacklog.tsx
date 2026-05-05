@@ -33,9 +33,18 @@ const STATUS_COLORS: Record<string, string> = {
 interface Props {
   onCardClick?: (andaime: any) => void;
   onAdjustBacklog?: () => void;
+  isSelectionMode?: boolean;
+  selectedIds?: number[];
+  onToggleSelection?: (id: number) => void;
 }
 
-export default function AndaimeBacklog({ onCardClick, onAdjustBacklog }: Props) {
+export default function AndaimeBacklog({ 
+  onCardClick, 
+  onAdjustBacklog,
+  isSelectionMode = false,
+  selectedIds = [],
+  onToggleSelection
+}: Props) {
   const { andaimes, fetchAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
@@ -148,12 +157,33 @@ export default function AndaimeBacklog({ onCardClick, onAdjustBacklog }: Props) 
                   }
                   return a.area === column;
                 })
-                .map(item => (
+                .map(item => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
                     <div 
                       key={item.id} 
-                      onClick={() => onCardClick?.(item)}
-                      className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]"
+                      onClick={() => {
+                        if (isSelectionMode && onToggleSelection) {
+                          onToggleSelection(item.id);
+                        } else {
+                          onCardClick?.(item);
+                        }
+                      }}
+                      className={cn(
+                        "bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]",
+                        isSelected ? "ring-2 ring-sky-500 border-sky-200" : "border-gray-200 hover:shadow-md"
+                      )}
                     >
+                      {/* Selection indicator */}
+                      {isSelectionMode && (
+                        <div className="absolute top-2 right-8 z-10">
+                          {isSelected ? (
+                            <CheckCircle2 size={16} className="text-sky-500" />
+                          ) : (
+                            <div className="w-4 h-4 border-2 border-slate-300 rounded-full bg-white/50" />
+                          )}
+                        </div>
+                      )}
                       {/* Execution Status Button */}
                       <div className="absolute -top-2 -right-1 z-20 flex flex-col items-end">
                         <button
@@ -304,12 +334,13 @@ export default function AndaimeBacklog({ onCardClick, onAdjustBacklog }: Props) 
                       )}
                     </div>
                   </div>
-                ))}
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
-      </div>
     </div>
+  </div>
   );
 }
