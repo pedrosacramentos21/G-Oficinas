@@ -19,14 +19,26 @@ async function startServer() {
   app.use(express.json());
   app.use(cors());
 
+  // Basic ping to check if server is running at all
+  app.get('/api/ping', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // API health check
   app.get('/api/health', async (req, res) => {
     try {
+      if (!supabaseUrl || !supabaseKey) {
+        return res.status(500).json({ status: 'error', message: 'Supabase environment variables are missing' });
+      }
       const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
-      if (error) throw error;
+      if (error) {
+        console.error('Database connection error:', error);
+        return res.status(500).json({ status: 'error', message: `Database error: ${error.message}` });
+      }
       res.json({ status: 'ok' });
-    } catch (error) {
-      res.status(500).json({ status: 'error', message: 'Database connection failed' });
+    } catch (error: any) {
+      console.error('Health check exception:', error);
+      res.status(500).json({ status: 'error', message: error.message || 'Database connection failed' });
     }
   });
 
@@ -1147,8 +1159,15 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server version: 1.0.1`);
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Supabase URL configured: ${!!supabaseUrl}`);
+    console.log(`Supabase Key configured: ${!!supabaseKey}`);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error('FATAL: Failed to start server:', err);
+  process.exit(1);
+});

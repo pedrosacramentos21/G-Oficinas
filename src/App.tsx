@@ -18,24 +18,61 @@ export default function App() {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        const res = await fetch('/api/health');
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setConnectionError(data.message || `Erro de conexão: ${res.status} ${res.statusText}`);
+        // Step 1: Check if the server is even running
+        let pingRes;
+        try {
+          pingRes = await fetch('/api/ping');
+        } catch (fetchErr) {
+          console.error('Server ping failed:', fetchErr);
+          setConnectionError('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
           return;
         }
-        const data = await res.json();
-        if (data.status !== 'ok') {
-          setConnectionError('Erro de conexão com o banco de dados no servidor.');
-        } else {
+
+        if (!pingRes.ok) {
+          setConnectionError(`O servidor está respondendo com erro: ${pingRes.status}`);
+          return;
+        }
+
+        // Step 2: Server is UP, now check database connectivity
+        const healthRes = await fetch('/api/health');
+        if (!healthRes.ok) {
+          const data = await healthRes.json().catch(() => ({}));
+          const msg = data.message || '';
+          
+          if (msg.includes('environment variables are missing')) {
+            setConnectionError('Erro: Chaves do Supabase não configuradas nas variáveis de ambiente.');
+          } else if (msg.includes('relation') || msg.includes('does not exist')) {
+            setConnectionError('Erro: Tabelas do Supabase não encontradas. Execute o script supabase_migration.sql no editor SQL do Supabase.');
+          } else if (msg.includes('Database error')) {
+            setConnectionError(`Erro no banco de dados: ${msg}`);
+          } else {
+            setConnectionError(msg || `Erro na conexão com o banco de dados: ${healthRes.status}`);
+          }
+          return;
+        }
+
+        const healthData = await healthRes.json();
+        if (healthData.status === 'ok') {
           setConnectionError(null);
+        } else {
+          setConnectionError('O servidor respondeu com um status inválido.');
         }
       } catch (err) {
-        setConnectionError('Não foi possível verificar a conexão com o servidor. Verifique se o backend está rodando.');
+        console.error('Connection check overall failure:', err);
+        setConnectionError('Erro inesperado na verificação de conexão.');
       }
     };
+    
+    // Initial check
     checkConnection();
-  }, []);
+    
+    // Retry every 30 seconds if there's an error
+    const interval = setInterval(() => {
+      if (connectionError) checkConnection();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [connectionError]);
 
   return (
     <Router>
