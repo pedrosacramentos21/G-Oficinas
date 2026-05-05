@@ -386,11 +386,10 @@ export default function Refrigeracao() {
         setSelectionMode(false);
         setSelectedIds([]);
       } else if (passwordModal.action === 'backlog-batch-delete') {
-        if (passwordModal.deleteChoice === 'backlog-only') {
-          await batchUpdateRefrigeracaoBacklog(passwordModal.ids!, { esconder_no_backlog: true }, password);
-        } else {
-          const itemsToDelete = refrigeracaoBacklog.filter(b => passwordModal.ids?.includes(b.id));
-          await batchDeleteRefrigeracaoBacklog(passwordModal.ids!, password);
+        const itemsToDelete = refrigeracaoBacklog.filter(b => passwordModal.ids?.includes(b.id));
+        await batchDeleteRefrigeracaoBacklog(passwordModal.ids!, password);
+
+        if (passwordModal.deleteChoice === 'both') {
           // Sync with calendar
           for (const item of itemsToDelete) {
             const existingManutencao = refrigeracaoManutencoes.find(m => m.titulo === item.titulo && m.area === item.area);
@@ -515,7 +514,6 @@ export default function Refrigeracao() {
   // Backlog Indicators
   const filteredBacklog = refrigeracaoBacklog
     .filter(b => {
-      if (b.esconder_no_backlog) return false;
       const matchArea = filterArea.length === 0 || filterArea.includes(b.area);
       const matchSubArea = filterSubArea.length === 0 || filterSubArea.includes(b.sub_area);
       const matchTipo = filterTipo.length === 0 || filterTipo.includes(b.tipo_manutencao);

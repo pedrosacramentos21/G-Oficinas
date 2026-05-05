@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Construction, LayoutDashboard, AlertCircle, BarChart3, Database } from 'lucide-react';
+import { Construction, LayoutDashboard, AlertCircle, BarChart3, Database, X } from 'lucide-react';
 import Sidebar from './components/Sidebar';
+import { useStore } from './store';
 import Andaimes from './pages/Andaimes';
 import PTAs from './pages/PTAs';
 import SalaMotores from './pages/SalaMotores';
@@ -18,24 +19,14 @@ export default function App() {
   const [hasLocalData, setHasLocalData] = React.useState(false);
   const [isRecovering, setIsRecovering] = React.useState(false);
 
+  const { error: storeError, setError: setStoreError } = useStore();
+
   React.useEffect(() => {
     // Check for local data that could be recovered
-    const keys = [
-      'andaimes_data', 
-      'ptas_data', 
-      'ptas_activities',
-      'sala_motores_activities', 
-      'sala_motores_data',
-      'atividades_sala_motores',
-      'armstrong_manutencoes', 
-      'armstrong_data',
-      'armstrong_backlog', 
-      'refrigeracao_manutencoes', 
-      'refrigeracao_data',
-      'refrigeracao_backlog',
-      'oficina_servicos'
-    ];
-    const foundData = keys.some(key => {
+    const prefixes = ['andaimes', 'ptas', 'sala_motores', 'atividades', 'armstrong', 'refrigeracao', 'oficina'];
+    const allKeys = Object.keys(localStorage);
+    const foundData = allKeys.some(key => {
+      if (!prefixes.some(p => key.startsWith(p))) return false;
       const data = localStorage.getItem(key);
       try {
         if (!data) return false;
@@ -45,7 +36,35 @@ export default function App() {
         return false;
       }
     });
-    setHasLocalData(foundData);
+    
+    if (foundData && !isRecovering) {
+      console.log('Dados locais detectados, iniciando recuperação automática...');
+      const recover = async () => {
+        setIsRecovering(true);
+        try {
+          const count = await syncLocalStorageToSupabase();
+          console.log(`${count} registros recuperados automaticamente.`);
+          // Importante: forçar refresh do store após sucesso
+          const store = useStore.getState();
+          await Promise.all([
+            store.fetchAndaimes(),
+            store.fetchPTAs(),
+            store.fetchSalaMotores(),
+            store.fetchArmstrong(),
+            store.fetchRefrigeracao(),
+            store.fetchOficina()
+          ]);
+        } catch (err) {
+          console.error('Falha na recuperação automática:', err);
+        } finally {
+          setIsRecovering(false);
+          setHasLocalData(false);
+        }
+      };
+      recover();
+    } else {
+      setHasLocalData(foundData);
+    }
 
     const checkConnection = async () => {
       try {
@@ -115,6 +134,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [connectionError]);
 
+  const activeError = connectionError || storeError;
+
   return (
     <Router>
       <div className="flex h-screen bg-gray-50 overflow-hidden relative">
@@ -139,36 +160,27 @@ export default function App() {
         </div>
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {connectionError && (
-            <div className="bg-red-500 text-white px-4 py-2 flex items-center gap-2 text-sm font-medium animate-pulse">
-              <AlertCircle size={16} />
-              {connectionError}
-            </div>
-          )}
-          {hasLocalData && !connectionError && (
-            <div className="bg-ambev-gold text-ambev-blue px-4 py-2 flex items-center justify-between gap-2 text-sm font-bold shadow-md">
+          {activeError && (
+            <div className="bg-red-500 text-white px-4 py-2 flex items-center justify-between gap-2 text-sm font-medium animate-in slide-in-from-top duration-300">
               <div className="flex items-center gap-2">
-                <Database size={16} />
-                Histórico local detectado! Deseja sincronizar com o novo banco de dados?
+                <AlertCircle size={16} />
+                {activeError}
               </div>
               <button 
-                onClick={async () => {
-                  setIsRecovering(true);
-                  try {
-                    const count = await syncLocalStorageToSupabase();
-                    alert(`${count} registros recuperados com sucesso!`);
-                    setHasLocalData(false);
-                  } catch (err: any) {
-                    alert('Erro ao recuperar dados: ' + err.message);
-                  } finally {
-                    setIsRecovering(false);
-                  }
+                onClick={() => {
+                  setConnectionError(null);
+                  setStoreError(null);
                 }}
-                disabled={isRecovering}
-                className="bg-ambev-blue text-white px-3 py-1 rounded-md text-xs hover:bg-ambev-blue/90 transition-colors disabled:opacity-50"
+                className="hover:bg-white/20 p-1 rounded transition-colors"
               >
-                {isRecovering ? 'SINCRONIZANDO...' : 'RECUPERAR AGORA'}
+                <X size={14} />
               </button>
+            </div>
+          )}
+          {isRecovering && (
+            <div className="bg-ambev-blue text-amber-400 px-4 py-2 flex items-center justify-center gap-2 text-sm font-bold animate-pulse">
+              <Database size={16} />
+              SINCRONIZANDO DADOS LOCAIS COM O BANCO... AGUARDE
             </div>
           )}
           {/* Mobile Header */}

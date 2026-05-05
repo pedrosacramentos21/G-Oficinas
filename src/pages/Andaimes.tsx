@@ -124,11 +124,7 @@ export default function Andaimes() {
           throw new Error('Senha incorreta');
         }
       } else if (passwordModal.action === 'batch-delete') {
-        if (passwordModal.deleteChoice === 'backlog-only') {
-          await batchUpdateAndaimes(passwordModal.ids || selectedIds, { esconder_no_backlog: true }, password);
-        } else {
-          await batchDeleteAndaimes(passwordModal.ids || selectedIds, password);
-        }
+        await batchDeleteAndaimes(passwordModal.ids || selectedIds, password);
         setSelectedIds([]);
         setIsSelectionMode(false);
       } else if (passwordModal.action === 'batch-approve') {
@@ -139,12 +135,7 @@ export default function Andaimes() {
         if (passwordModal.action === 'approve') {
           await approveAndaime(passwordModal.id, password);
         } else if (passwordModal.action === 'delete') {
-          if (passwordModal.deleteChoice === 'backlog-only') {
-            const { updateAndaime } = useStore.getState();
-            await updateAndaime(passwordModal.id, { esconder_no_backlog: true }, password);
-          } else {
-            await deleteAndaime(passwordModal.id, password);
-          }
+          await deleteAndaime(passwordModal.id, password);
         }
       }
       setPasswordModal({ ...passwordModal, isOpen: false, deleteChoice: undefined });

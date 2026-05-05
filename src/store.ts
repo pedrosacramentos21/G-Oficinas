@@ -130,7 +130,17 @@ interface RefrigeracaoBacklog {
   nivel_criticidade: string;
 }
 
+interface OficinaServico {
+  id: number;
+  servico: string;
+  responsavel: string;
+  data: string;
+  status: string;
+}
+
 interface StoreState {
+  error: string | null;
+  setError: (error: string | null) => void;
   andaimes: Andaime[];
   ptas: PTA[];
   salaMotores: AtividadeSalaMotores[];
@@ -140,6 +150,7 @@ interface StoreState {
   refrigeracaoManutencoes: RefrigeracaoManutencao[];
   refrigeracaoPCMAreas: ArmstrongPCMArea[];
   refrigeracaoBacklog: RefrigeracaoBacklog[];
+  oficinaServicos: OficinaServico[];
   fetchAndaimes: () => Promise<void>;
   addAndaime: (andaime: Omit<Andaime, 'id' | 'status'>) => Promise<any>;
   approveAndaime: (id: number, password: string) => Promise<void>;
@@ -185,9 +196,13 @@ interface StoreState {
   deleteRefrigeracaoBacklog: (id: number, password: string) => Promise<void>;
   batchDeleteRefrigeracaoBacklog: (ids: number[], password: string) => Promise<void>;
   batchUpdateRefrigeracaoBacklog: (ids: number[], updates: any, password: string) => Promise<void>;
+  fetchOficina: () => Promise<void>;
+  addOficinaServico: (servico: Omit<OficinaServico, 'id'>) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
+  error: null,
+  setError: (error) => set({ error }),
   andaimes: [],
   ptas: [],
   salaMotores: [],
@@ -197,20 +212,24 @@ export const useStore = create<StoreState>((set, get) => ({
   refrigeracaoManutencoes: [],
   refrigeracaoPCMAreas: [],
   refrigeracaoBacklog: [],
+  oficinaServicos: [],
 
   fetchAndaimes: async () => {
     try {
       const res = await fetch('/api/andaimes');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro ao buscar andaimes' }));
+        throw new Error(err.error || 'Erro ao buscar andaimes');
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
-        set({ andaimes: data });
+        set({ andaimes: data, error: null });
       } else {
-        console.error('Andaimes data is not an array:', data);
-        set({ andaimes: [] });
+        set({ andaimes: [], error: 'Dados de andaimes inválidos' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch andaimes:', error);
-      set({ andaimes: [] });
+      set({ error: error.message });
     }
   },
 
@@ -322,16 +341,19 @@ export const useStore = create<StoreState>((set, get) => ({
   fetchPTAs: async () => {
     try {
       const res = await fetch('/api/ptas');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro ao buscar PTAs' }));
+        throw new Error(err.error || 'Erro ao buscar PTAs');
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
-        set({ ptas: data });
+        set({ ptas: data, error: null });
       } else {
-        console.error('PTAs data is not an array:', data);
-        set({ ptas: [] });
+        set({ ptas: [], error: 'Dados de PTAs inválidos' });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch ptas:', error);
-      set({ ptas: [] });
+      set({ error: error.message });
     }
   },
 
@@ -404,20 +426,18 @@ export const useStore = create<StoreState>((set, get) => ({
   fetchSalaMotores: async () => {
     try {
       const res = await fetch('/api/sala-motores');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ error: 'Invalid JSON' }));
       if (!res.ok) {
         throw new Error(data.error || 'Falha ao buscar atividades da sala de motores');
       }
       if (Array.isArray(data)) {
-        set({ salaMotores: data });
+        set({ salaMotores: data, error: null });
       } else {
-        console.error('Sala Motores data is not an array:', data);
-        set({ salaMotores: [] });
+        throw new Error('Dados da sala de motores inválidos');
       }
     } catch (error: any) {
       console.error('Failed to fetch sala de motores:', error);
-      set({ salaMotores: [] });
-      // Don't show alert here to avoid spamming on initial load, but log it
+      set({ salaMotores: [], error: error.message });
     }
   },
 
@@ -488,39 +508,35 @@ export const useStore = create<StoreState>((set, get) => ({
 
   fetchArmstrong: async () => {
     try {
-      const [manutencoesRes, pcmAreasRes, backlogRes] = await Promise.all([
-        fetch('/api/armstrong/manutencoes'),
-        fetch('/api/armstrong/pcm-areas'),
-        fetch('/api/armstrong/backlog')
-      ]);
-      
-      if (!manutencoesRes.ok || !pcmAreasRes.ok || !backlogRes.ok) {
-        throw new Error('Failed to fetch armstrong data from server');
-      }
-      
-      const manutencoes = await manutencoesRes.json().catch(async () => {
-        const text = await manutencoesRes.text();
-        console.error('Manutencoes response not JSON:', text);
-        return [];
-      });
-      const pcmAreas = await pcmAreasRes.json().catch(async () => {
-        const text = await pcmAreasRes.text();
-        console.error('PCM Areas response not JSON:', text);
-        return [];
-      });
-      const backlog = await backlogRes.json().catch(async () => {
-        const text = await backlogRes.text();
-        console.error('Backlog response not JSON:', text);
-        return [];
-      });
+      const fetchWithCatch = async (url: string, name: string) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: `Erro em ${name}` }));
+            throw new Error(err.error || `Erro ao carregar ${name}`);
+          }
+          return await res.json();
+        } catch (err: any) {
+          console.warn(`Partial fetch failure for ${name}:`, err);
+          return null; // Return null instead of throwing for Promise.all
+        }
+      };
 
-      set({ 
-        armstrongManutencoes: Array.isArray(manutencoes) ? manutencoes : [],
-        armstrongPCMAreas: Array.isArray(pcmAreas) ? pcmAreas : [],
-        armstrongBacklog: Array.isArray(backlog) ? backlog : []
-      });
-    } catch (error) {
+      const [manutencoes, pcmAreas, backlog] = await Promise.all([
+        fetchWithCatch('/api/armstrong/manutencoes', 'Manutenções Armstrong'),
+        fetchWithCatch('/api/armstrong/pcm-areas', 'Áreas PCM Armstrong'),
+        fetchWithCatch('/api/armstrong/backlog', 'Backlog Armstrong')
+      ]);
+
+      const updates: any = { error: null };
+      if (manutencoes !== null) updates.armstrongManutencoes = manutencoes;
+      if (pcmAreas !== null) updates.armstrongPCMAreas = pcmAreas;
+      if (backlog !== null) updates.armstrongBacklog = backlog;
+      
+      set(updates);
+    } catch (error: any) {
       console.error('Failed to fetch armstrong data:', error);
+      set({ error: error.message });
     }
   },
 
@@ -663,27 +679,35 @@ export const useStore = create<StoreState>((set, get) => ({
 
   fetchRefrigeracao: async () => {
     try {
-      const [manutencoesRes, pcmAreasRes, backlogRes] = await Promise.all([
-        fetch('/api/refrigeracao/manutencoes'),
-        fetch('/api/refrigeracao/pcm-areas'),
-        fetch('/api/refrigeracao/backlog')
-      ]);
-      
-      if (!manutencoesRes.ok || !pcmAreasRes.ok || !backlogRes.ok) {
-        throw new Error('Failed to fetch refrigeracao data from server');
-      }
-      
-      const manutencoes = await manutencoesRes.json().catch(() => []);
-      const pcmAreas = await pcmAreasRes.json().catch(() => []);
-      const backlog = await backlogRes.json().catch(() => []);
+      const fetchWithCatch = async (url: string, name: string) => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: `Erro em ${name}` }));
+            throw new Error(err.error || `Erro ao carregar ${name}`);
+          }
+          return await res.json();
+        } catch (err: any) {
+          console.warn(`Partial fetch failure for ${name}:`, err);
+          return null; // Return null instead of throwing for Promise.all
+        }
+      };
 
-      set({ 
-        refrigeracaoManutencoes: Array.isArray(manutencoes) ? manutencoes : [],
-        refrigeracaoPCMAreas: Array.isArray(pcmAreas) ? pcmAreas : [],
-        refrigeracaoBacklog: Array.isArray(backlog) ? backlog : []
-      });
-    } catch (error) {
+      const [manutencoes, pcmAreas, backlog] = await Promise.all([
+        fetchWithCatch('/api/refrigeracao/manutencoes', 'Manutenções Refrigeração'),
+        fetchWithCatch('/api/refrigeracao/pcm-areas', 'Áreas PCM Refrigeração'),
+        fetchWithCatch('/api/refrigeracao/backlog', 'Backlog Refrigeração')
+      ]);
+
+      const updates: any = { error: null };
+      if (manutencoes !== null) updates.refrigeracaoManutencoes = manutencoes;
+      if (pcmAreas !== null) updates.refrigeracaoPCMAreas = pcmAreas;
+      if (backlog !== null) updates.refrigeracaoBacklog = backlog;
+      
+      set(updates);
+    } catch (error: any) {
       console.error('Failed to fetch refrigeracao data:', error);
+      set({ error: error.message });
     }
   },
 
@@ -822,5 +846,36 @@ export const useStore = create<StoreState>((set, get) => ({
       throw new Error(error.error);
     }
     get().fetchRefrigeracao();
+  },
+
+  fetchOficina: async () => {
+    try {
+      const res = await fetch('/api/oficina/servicos');
+      const data = await res.json().catch(() => ({ error: 'Invalid JSON' }));
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao buscar serviços da oficina');
+      }
+      if (Array.isArray(data)) {
+        set({ oficinaServicos: data, error: null });
+      } else {
+        throw new Error('Dados da oficina inválidos');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch oficina servicos:', error);
+      set({ oficinaServicos: [], error: error.message });
+    }
+  },
+
+  addOficinaServico: async (servico) => {
+    const res = await fetch('/api/oficina/servicos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(servico),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add oficina servico');
+    }
+    get().fetchOficina();
   },
 }));

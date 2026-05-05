@@ -103,7 +103,7 @@ export default function SalaMotores() {
       ? (a.data_entrega || a.data) 
       : (a.status === 'concluido' ? (a.data_conclusao || a.data) : a.data);
 
-    if (!dateToFilter) return false;
+    if (!dateToFilter || typeof dateToFilter !== 'string') return false;
     
     let year, month;
     if (dateToFilter.includes('T')) {
@@ -111,14 +111,21 @@ export default function SalaMotores() {
       const d = new Date(dateToFilter);
       year = d.getFullYear();
       month = d.getMonth() + 1;
-    } else {
+    } else if (dateToFilter.includes('-')) {
       // Formato YYYY-MM-DD (Input date)
       const parts = dateToFilter.split('-').map(Number);
       year = parts[0];
       month = parts[1];
+    } else {
+      const d = new Date(dateToFilter);
+      year = d.getFullYear();
+      month = d.getMonth() + 1;
     }
     
-    return (month - 1) === selectedMonth && year === selectedYear;
+    if (selectedMonth !== -1 && (month - 1) !== selectedMonth) return false;
+    if (selectedYear !== -1 && year !== selectedYear) return false;
+    
+    return true;
   });
 
   const totalCustoEvitadoMes = filteredActivities
@@ -236,6 +243,7 @@ export default function SalaMotores() {
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer"
             >
+              <option value={-1}>Todos os Anos</option>
               {[2024, 2025, 2026].map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}

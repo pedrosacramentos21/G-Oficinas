@@ -44,15 +44,39 @@ async function startServer() {
       if (!supabase) {
         return res.status(500).json({ status: 'error', message: 'Supabase client not initialized. Check environment variables.' });
       }
-      const { error } = await supabase.from('solicitacoes_andaime').select('id').limit(1);
-      if (error) {
-        console.error('Database connection error:', error);
-        // Include specialized error messages for common Supabase errors
-        if (error.code === '42P01') {
-          return res.status(500).json({ status: 'error', message: 'Tabela solicitacoes_andaime não encontrada no banco de dados Supabase.' });
-        }
-        return res.status(500).json({ status: 'error', message: `Supabase database error: ${error.message}` });
+
+      const tables = [
+        'solicitacoes_andaime',
+        'solicitacoes_pta',
+        'atividades_sala_motores',
+        'armstrong_manutencao',
+        'armstrong_backlog',
+        'refrigeracao_manutencao',
+        'refrigeracao_backlog',
+        'oficina_servicos',
+        'armstrong_pcm_areas',
+        'refrigeracao_pcm_areas'
+      ];
+
+      const results = await Promise.all(
+        tables.map(async (table) => {
+          const { error } = await supabase.from(table).select('id').limit(1);
+          return { table, error };
+        })
+      );
+
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) {
+        console.error('Database connection errors:', errors);
+        const errorDetails = errors.map(e => `${e.table}: ${e.error?.message}`).join(', ');
+        return res.status(500).json({ 
+          status: 'error', 
+          message: `Erro em algumas tabelas: ${errorDetails}`,
+          missing_tables: errors.map(e => e.table)
+        });
       }
+
       res.json({ status: 'ok' });
     } catch (error: any) {
       console.error('Health check exception:', error);
@@ -1120,6 +1144,35 @@ async function startServer() {
       res.json(data);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch refrigeracao backlog' });
+    }
+  });
+
+  app.get('/api/oficina/servicos', async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('oficina_servicos')
+        .select('*')
+        .order('data', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch oficina servicos' });
+    }
+  });
+
+  app.post('/api/oficina/servicos', async (req, res) => {
+    const { servico, responsavel, data, status } = req.body;
+    try {
+      const { data: inserted, error } = await supabase
+        .from('oficina_servicos')
+        .insert([{ servico, responsavel, data, status: status || 'pendente' }])
+        .select();
+      
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create oficina servico' });
     }
   });
 
