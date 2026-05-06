@@ -253,6 +253,20 @@ export default function AndaimeBacklog({
                           <span className="label">Data Desmontagem</span>
                           <p>{item.data_desmontagem ? formatDate(item.data_desmontagem) : 'N/A'}</p>
                         </div>
+                        {item.created_at && (
+                          <div className="col-span-2 mt-1 pt-1 border-t border-slate-100">
+                             <span className="label text-slate-400">Solicitado em</span>
+                             <p className="text-[10px] text-slate-500 font-black">
+                               {new Date(item.created_at).toLocaleString('pt-BR', { 
+                                 day: '2-digit', 
+                                 month: '2-digit', 
+                                 year: 'numeric', 
+                                 hour: '2-digit', 
+                                 minute: '2-digit' 
+                               })}
+                             </p>
+                          </div>
+                        )}
                       </div>
 
                       {item.excedeu_limite && (

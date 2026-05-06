@@ -382,6 +382,20 @@ export default function SalaMotores() {
                                       <span className="label">Data</span>
                                       <p>{item.data}</p>
                                     </div>
+                                    {item.created_at && (
+                                      <div className="col-span-2 mt-1 pt-1 border-t border-slate-100">
+                                         <span className="label">Solicitado em</span>
+                                         <p className="text-[10px] text-slate-500 font-bold">
+                                           {new Date(item.created_at).toLocaleString('pt-BR', { 
+                                             day: '2-digit', 
+                                             month: '2-digit', 
+                                             year: 'numeric', 
+                                             hour: '2-digit', 
+                                             minute: '2-digit' 
+                                           })}
+                                         </p>
+                                      </div>
+                                    )}
                                   </div>
 
                                   {item.causa_raiz && (

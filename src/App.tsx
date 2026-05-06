@@ -16,8 +16,10 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [connectionError, setConnectionError] = React.useState<string | null>(null);
+  const [counts, setCounts] = React.useState<Record<string, number>>({});
   const [hasLocalData, setHasLocalData] = React.useState(false);
   const [isRecovering, setIsRecovering] = React.useState(false);
+  const [showDebug, setShowDebug] = React.useState(false);
 
   const { error: storeError, setError: setStoreError } = useStore();
 
@@ -112,10 +114,11 @@ export default function App() {
         }
 
         const healthData = await healthRes.json();
+        setCounts(healthData.counts || {});
         if (healthData.status === 'ok') {
           setConnectionError(null);
         } else {
-          setConnectionError('O servidor respondeu com um status inválido.');
+          setConnectionError(healthData.message || 'O servidor respondeu com um status inválido.');
         }
       } catch (err: any) {
         console.error('Connection check overall failure:', err);
@@ -161,28 +164,49 @@ export default function App() {
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {activeError && (
-            <div className="bg-red-500 text-white px-4 py-2 flex items-center justify-between gap-2 text-sm font-medium animate-in slide-in-from-top duration-300">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={16} />
-                {activeError}
+            <div className="bg-red-500 text-white px-4 py-2 flex flex-col gap-1 z-50">
+              <div className="flex items-center justify-between gap-2 text-sm font-medium">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  {activeError}
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase"
+                  >
+                    {showDebug ? 'Ocultar Detalhes' : 'Ver Detalhes'}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setConnectionError(null);
+                      setStoreError(null);
+                    }}
+                    className="hover:bg-white/20 p-1 rounded transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={() => {
-                  setConnectionError(null);
-                  setStoreError(null);
-                }}
-                className="hover:bg-white/20 p-1 rounded transition-colors"
-              >
-                <X size={14} />
-              </button>
+              {showDebug && (
+                <div className="bg-black/20 p-2 rounded mt-1 text-[10px] font-mono grid grid-cols-2 sm:grid-cols-5 gap-2 border border-white/10">
+                  {Object.entries(counts).map(([table, count]) => (
+                    <div key={table} className="flex justify-between border-r border-white/10 pr-2 last:border-0">
+                      <span className="opacity-70 truncate">{table.replace('solicitacoes_', '').replace('_servicos', '')}:</span>
+                      <span className="font-bold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {isRecovering && (
             <div className="bg-ambev-blue text-amber-400 px-4 py-2 flex items-center justify-center gap-2 text-sm font-bold animate-pulse">
               <Database size={16} />
-              SINCRONIZANDO DADOS LOCAIS COM O BANCO... AGUARDE
+              SINCRONIZANDO DADOS... AGUARDE
             </div>
           )}
+          
           {/* Mobile Header */}
           <div className="lg:hidden bg-ambev-blue text-white p-4 flex items-center justify-between shadow-md border-b border-white/10">
             <h1 className="text-lg font-black flex items-center gap-2 uppercase italic tracking-tighter">

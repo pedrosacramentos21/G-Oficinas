@@ -19,6 +19,7 @@ interface Andaime {
   excedeu_limite?: boolean;
   justificativa_excesso?: string;
   data_montagem_original?: string;
+  created_at?: string;
 }
 
 interface PTA {
@@ -32,6 +33,7 @@ interface PTA {
   descricao: string;
   prioridade: string;
   status: 'pendente' | 'aprovado';
+  created_at?: string;
 }
 
 interface AtividadeSalaMotores {
@@ -50,6 +52,7 @@ interface AtividadeSalaMotores {
   data_conclusao?: string;
   data_entrega?: string;
   historico_status?: { status: string; data: string }[];
+  created_at?: string;
 }
 
 interface ArmstrongManutencao {
@@ -68,6 +71,7 @@ interface ArmstrongManutencao {
   investimento_estimado: string;
   status: string;
   tipo_manutencao: string;
+  created_at?: string;
 }
 
 interface RefrigeracaoManutencao {
@@ -86,6 +90,7 @@ interface RefrigeracaoManutencao {
   status: string;
   tipo_manutencao: string;
   nivel_criticidade: string;
+  created_at?: string;
 }
 
 interface ArmstrongPCMArea {
@@ -110,6 +115,7 @@ interface ArmstrongBacklog {
   hora_inicio?: string;
   hora_fim?: string;
   tipo_manutencao: string;
+  created_at?: string;
 }
 
 interface RefrigeracaoBacklog {
@@ -128,6 +134,7 @@ interface RefrigeracaoBacklog {
   hora_fim?: string;
   tipo_manutencao: string;
   nivel_criticidade: string;
+  created_at?: string;
 }
 
 interface OficinaServico {
@@ -136,6 +143,7 @@ interface OficinaServico {
   responsavel: string;
   data: string;
   status: string;
+  created_at?: string;
 }
 
 interface StoreState {

@@ -66,8 +66,8 @@ async function startServer() {
 
       const results = await Promise.all(
         tables.map(async (table) => {
-          const { error } = await supabase.from(table).select('id').limit(1);
-          return { table, error };
+          const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true });
+          return { table, count: count || 0, error };
         })
       );
 
@@ -79,11 +79,15 @@ async function startServer() {
         return res.status(500).json({ 
           status: 'error', 
           message: `Erro em algumas tabelas: ${errorDetails}`,
-          missing_tables: errors.map(e => e.table)
+          missing_tables: errors.map(e => e.table),
+          counts: results.reduce((acc: any, curr) => { acc[curr.table] = curr.count; return acc; }, {})
         });
       }
 
-      res.json({ status: 'ok' });
+      res.json({ 
+        status: 'ok', 
+        counts: results.reduce((acc: any, curr) => { acc[curr.table] = curr.count; return acc; }, {})
+      });
     } catch (error: any) {
       console.error('Health check exception:', error);
       res.status(500).json({ status: 'error', message: error.message || 'Database connection failed' });
