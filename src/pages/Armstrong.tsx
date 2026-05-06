@@ -518,6 +518,8 @@ export default function Armstrong() {
   };
 
   // Backlog Indicators
+  const [gainViewMode, setGainViewMode] = useState<'total' | 'nao-planejada' | 'planejada' | 'concluida' | 'planejadas-nao-planejadas'>('total');
+
   const filteredBacklog = armstrongBacklog
     .filter(b => {
       const matchArea = filterArea.length === 0 || filterArea.includes(b.area);
@@ -557,6 +559,11 @@ export default function Armstrong() {
 
   const pendingBacklog = filteredBacklog.filter(b => b.status !== 'Concluída');
   const totalGain = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const gainNaoPlanejada = filteredBacklog.filter(b => b.status === 'Não planejada').reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const gainPlanejada = filteredBacklog.filter(b => b.status === 'Planejada').reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const gainConcluida = filteredBacklog.filter(b => b.status === 'Concluída').reduce((sum, b) => sum + (parseFloat(b.impacto_energetico) || 0), 0);
+  const gainPrevistaTotal = gainNaoPlanejada + gainPlanejada;
+
   const totalInvestment = filteredBacklog.reduce((sum, b) => sum + (parseFloat(b.investimento_estimado?.replace(/[^\d,.-]/g, '').replace(',', '.') || '0') || 0), 0);
 
   return (
@@ -1183,13 +1190,64 @@ export default function Armstrong() {
                 <p className="text-xl md:text-3xl font-black text-slate-900">{pendingBacklog.length}</p>
               </div>
             </div>
-            <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
+            <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6 relative group overflow-hidden">
               <div className="bg-orange-50 p-3 md:p-4 rounded-xl md:rounded-2xl text-orange-500">
                 <TrendingUp size={24} className="md:w-8 md:h-8" />
               </div>
-              <div>
-                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Ganho Total (MJ/Mês)</p>
-                <p className="text-xl md:text-3xl font-black text-slate-900">{totalGain.toLocaleString()}</p>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {gainViewMode === 'total' && 'Ganho Total (MJ/Mês)'}
+                    {gainViewMode === 'nao-planejada' && 'Ganho Não Planejadas'}
+                    {gainViewMode === 'planejada' && 'Ganho Planejadas'}
+                    {gainViewMode === 'concluida' && 'Ganho Concluídas'}
+                    {gainViewMode === 'planejadas-nao-planejadas' && 'Ganho Planejadas + Não Planejadas'}
+                  </p>
+                  
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => setGainViewMode('total')}
+                      className={cn("text-[8px] font-black px-1.5 py-0.5 rounded uppercase border transition-all", gainViewMode === 'total' ? "bg-orange-500 text-white border-orange-500" : "bg-white text-slate-400 border-slate-200")}
+                      title="Geral"
+                    >T</button>
+                    <button 
+                      onClick={() => setGainViewMode('planejadas-nao-planejadas')}
+                      className={cn("text-[8px] font-black px-1.5 py-0.5 rounded uppercase border transition-all", gainViewMode === 'planejadas-nao-planejadas' ? "bg-ambev-blue text-white border-ambev-blue" : "bg-white text-slate-400 border-slate-200")}
+                      title="Planejadas + Não Planejadas"
+                    >P+NP</button>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col">
+                  <p className="text-xl md:text-3xl font-black text-slate-900">
+                    {gainViewMode === 'total' && totalGain.toLocaleString()}
+                    {gainViewMode === 'nao-planejada' && gainNaoPlanejada.toLocaleString()}
+                    {gainViewMode === 'planejada' && gainPlanejada.toLocaleString()}
+                    {gainViewMode === 'concluida' && gainConcluida.toLocaleString()}
+                    {gainViewMode === 'planejadas-nao-planejadas' && gainPrevistaTotal.toLocaleString()}
+                  </p>
+                  
+                  <div className="flex gap-3 mt-1">
+                    <button 
+                      onClick={() => setGainViewMode(gainViewMode === 'nao-planejada' ? 'total' : 'nao-planejada')}
+                      className={cn("text-[7px] font-black uppercase tracking-tighter hover:underline transition-colors", gainViewMode === 'nao-planejada' ? "text-red-500" : "text-slate-400")}
+                    >
+                      Não Plan: {gainNaoPlanejada.toLocaleString()}
+                    </button>
+                    <button 
+                      onClick={() => setGainViewMode(gainViewMode === 'planejada' ? 'total' : 'planejada')}
+                      className={cn("text-[7px] font-black uppercase tracking-tighter hover:underline transition-colors", gainViewMode === 'planejada' ? "text-yellow-600" : "text-slate-400")}
+                    >
+                      Plan: {gainPlanejada.toLocaleString()}
+                    </button>
+                    <button 
+                      onClick={() => setGainViewMode(gainViewMode === 'concluida' ? 'total' : 'concluida')}
+                      className={cn("text-[7px] font-black uppercase tracking-tighter hover:underline transition-colors", gainViewMode === 'concluida' ? "text-green-600" : "text-slate-400")}
+                    >
+                      Concl: {gainConcluida.toLocaleString()}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="bg-white p-4 md:p-6 rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-4 md:gap-6">
