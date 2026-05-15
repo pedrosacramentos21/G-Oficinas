@@ -139,52 +139,101 @@ async function startServer() {
     const status = 'pendente';
     
     try {
+      // 0. Global Daily Limit (Max 2 per day)
+      const { count: dailyCount, error: dailyError } = await supabase
+        .from('solicitacoes_andaime')
+        .select('*', { count: 'exact', head: true })
+        .eq('data_montagem', data_montagem);
+      
+      if (dailyError) throw dailyError;
+      if ((dailyCount || 0) >= 2) {
+        return res.status(400).json({ error: `Limite global atingido: Já existem ${dailyCount} solicitações para o dia ${new Date(data_montagem).toLocaleDateString('pt-BR')}. Não é permitido mais que 2 solicitações por dia no total.` });
+      }
+
+      // Check for disassembly date global limit as well
+      if (tipo_servico === 'Montagem' && data_desmontagem) {
+        const { count: disCount, error: disError } = await supabase
+          .from('solicitacoes_andaime')
+          .select('*', { count: 'exact', head: true })
+          .eq('data_montagem', data_desmontagem);
+        
+        if (disError) throw disError;
+        if ((disCount || 0) >= 2) {
+          return res.status(400).json({ error: `Limite global atingido na data de desmontagem: Já existem ${disCount} solicitações para o dia ${new Date(data_desmontagem).toLocaleDateString('pt-BR')}. Por favor, escolha outra data para desmontagem.` });
+        }
+      }
+
       // Scheduling restrictions
-      // 1. Max 3 total bookings per area per week
+      // 1. Max 3 total days per area per week (Assembly OR Dismantling)
       // 2. Max 2 consecutive days per area per week
       
-      const mon = new Date(dateMontagem);
-      const day = mon.getDay();
-      const diffToMon = mon.getDate() - day + (day === 0 ? -6 : 1);
-      const weekStart = new Date(mon.setDate(diffToMon)).toISOString().split('T')[0];
-      const weekEnd = new Date(mon.setDate(mon.getDate() + 6)).toISOString().split('T')[0];
+      const checkAreaWeekConflicts = async (targetDates: string[], targetArea: string, excludeId?: number) => {
+        // Group target dates by their week (Monday to Sunday)
+        const weekGroups: { [weekStart: string]: string[] } = {};
+        
+        targetDates.forEach(date => {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
+          const weekStart = new Date(new Date(d).setDate(diffToMon)).toISOString().split('T')[0];
+          if (!weekGroups[weekStart]) weekGroups[weekStart] = [];
+          weekGroups[weekStart].push(date.split('T')[0]);
+        });
 
-      const { data: weekAndaimes, error: weekError } = await supabase
-        .from('solicitacoes_andaime')
-        .select('data_montagem')
-        .eq('area', area)
-        .eq('tipo_servico', 'Montagem')
-        .gte('data_montagem', weekStart)
-        .lte('data_montagem', weekEnd)
-        .not('status', 'eq', 'reprovado');
+        for (const weekStartStr of Object.keys(weekGroups)) {
+          const weekStart = new Date(weekStartStr);
+          const weekEndStr = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6)).toISOString().split('T')[0];
 
-      if (weekError) throw weekError;
+          let query = supabase
+            .from('solicitacoes_andaime')
+            .select('data_montagem')
+            .eq('area', targetArea)
+            .gte('data_montagem', weekStartStr)
+            .lte('data_montagem', weekEndStr)
+            .not('status', 'eq', 'reprovado');
+          
+          if (excludeId) {
+            query = query.not('id', 'eq', excludeId);
+          }
 
-      if (weekAndaimes) {
-        // Count unique days in the week
-        const uniqueDays = new Set(weekAndaimes.map(a => a.data_montagem.split('T')[0]));
-        uniqueDays.add(data_montagem.split('T')[0]);
+          const { data: weekAndaimes, error: weekError } = await query;
+          if (weekError) throw weekError;
 
-        if (uniqueDays.size > 3) {
-          return res.status(400).json({ error: 'Não é permitido realizar mais de 3 agendamentos na mesma semana para uma mesma área a fim de garantir a rotatividade no atendimento.' });
-        }
+          const uniqueDays = new Set<string>();
+          weekAndaimes?.forEach(a => uniqueDays.add(a.data_montagem.split('T')[0]));
+          weekGroups[weekStartStr].forEach(d => uniqueDays.add(d));
 
-        // Check for 3 consecutive days
-        const sortedDays = Array.from(uniqueDays).sort() as string[];
-        let consecutive = 1;
-        for (let i = 1; i < sortedDays.length; i++) {
-          const d1 = new Date(sortedDays[i-1]);
-          const d2 = new Date(sortedDays[i]);
-          const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-          if (diff === 1) {
-            consecutive++;
-            if (consecutive > 2) {
-              return res.status(400).json({ error: 'Não é permitido agendar por mais de 2 dias consecutivos na mesma semana para uma mesma área.' });
+          if (uniqueDays.size > 3) {
+            return `Limite por área: A área ${targetArea} excedeu 3 dias de solicitações na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}. Por favor, verifique montagens e desmontagens agendadas.`;
+          }
+
+          const sortedDays = Array.from(uniqueDays).sort() as string[];
+          let consecutive = 1;
+          for (let i = 1; i < sortedDays.length; i++) {
+            const d1 = new Date(sortedDays[i-1]);
+            const d2 = new Date(sortedDays[i]);
+            const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+            if (diff === 1) {
+              consecutive++;
+              if (consecutive > 2) {
+                return `Limite por área: A área ${targetArea} não pode realizar solicitações por mais de 2 dias consecutivos na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.`;
+              }
+            } else {
+              consecutive = 1;
             }
-          } else {
-            consecutive = 1;
           }
         }
+        return null;
+      };
+
+      const datesToCheck = [data_montagem];
+      if (tipo_servico === 'Montagem' && data_desmontagem) {
+        datesToCheck.push(data_desmontagem);
+      }
+
+      const weekError = await checkAreaWeekConflicts(datesToCheck, area);
+      if (weekError) {
+        return res.status(400).json({ error: weekError });
       }
 
       // Conflict detection
@@ -250,7 +299,7 @@ async function startServer() {
     try {
       const { data: request, error: fetchError } = await supabase
         .from('solicitacoes_andaime')
-        .select('status')
+        .select('*')
         .eq('id', id)
         .single();
 
@@ -258,6 +307,95 @@ async function startServer() {
 
       if (request.status === 'aprovado' && password !== MASTER_PASSWORD) {
         return res.status(401).json({ error: 'Senha mestre necessária para alterar solicitações aprovadas.' });
+      }
+
+      // Check for date/area conflicts if they are being updated
+      const targetDate = updates.data_montagem || request.data_montagem;
+      const targetArea = updates.area || request.area;
+      const targetDesmontagem = updates.data_desmontagem || request.data_desmontagem;
+
+      if (updates.data_montagem || updates.area || updates.data_desmontagem) {
+        // 1. Global Daily Limit (Max 2)
+        const checkGlobalLimit = async (date: string, currentId: number) => {
+          const { count, error } = await supabase
+            .from('solicitacoes_andaime')
+            .select('*', { count: 'exact', head: true })
+            .eq('data_montagem', date)
+            .not('id', 'eq', currentId);
+          if (error) throw error;
+          return count || 0;
+        };
+
+        const dailyCount = await checkGlobalLimit(targetDate, id);
+        if (dailyCount >= 2) {
+          return res.status(400).json({ error: `Limite global atingido: Já existem ${dailyCount} solicitações para o dia ${new Date(targetDate).toLocaleDateString('pt-BR')}.` });
+        }
+
+        // If dismantling date is also being changed or exists
+        if (targetDesmontagem && targetDesmontagem !== targetDate) {
+          const disCount = await checkGlobalLimit(targetDesmontagem, id);
+          if (disCount >= 2) {
+            return res.status(400).json({ error: `Limite global atingido na data de desmontagem: Já existem ${disCount} solicitações para o dia ${new Date(targetDesmontagem).toLocaleDateString('pt-BR')}.` });
+          }
+        }
+
+        // 2. Area Week Limits
+        const datesToCheck = [targetDate];
+        if (targetDesmontagem && targetDesmontagem !== targetDate) {
+          datesToCheck.push(targetDesmontagem);
+        }
+
+        // Re-implement the check logic here or move to helper
+        // (Moving to helper is better but I'll stick to inline for now to avoid scope issues in this large file unless I refactor)
+        const weekGroups: { [weekStart: string]: string[] } = {};
+        datesToCheck.forEach(date => {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
+          const weekStart = new Date(new Date(d).setDate(diffToMon)).toISOString().split('T')[0];
+          if (!weekGroups[weekStart]) weekGroups[weekStart] = [];
+          weekGroups[weekStart].push(date.split('T')[0]);
+        });
+
+        for (const weekStartStr of Object.keys(weekGroups)) {
+          const weekStart = new Date(weekStartStr);
+          const weekEndStr = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6)).toISOString().split('T')[0];
+
+          const { data: weekAndaimes, error: weekError } = await supabase
+            .from('solicitacoes_andaime')
+            .select('data_montagem')
+            .eq('area', targetArea)
+            .gte('data_montagem', weekStartStr)
+            .lte('data_montagem', weekEndStr)
+            .not('status', 'eq', 'reprovado')
+            .not('id', 'eq', id);
+
+          if (weekError) throw weekError;
+
+          const uniqueDays = new Set<string>();
+          weekAndaimes?.forEach(a => uniqueDays.add(a.data_montagem.split('T')[0]));
+          weekGroups[weekStartStr].forEach(d => uniqueDays.add(d));
+
+          if (uniqueDays.size > 3) {
+            return res.status(400).json({ error: `Limite por área: A área ${targetArea} excederia 3 dias de solicitações na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.` });
+          }
+
+          const sortedDays = Array.from(uniqueDays).sort() as string[];
+          let consecutive = 1;
+          for (let i = 1; i < sortedDays.length; i++) {
+            const d1 = new Date(sortedDays[i-1]);
+            const d2 = new Date(sortedDays[i]);
+            const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
+            if (diff === 1) {
+              consecutive++;
+              if (consecutive > 2) {
+                return res.status(400).json({ error: `Limite por área: A área ${targetArea} não pode realizar solicitações por mais de 2 dias consecutivos na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.` });
+              }
+            } else {
+              consecutive = 1;
+            }
+          }
+        }
       }
 
       const { error } = await supabase

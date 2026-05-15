@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import { X, Layers, Lock, Unlock, Info, CheckCircle2, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -32,7 +32,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
   const [unlockPassword, setUnlockPassword] = useState('');
   const [showNotice, setShowNotice] = useState(false);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deleteChoice, setDeleteChoice] = useState<'backlog-only' | 'both' | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   
   const initialFormState = {
     area: AREAS[0],
@@ -65,6 +67,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     if (isOpen) {
       setShowPasswordModal(false);
       setPasswordModalAction('unlock');
+      setErrorMessage(null); // Clear error on open
       if (andaime) {
         setFormData({
           area: andaime.area || AREAS[0],
@@ -94,6 +97,16 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
   }, [isOpen, andaime]);
 
   useEffect(() => {
+    if (errorMessage) setErrorMessage(null);
+  }, [formData]);
+
+  useEffect(() => {
+    if (errorMessage && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
     if (!andaime && formData.tipo_servico === 'Montagem') {
       const currentPoints = andaimes
         .filter(a => a.area === formData.area && a.status === 'aprovado' && a.tipo_servico !== 'Desmontagem' && !a.esconder_no_backlog)
@@ -109,8 +122,13 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
           setTimeout(() => setShowLimitAlert(false), 5000);
         }
       }
+    } else if (!andaime && formData.tipo_servico === 'Desmontagem') {
+      // Force limit to false for Desmontagem as requested
+      if (formData.excedeu_limite) {
+        setFormData(prev => ({ ...prev, excedeu_limite: false, justificativa_excesso: '' }));
+      }
     }
-  }, [formData.area, formData.quantidade_pontos, formData.tipo_servico, andaimes, andaime]);
+  }, [formData.area, formData.quantidade_pontos, formData.tipo_servico, andaimes, andaime, formData.excedeu_limite]);
 
   if (!isOpen) return null;
 
@@ -118,17 +136,17 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     e.preventDefault();
     
     if (!formData.quantidade_pontos || formData.quantidade_pontos <= 0) {
-      alert('A quantidade de pontos deve ser maior que 0.');
+      setErrorMessage('A quantidade de pontos deve ser maior que 0.');
       return;
     }
 
     if (!formData.data_desmontagem) {
-      alert('A data de desmontagem prevista deve ser preenchida antes de enviar a solicitação.');
+      setErrorMessage('A data de desmontagem prevista deve ser preenchida antes de enviar a solicitação.');
       return;
     }
 
     if (new Date(formData.data_desmontagem) < new Date(formData.data_montagem)) {
-      alert('A data de desmontagem não pode ser anterior à data de montagem.');
+      setErrorMessage('A data de desmontagem não pode ser anterior à data de montagem.');
       return;
     }
 
@@ -138,40 +156,48 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays > 30) {
-      alert('A data de desmontagem deve ser no máximo 30 dias após a data de montagem.');
+      setErrorMessage('A data de desmontagem deve ser no máximo 30 dias após a data de montagem.');
       return;
     }
 
     if (formData.excedeu_limite && !formData.justificativa_excesso) {
-      alert('Por favor, insira uma justificativa para a montagem acima do limite de pontos.');
+      setErrorMessage('Por favor, insira uma justificativa para a montagem acima do limite de pontos.');
       return;
     }
 
-    // Scheduling restrictions validation (Frontend)
-    if (formData.tipo_servico === 'Montagem') {
-      const mon = new Date(formData.data_montagem);
+    // Scaffolding Conflict Rules & Global Limits
+    const checkConflicts = (dates: string[], area: string, currentId?: number) => {
+      // 1. Global Daily Limit (Max 2 per day)
+      for (const targetDateStr of dates) {
+        const dailyTotal = andaimes.filter(a => a.data_montagem === targetDateStr && a.id !== currentId).length;
+        if (dailyTotal >= 2) {
+          return `Limite global atingido: Já existem ${dailyTotal} solicitações para o dia ${new Date(targetDateStr).toLocaleDateString('pt-BR')}. Não é permitido mais que 2 solicitações por dia no total.`;
+        }
+      }
+
+      // 2. Area Week Limits
+      // Use the first date to define the week context
+      const mon = new Date(dates[0]);
       const day = mon.getDay();
       const diffToMon = mon.getDate() - day + (day === 0 ? -6 : 1);
       const weekStart = new Date(new Date(mon).setDate(diffToMon));
       const weekEnd = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6));
-
+      
       const weekStartStr = weekStart.toISOString().split('T')[0];
       const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-      const weekAndaimes = andaimes.filter(a => 
-        a.area === formData.area && 
-        a.tipo_servico === 'Montagem' && 
+      const areaWeekAndaimes = andaimes.filter(a => 
+        a.area === area && 
         a.data_montagem >= weekStartStr && 
         a.data_montagem <= weekEndStr &&
-        a.id !== andaime?.id
+        a.id !== currentId
       );
 
-      const uniqueDays = new Set(weekAndaimes.map(a => a.data_montagem.split('T')[0]));
-      uniqueDays.add(formData.data_montagem);
+      const uniqueDays = new Set(areaWeekAndaimes.map(a => a.data_montagem.split('T')[0]));
+      dates.forEach(d => uniqueDays.add(d));
 
       if (uniqueDays.size > 3) {
-        alert('Não é permitido realizar mais de 3 agendamentos na mesma semana para uma mesma área a fim de garantir a rotatividade no atendimento.');
-        return;
+        return `Limite por área: A área ${area} não pode solicitar mais de 3 dias na mesma semana nesta combinação de montagem e desmontagem.`;
       }
 
       const sortedDays = Array.from(uniqueDays).sort();
@@ -183,13 +209,24 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
         if (diff === 1) {
           consecutive++;
           if (consecutive > 2) {
-            alert('Não é permitido agendar por mais de 2 dias consecutivos na mesma semana para uma mesma área.');
-            return;
+            return `Limite por área: A área ${area} não pode solicitar andaime por mais de 2 dias consecutivos na mesma semana.`;
           }
         } else {
           consecutive = 1;
         }
       }
+      return null;
+    };
+
+    const datesToCheck = [formData.data_montagem];
+    if (formData.tipo_servico === 'Montagem' && formData.data_desmontagem) {
+      datesToCheck.push(formData.data_desmontagem);
+    }
+
+    const conflictError = checkConflicts(datesToCheck, formData.area, andaime?.id);
+    if (conflictError) {
+      setErrorMessage(conflictError);
+      return;
     }
 
     setIsSubmitting(true);
@@ -200,7 +237,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       } else {
         const res = await addAndaime(formData);
         if (res.message) {
-          alert(res.message);
+          setErrorMessage(res.message);
         }
         setShowSuccess(true);
         setTimeout(() => {
@@ -209,7 +246,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
         }, 3000);
       }
     } catch (err: any) {
-      alert(err.message);
+      setErrorMessage(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -467,6 +504,18 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                       value={formData.justificativa_excesso}
                       onChange={e => setFormData({...formData, justificativa_excesso: e.target.value})}
                     />
+                  </div>
+                )}
+                
+                {errorMessage && (
+                  <div ref={errorRef} className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-red-500 text-white p-4 rounded-xl shadow-lg border-2 border-red-400 flex items-start gap-3">
+                      <Lock size={18} className="shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Erro de Solicitação</p>
+                        <p className="text-xs font-bold leading-tight">{errorMessage}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
