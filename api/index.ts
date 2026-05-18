@@ -1324,6 +1324,100 @@ async function startServer() {
     }
   });
 
+  app.get('/api/workshop/checklists', async (req, res) => {
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { data, error } = await supabase
+        .from('workshop_checklists')
+        .select('*')
+        .order('data', { ascending: false })
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to fetch workshop checklists' });
+    }
+  });
+
+  app.post('/api/workshop/checklists', async (req, res) => {
+    const { data, responsavel, equipamento, items, observacoes } = req.body;
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const values = Object.values(items);
+      const condicao = values.includes('N') ? 'N' : 'S';
+      const { data: inserted, error } = await supabase
+        .from('workshop_checklists')
+        .insert([{ data, responsavel, equipamento, items, observacoes, condicao }])
+        .select();
+      if (error) throw error;
+      res.json({ id: inserted[0].id });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to create workshop checklist' });
+    }
+  });
+
+  app.get('/api/workshop/equipment', async (req, res) => {
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { data, error } = await supabase
+        .from('workshop_equipment')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to fetch workshop equipment' });
+    }
+  });
+
+  app.post('/api/workshop/equipment', async (req, res) => {
+    const { name, local, items } = req.body;
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { data: inserted, error } = await supabase
+        .from('workshop_equipment')
+        .insert([{ name, local, items }])
+        .select();
+      if (error) throw error;
+      res.json(inserted[0]);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to create workshop equipment' });
+    }
+  });
+
+  app.put('/api/workshop/equipment/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, local, items } = req.body;
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { data: updated, error } = await supabase
+        .from('workshop_equipment')
+        .update({ name, local, items })
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      res.json(updated[0]);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to update workshop equipment' });
+    }
+  });
+
+  app.delete('/api/workshop/equipment/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { error } = await supabase
+        .from('workshop_equipment')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to delete workshop equipment' });
+    }
+  });
+
   app.post('/api/refrigeracao/backlog', async (req, res) => {
     const { area, sub_area, titulo, investimento_estimado, data_prevista, status, observacoes, descricao, equipamento, responsavel, hora_inicio, hora_fim, tipo_manutencao, nivel_criticidade } = req.body;
     try {

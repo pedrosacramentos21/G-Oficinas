@@ -146,6 +146,23 @@ interface OficinaServico {
   created_at?: string;
 }
 
+interface WorkshopChecklist {
+  id: number;
+  data: string;
+  responsavel: string;
+  equipamento: string;
+  items: Record<string, 'S' | 'N' | 'NA'>;
+  observacoes?: string;
+  created_at?: string;
+}
+
+interface WorkshopEquipment {
+  id: number;
+  name: string;
+  local: string;
+  items: { id: string, label: string }[];
+}
+
 interface StoreState {
   error: string | null;
   setError: (error: string | null) => void;
@@ -159,6 +176,8 @@ interface StoreState {
   refrigeracaoPCMAreas: ArmstrongPCMArea[];
   refrigeracaoBacklog: RefrigeracaoBacklog[];
   oficinaServicos: OficinaServico[];
+  workshopChecklists: WorkshopChecklist[];
+  workshopEquipment: WorkshopEquipment[];
   fetchAndaimes: () => Promise<void>;
   addAndaime: (andaime: Omit<Andaime, 'id' | 'status'>) => Promise<any>;
   approveAndaime: (id: number, password: string) => Promise<void>;
@@ -206,6 +225,12 @@ interface StoreState {
   batchUpdateRefrigeracaoBacklog: (ids: number[], updates: any, password: string) => Promise<void>;
   fetchOficina: () => Promise<void>;
   addOficinaServico: (servico: Omit<OficinaServico, 'id'>) => Promise<void>;
+  fetchWorkshopChecklists: () => Promise<void>;
+  addWorkshopChecklist: (checklist: Omit<WorkshopChecklist, 'id'>) => Promise<void>;
+  fetchWorkshopEquipment: () => Promise<void>;
+  addWorkshopEquipment: (equipment: Omit<WorkshopEquipment, 'id'>) => Promise<void>;
+  updateWorkshopEquipment: (id: number, equipment: Partial<WorkshopEquipment>) => Promise<void>;
+  deleteWorkshopEquipment: (id: number) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -221,6 +246,8 @@ export const useStore = create<StoreState>((set, get) => ({
   refrigeracaoPCMAreas: [],
   refrigeracaoBacklog: [],
   oficinaServicos: [],
+  workshopChecklists: [],
+  workshopEquipment: [],
 
   fetchAndaimes: async () => {
     try {
@@ -891,5 +918,91 @@ export const useStore = create<StoreState>((set, get) => ({
       throw new Error(error.error || 'Failed to add oficina servico');
     }
     get().fetchOficina();
+  },
+
+  fetchWorkshopChecklists: async () => {
+    try {
+      const res = await fetch('/api/workshop/checklists');
+      const data = await res.json().catch(() => ({ error: 'Invalid JSON' }));
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao buscar checklists da oficina');
+      }
+      if (Array.isArray(data)) {
+        set({ workshopChecklists: data, error: null });
+      } else {
+        throw new Error('Dados da oficina inválidos');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch workshop checklists:', error);
+      set({ workshopChecklists: [], error: error.message });
+    }
+  },
+
+  addWorkshopChecklist: async (checklist) => {
+    const res = await fetch('/api/workshop/checklists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(checklist),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add workshop checklist');
+    }
+    get().fetchWorkshopChecklists();
+  },
+
+  fetchWorkshopEquipment: async () => {
+    try {
+      const res = await fetch('/api/workshop/equipment');
+      const data = await res.json().catch(() => ({ error: 'Invalid JSON' }));
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao buscar equipamentos da oficina');
+      }
+      if (Array.isArray(data)) {
+        set({ workshopEquipment: data, error: null });
+      } else {
+        throw new Error('Dados de equipamentos inválidos');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch workshop equipment:', error);
+      set({ workshopEquipment: [], error: error.message });
+    }
+  },
+
+  addWorkshopEquipment: async (equipment) => {
+    const res = await fetch('/api/workshop/equipment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(equipment),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to add workshop equipment');
+    }
+    get().fetchWorkshopEquipment();
+  },
+
+  updateWorkshopEquipment: async (id, equipment) => {
+    const res = await fetch(`/api/workshop/equipment/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(equipment),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to update workshop equipment');
+    }
+    get().fetchWorkshopEquipment();
+  },
+
+  deleteWorkshopEquipment: async (id) => {
+    const res = await fetch(`/api/workshop/equipment/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to delete workshop equipment');
+    }
+    get().fetchWorkshopEquipment();
   },
 }));
