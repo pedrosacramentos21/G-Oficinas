@@ -6,13 +6,15 @@ import PasswordModal from '../components/PasswordModal';
 
 export default function Oficina() {
   const { 
-    workshopChecklists, fetchWorkshopChecklists, addWorkshopChecklist,
+    workshopChecklists, fetchWorkshopChecklists, addWorkshopChecklist, deleteWorkshopChecklist,
     workshopEquipment, fetchWorkshopEquipment, addWorkshopEquipment, updateWorkshopEquipment, deleteWorkshopEquipment 
   } = useStore();
   const [view, setView] = useState<'selection' | 'form' | 'history' | 'management'>('selection');
   const [selectedEq, setSelectedEq] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordAction, setPasswordAction] = useState<'management' | 'delete_record'>('management');
+  const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [editingEquipment, setEditingEquipment] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
@@ -75,9 +77,14 @@ export default function Oficina() {
     }
   };
 
-  const handleOpenManagement = (password: string) => {
+  const handlePasswordConfirm = (password: string) => {
     if (password === 'Itf2026') {
-      setView('management');
+      if (passwordAction === 'management') {
+        setView('management');
+      } else if (passwordAction === 'delete_record' && recordToDelete !== null) {
+        deleteWorkshopChecklist(recordToDelete);
+        setRecordToDelete(null);
+      }
       setShowPasswordModal(false);
     } else {
       alert('Senha incorreta');
@@ -118,7 +125,7 @@ export default function Oficina() {
       <PasswordModal 
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
-        onConfirm={handleOpenManagement}
+        onConfirm={handlePasswordConfirm}
       />
 
       {/* Header */}
@@ -510,11 +517,24 @@ export default function Oficina() {
                               </div>
                             </div>
                           </div>
-                          {record.observacoes && (
-                            <div className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 max-w-sm">
-                              <p className="text-[8px] font-bold text-gray-500 uppercase leading-tight italic">"{record.observacoes}"</p>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-3">
+                            {record.observacoes && (
+                              <div className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 max-w-sm">
+                                <p className="text-[8px] font-bold text-gray-500 uppercase leading-tight italic">"{record.observacoes}"</p>
+                              </div>
+                            )}
+                            <button
+                              onClick={() => {
+                                setPasswordAction('delete_record');
+                                setRecordToDelete(record.id);
+                                setShowPasswordModal(true);
+                              }}
+                              className="p-2.5 bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-xl transition-all border border-transparent hover:border-red-100"
+                              title="Excluir Registro"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

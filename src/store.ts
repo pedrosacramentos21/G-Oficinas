@@ -227,6 +227,7 @@ interface StoreState {
   addOficinaServico: (servico: Omit<OficinaServico, 'id'>) => Promise<void>;
   fetchWorkshopChecklists: () => Promise<void>;
   addWorkshopChecklist: (checklist: Omit<WorkshopChecklist, 'id'>) => Promise<void>;
+  deleteWorkshopChecklist: (id: number) => Promise<void>;
   fetchWorkshopEquipment: () => Promise<void>;
   addWorkshopEquipment: (equipment: Omit<WorkshopEquipment, 'id'>) => Promise<void>;
   updateWorkshopEquipment: (id: number, equipment: Partial<WorkshopEquipment>) => Promise<void>;
@@ -947,6 +948,17 @@ export const useStore = create<StoreState>((set, get) => ({
     if (!res.ok) {
       const error = await res.json().catch(() => ({ error: 'Unknown error' }));
       throw new Error(error.error || 'Failed to add workshop checklist');
+    }
+    get().fetchWorkshopChecklists();
+  },
+
+  deleteWorkshopChecklist: async (id) => {
+    const res = await fetch(`/api/workshop/checklists/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || 'Failed to delete workshop checklist');
     }
     get().fetchWorkshopChecklists();
   },

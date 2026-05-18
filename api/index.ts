@@ -1357,6 +1357,21 @@ async function startServer() {
     }
   });
 
+  app.delete('/api/workshop/checklists/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      if (!supabase) throw new Error('Supabase not initialized');
+      const { error } = await supabase
+        .from('workshop_checklists')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to delete workshop checklist' });
+    }
+  });
+
   app.get('/api/workshop/equipment', async (req, res) => {
     try {
       if (!supabase) throw new Error('Supabase not initialized');
@@ -1523,7 +1538,7 @@ const appPromise = startServer();
 // For local development (tsx api/index.ts)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   appPromise.then(app => {
-    const PORT = Number(process.env.PORT) || 3000;
+    const PORT = 3000;
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server version: 1.0.2`);
       console.log(`Server running on http://0.0.0.0:${PORT}`);
