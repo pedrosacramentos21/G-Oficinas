@@ -58,31 +58,31 @@ export async function syncLocalStorageToSupabase() {
   // Known keys already in the map
   const knownKeys = recoveryMap.map(m => m.key);
   
-  // Find other potential keys by prefix
-  const allLocalStorageKeys = Object.keys(localStorage);
-  const prefixes = ['andaimes', 'ptas', 'sala_motores', 'armstrong', 'refrigeracao', 'oficina', 'atividades'];
-  
-  for (const key of allLocalStorageKeys) {
-    if (prefixes.some(p => key.startsWith(p)) && !knownKeys.includes(key)) {
-      // Try to guess the type by prefix
-      let type = 'andaime';
-      let action = store.addAndaime;
+      // Find other potential keys by prefix
+      const allLocalStorageKeys = Object.keys(localStorage);
+      const prefixes = ['andaimes', 'ptas', 'sala_motores', 'armstrong', 'refrigeracao', 'oficina', 'atividades'];
       
-      if (key.startsWith('ptas')) { type = 'pta'; action = store.addPTA; }
-      else if (key.includes('motores') || key.startsWith('atividades')) { type = 'sala_motores'; action = store.addAtividadeSalaMotores; }
-      else if (key.startsWith('armstrong')) { 
-        if (key.includes('backlog')) { type = 'armstrong_backlog'; action = store.addArmstrongBacklog; }
-        else { type = 'armstrong_manutencao'; action = store.addArmstrongManutencao; }
+      for (const key of allLocalStorageKeys) {
+        if (prefixes.some(p => key.startsWith(p)) && !knownKeys.includes(key)) {
+          // Try to guess the type by prefix
+          let type = 'andaime';
+          let action: (data: any) => Promise<any> = store.addAndaime as any;
+          
+          if (key.startsWith('ptas')) { type = 'pta'; action = store.addPTA as any; }
+          else if (key.includes('motores') || key.startsWith('atividades')) { type = 'sala_motores'; action = store.addAtividadeSalaMotores as any; }
+          else if (key.startsWith('armstrong')) { 
+            if (key.includes('backlog')) { type = 'armstrong_backlog'; action = store.addArmstrongBacklog as any; }
+            else { type = 'armstrong_manutencao'; action = store.addArmstrongManutencao as any; }
+          }
+          else if (key.startsWith('refrigeracao')) {
+            if (key.includes('backlog')) { type = 'refrigeracao_backlog'; action = store.addRefrigeracaoBacklog as any; }
+            else { type = 'refrigeracao_manutencao'; action = store.addRefrigeracaoManutencao as any; }
+          }
+          else if (key.startsWith('oficina')) { type = 'oficina'; action = store.addOficinaServico as any; }
+          
+          recoveryMap.push({ key, action, type });
+        }
       }
-      else if (key.startsWith('refrigeracao')) {
-        if (key.includes('backlog')) { type = 'refrigeracao_backlog'; action = store.addRefrigeracaoBacklog; }
-        else { type = 'refrigeracao_manutencao'; action = store.addRefrigeracaoManutencao; }
-      }
-      else if (key.startsWith('oficina')) { type = 'oficina'; action = store.addOficinaServico; }
-      
-      recoveryMap.push({ key, action, type });
-    }
-  }
 
   for (const entry of recoveryMap) {
     const localData = localStorage.getItem(entry.key);

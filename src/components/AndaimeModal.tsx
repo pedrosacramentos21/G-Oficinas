@@ -5,12 +5,7 @@ import { cn } from '../lib/utils';
 import PasswordModal from './PasswordModal';
 import DeleteChoiceModal from './DeleteChoiceModal';
 
-const AREAS = [
-  'Processo cerveja',
-  'Packaging, Bblend e Xaroparia',
-  'Utilidades',
-  'Meio Ambiente'
-];
+import { AREAS, STATUS_EXECUCAO_OPTIONS, STATUS_COLORS, GET_LIMIT } from '../constants/andaimes';
 
 const TIPOS_SERVICO = [
   'Montagem',
@@ -49,7 +44,8 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     descricao_local: '',
     excedeu_limite: false,
     justificativa_excesso: '',
-    somente_backlog: false
+    somente_backlog: false,
+    status_execucao: STATUS_EXECUCAO_OPTIONS[0]
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -57,7 +53,8 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
   const { andaimes } = useStore();
 
   const LIMITS: Record<string, number> = {
-    'Processo cerveja': 10,
+    'Brassagem': 5,
+    'Filtração/Adegas': 5,
     'Packaging, Bblend e Xaroparia': 4,
     'Utilidades': 3,
     'Meio Ambiente': 3
@@ -83,6 +80,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
           excedeu_limite: andaime.excedeu_limite || false,
           justificativa_excesso: andaime.justificativa_excesso || '',
           somente_backlog: andaime.somente_backlog || false,
+          status_execucao: andaime.status_execucao || STATUS_EXECUCAO_OPTIONS[0],
           data_montagem_original: andaime.data_montagem_original || undefined
         } as any);
         setIsUnlocked(!andaime.id || andaime.status !== 'aprovado');
@@ -110,17 +108,14 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     if (!andaime && formData.tipo_servico === 'Montagem') {
       const currentPoints = andaimes
         .filter(a => a.area === formData.area && a.status === 'aprovado' && a.tipo_servico !== 'Desmontagem' && !a.esconder_no_backlog)
-        .reduce((sum, a) => sum + a.quantidade_pontos, 0);
+        .reduce((sum, a) => sum + (Number(a.quantidade_pontos) || 0), 0);
       
-      const limit = LIMITS[formData.area] || 999;
-      const willExceed = currentPoints + formData.quantidade_pontos > limit;
+      const limit = GET_LIMIT(formData.area);
+      const pointsToAdd = Number(formData.quantidade_pontos) || 0;
+      const willExceed = currentPoints + pointsToAdd > limit;
       
       if (willExceed !== formData.excedeu_limite) {
         setFormData(prev => ({ ...prev, excedeu_limite: willExceed }));
-        if (willExceed) {
-          setShowLimitAlert(true);
-          setTimeout(() => setShowLimitAlert(false), 5000);
-        }
       }
     } else if (!andaime && formData.tipo_servico === 'Desmontagem') {
       // Force limit to false for Desmontagem as requested
@@ -161,7 +156,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     }
 
     if (formData.excedeu_limite && !formData.justificativa_excesso) {
-      setErrorMessage('Por favor, insira uma justificativa para a montagem acima do limite de pontos.');
+      setErrorMessage('Aviso de Limite: O limite de pontos para esta área foi excedido. Por favor, insira uma justificativa para prosseguir.');
+      setShowLimitAlert(true);
+      setTimeout(() => setShowLimitAlert(false), 5000);
       return;
     }
 
@@ -386,6 +383,20 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                 </div>
 
                 <div>
+                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Status de Execução</label>
+                  <select 
+                    className={cn(
+                      "w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-black uppercase tracking-widest text-[10px] focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none appearance-none",
+                      STATUS_COLORS[formData.status_execucao]
+                    )}
+                    value={formData.status_execucao}
+                    onChange={e => setFormData({...formData, status_execucao: e.target.value})}
+                  >
+                    {STATUS_EXECUCAO_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Tipo de Serviço</label>
                   <select 
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none appearance-none"
@@ -403,8 +414,11 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                     min="1"
                     required
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 sm:p-3 font-bold text-gray-700 focus:ring-2 focus:ring-ambev-blue focus:border-transparent transition-all outline-none"
-                    value={formData.quantidade_pontos}
-                    onChange={e => setFormData({...formData, quantidade_pontos: parseInt(e.target.value)})}
+                    value={formData.quantidade_pontos || ''}
+                    onChange={e => {
+                      const val = parseInt(e.target.value);
+                      setFormData({...formData, quantidade_pontos: isNaN(val) ? 0 : val});
+                    }}
                   />
                 </div>
 
@@ -492,7 +506,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                         <span className="text-[10px] font-black uppercase tracking-widest">Aviso: Limite de pontos excedido</span>
                       </div>
                       <p className="text-[10px] font-bold text-red-500 uppercase leading-tight">
-                        O limite de pontos para a área {formData.area} ({LIMITS[formData.area]} pts) foi excedido. 
+                        O limite de pontos para a área {formData.area} ({GET_LIMIT(formData.area)} pts) foi excedido. 
                         É obrigatório inserir uma justificativa para esta solicitação.
                       </p>
                     </div>

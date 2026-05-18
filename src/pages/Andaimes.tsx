@@ -23,24 +23,7 @@ import DeleteChoiceModal from '../components/DeleteChoiceModal';
 import AndaimeBacklog from './AndaimeBacklog';
 import { cn, formatDate } from '../lib/utils';
 
-const AREAS = [
-  'Processo cerveja',
-  'Packaging, Bblend e Xaroparia',
-  'Utilidades',
-  'Meio Ambiente'
-];
-
-const STATUS_EXECUCAO_OPTIONS = [
-  'Pendente',
-  'Em andamento',
-  'Concluído'
-] as const;
-
-const STATUS_COLORS: Record<string, string> = {
-  'Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
-  'Em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
-  'Concluído': 'text-green-600 bg-green-50 border-green-200'
-};
+import { AREAS, STATUS_EXECUCAO_OPTIONS, STATUS_COLORS } from '../constants/andaimes';
 
 export default function Andaimes() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -56,7 +39,14 @@ export default function Andaimes() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [passwordModal, setPasswordModal] = useState<{ isOpen: boolean, id: number | null, ids?: number[], action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve' | 'adjust-backlog', deleteChoice?: 'backlog-only' | 'both' }>({
+  const [passwordModal, setPasswordModal] = useState<{ 
+    isOpen: boolean, 
+    id: number | null, 
+    ids?: number[], 
+    action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve' | 'adjust-backlog' | 'move-card', 
+    deleteChoice?: 'backlog-only' | 'both',
+    targetArea?: string
+  }>({
     isOpen: false,
     id: null,
     action: 'approve'
@@ -120,6 +110,15 @@ export default function Andaimes() {
           setSelectedAndaime({ somente_backlog: true });
           setIsModalOpen(true);
           return;
+        } else {
+          throw new Error('Senha incorreta');
+        }
+      } else if (passwordModal.action === 'move-card') {
+        if (password === 'Itf2026') {
+          if (passwordModal.id && passwordModal.targetArea) {
+            await batchUpdateAndaimes([passwordModal.id], { area: passwordModal.targetArea }, password);
+            fetchAndaimes();
+          }
         } else {
           throw new Error('Senha incorreta');
         }
@@ -242,6 +241,15 @@ export default function Andaimes() {
     if (calendarApi) {
       calendarApi.gotoDate(andaime.data_montagem);
     }
+  };
+
+  const handleMoveCard = (id: number, targetArea: string) => {
+    setPasswordModal({ 
+      isOpen: true, 
+      id, 
+      action: 'move-card', 
+      targetArea 
+    });
   };
 
   const totalPoints = pointsPerArea.reduce((sum, a) => sum + a.points, 0);
@@ -601,7 +609,7 @@ export default function Andaimes() {
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn(
                           "text-[6px] font-black uppercase tracking-tighter truncate px-1 rounded border",
-                          data.area === 'Processo cerveja' ? "text-amber-700 bg-amber-50 border-amber-200" :
+                          (data.area === 'Brassagem' || data.area === 'Filtração/Adegas') ? "text-amber-700 bg-amber-50 border-amber-200" :
                           data.area === 'Packaging, Bblend e Xaroparia' ? "text-blue-700 bg-blue-50 border-blue-200" :
                           data.area === 'Utilidades' ? "text-emerald-700 bg-emerald-50 border-emerald-200" :
                           "text-purple-700 bg-purple-50 border-purple-200",
@@ -737,6 +745,7 @@ export default function Andaimes() {
         <AndaimeBacklog 
           onCardClick={openEditRequest} 
           onAdjustBacklog={handleAdjustBacklog} 
+          onMoveCard={handleMoveCard}
           isSelectionMode={isSelectionMode}
           selectedIds={selectedIds}
           onToggleSelection={toggleSelection}

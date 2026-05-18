@@ -18,7 +18,8 @@ export interface Solicitacao {
 }
 
 export const AREAS = [
-  'PROCESSO',
+  'BRASSAGEM',
+  'FILTRAÇÃO/ADEGAS',
   'PACKAGING',
   'BBLEND',
   'XAROPARIA',

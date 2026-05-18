@@ -3,36 +3,14 @@ import { useStore } from '../store';
 import { Calendar, User, Clock, CheckCircle2, MapPin, Layers, ChevronDown, ListCheck, Settings2 } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
 
-const COLUMNS = [
-  'Processo cerveja',
-  'Packaging, Bblend e Xaroparia',
-  'Utilidades',
-  'Meio Ambiente'
-];
+import { AREAS, STATUS_EXECUCAO_OPTIONS, STATUS_COLORS, GET_LIMIT } from '../constants/andaimes';
 
-const GET_LIMIT = (column: string) => {
-  if (column.includes('Processo')) return 10;
-  if (column.includes('Packaging')) return 4;
-  if (column.includes('Utilidades')) return 3;
-  if (column.includes('Meio Ambiente')) return 3;
-  return 999;
-};
-
-const STATUS_EXECUCAO_OPTIONS = [
-  'Pendente',
-  'Em andamento',
-  'Concluído'
-] as const;
-
-const STATUS_COLORS: Record<string, string> = {
-  'Pendente': 'text-amber-600 bg-amber-50 border-amber-200',
-  'Em andamento': 'text-orange-600 bg-orange-50 border-orange-200',
-  'Concluído': 'text-green-600 bg-green-50 border-green-200'
-};
+const COLUMNS = AREAS;
 
 interface Props {
   onCardClick?: (andaime: any) => void;
   onAdjustBacklog?: () => void;
+  onMoveCard?: (id: number, newArea: string) => void;
   isSelectionMode?: boolean;
   selectedIds?: number[];
   onToggleSelection?: (id: number) => void;
@@ -41,16 +19,21 @@ interface Props {
 export default function AndaimeBacklog({ 
   onCardClick, 
   onAdjustBacklog,
+  onMoveCard,
   isSelectionMode = false,
   selectedIds = [],
   onToggleSelection
 }: Props) {
   const { andaimes, fetchAndaimes, updateStatusExecucaoAndaime } = useStore();
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAndaimes();
-  }, []);
+    const interval = setInterval(fetchAndaimes, 30000); // Add polling to backlog too
+    return () => clearInterval(interval);
+  }, [fetchAndaimes]);
 
   const handleStatusChange = async (e: React.MouseEvent, id: number, status: string) => {
     e.stopPropagation();
@@ -60,6 +43,28 @@ export default function AndaimeBacklog({
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const handleDragStart = (id: number) => {
+    if (isSelectionMode) return;
+    setDraggedId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, column: string) => {
+    e.preventDefault();
+    setDragOverColumn(column);
+  };
+
+  const handleDrop = (e: React.DragEvent, column: string) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+    if (draggedId !== null && onMoveCard) {
+      const item = andaimes.find(a => a.id === draggedId);
+      if (item && item.area !== column) {
+        onMoveCard(draggedId, column);
+      }
+    }
+    setDraggedId(null);
   };
 
   return (
@@ -78,7 +83,7 @@ export default function AndaimeBacklog({
         </button>
       </div>
 
-      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
         {COLUMNS.map(column => {
           const points = andaimes
             .filter(a => {
@@ -132,9 +137,18 @@ export default function AndaimeBacklog({
       </div>
 
       <div className="flex-1 min-h-0 overflow-x-auto pb-4 custom-scrollbar">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 min-w-[1000px] lg:min-w-0 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 min-w-[1250px] xl:min-w-0 h-full">
           {COLUMNS.map(column => (
-            <div key={column} className="flex flex-col gap-3 md:gap-4 bg-gray-100/50 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border border-gray-200/50 h-full min-h-[400px]">
+            <div 
+              key={column} 
+              onDragOver={(e) => handleDragOver(e, column)}
+              onDragLeave={() => setDragOverColumn(null)}
+              onDrop={(e) => handleDrop(e, column)}
+              className={cn(
+                "flex flex-col gap-3 md:gap-4 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border transition-all h-full min-h-[400px]",
+                dragOverColumn === column ? "bg-ambev-blue/5 border-ambev-blue border-dashed ring-4 ring-ambev-blue/10 scale-[1.02]" : "bg-gray-100/50 border-gray-200/50"
+              )}
+            >
             <div className="flex items-center justify-between px-2 md:px-4 py-1 md:py-2 shrink-0">
               <h2 className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] truncate mr-2">{column}</h2>
               <span className="bg-white text-gray-900 text-[8px] md:text-[10px] font-black px-1.5 md:px-2 py-0.5 md:py-1 rounded-full shadow-sm shrink-0">
@@ -169,9 +183,12 @@ export default function AndaimeBacklog({
                           onCardClick?.(item);
                         }
                       }}
+                      draggable={!isSelectionMode}
+                      onDragStart={() => handleDragStart(item.id)}
                       className={cn(
                         "bg-white p-3 md:p-5 rounded-xl md:rounded-2xl shadow-sm border transition-all group relative overflow-visible cursor-pointer active:scale-[0.98]",
-                        isSelected ? "ring-2 ring-sky-500 border-sky-200" : "border-gray-200 hover:shadow-md"
+                        isSelected ? "ring-2 ring-sky-500 border-sky-200" : "border-gray-200 hover:shadow-md",
+                        draggedId === item.id && "opacity-40 grayscale scale-95"
                       )}
                     >
                       {/* Selection indicator */}

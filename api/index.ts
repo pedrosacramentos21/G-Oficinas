@@ -253,7 +253,7 @@ async function startServer() {
           data_montagem, data_desmontagem, hora_inicio, hora_fim, 
           solicitante, descricao_local, status: somente_backlog ? 'aprovado' : status,
           excedeu_limite, justificativa_excesso, somente_backlog,
-          status_execucao: 'Montagem Pendente'
+          status_execucao: 'Pendente'
         }])
         .select();
 
@@ -316,7 +316,7 @@ async function startServer() {
 
       if (updates.data_montagem || updates.area || updates.data_desmontagem) {
         // 1. Global Daily Limit (Max 2)
-        const checkGlobalLimit = async (date: string, currentId: number) => {
+        const checkGlobalLimit = async (date: any, currentId: any) => {
           const { count, error } = await supabase
             .from('solicitacoes_andaime')
             .select('*', { count: 'exact', head: true })
@@ -326,14 +326,14 @@ async function startServer() {
           return count || 0;
         };
 
-        const dailyCount = await checkGlobalLimit(targetDate, id);
+        const dailyCount = await checkGlobalLimit(targetDate, id as any);
         if (dailyCount >= 2) {
           return res.status(400).json({ error: `Limite global atingido: Já existem ${dailyCount} solicitações para o dia ${new Date(targetDate).toLocaleDateString('pt-BR')}.` });
         }
 
         // If dismantling date is also being changed or exists
         if (targetDesmontagem && targetDesmontagem !== targetDate) {
-          const disCount = await checkGlobalLimit(targetDesmontagem, id);
+          const disCount = await checkGlobalLimit(targetDesmontagem, id as any);
           if (disCount >= 2) {
             return res.status(400).json({ error: `Limite global atingido na data de desmontagem: Já existem ${disCount} solicitações para o dia ${new Date(targetDesmontagem).toLocaleDateString('pt-BR')}.` });
           }
