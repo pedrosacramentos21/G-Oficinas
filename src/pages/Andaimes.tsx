@@ -168,11 +168,12 @@ export default function Andaimes() {
 
   const events = React.useMemo(() => {
     return andaimes
-      .filter(a => !a.somente_backlog)
+      .filter(a => !(a.somente_backlog && a.tipo_servico === 'Montagem'))
       .map(a => {
         const isSelected = selectedIds.includes(a.id);
         const isDesmontagem = a.tipo_servico === 'Desmontagem';
         const isExcedente = a.excedeu_limite;
+        const isBacklog = a.somente_backlog;
         const date = a.data_montagem || new Date().toISOString().split('T')[0];
         const datePart = date.split('T')[0];
         
@@ -185,6 +186,9 @@ export default function Andaimes() {
         } else if (isDesmontagem && a.status === 'aprovado') {
           backgroundColor = isSelected ? '#003d6b' : '#005596';
           borderColor = isSelected ? '#002540' : '#003d6b';
+        } else if (isBacklog) {
+          backgroundColor = isSelected ? '#005596' : '#f8fafc';
+          borderColor = isSelected ? '#003d6b' : '#e2e8f0';
         }
 
         return {
@@ -194,8 +198,8 @@ export default function Andaimes() {
           end: `${datePart}T${a.hora_fim || '17:00'}`,
           backgroundColor,
           borderColor,
-          textColor: (a.status === 'pendente' || isExcedente) && !isSelected && !isDesmontagem ? '#ffffff' : '#ffffff',
-          className: `event-status-${a.status} ${isDesmontagem ? 'event-desmontagem' : ''} ${isExcedente ? 'event-excedente' : ''}`,
+          textColor: isBacklog && !isSelected ? '#64748b' : '#ffffff',
+          className: `event-status-${a.status} ${isDesmontagem ? 'event-desmontagem' : ''} ${isExcedente ? 'event-excedente' : ''} ${isBacklog ? 'event-backlog' : ''}`,
           extendedProps: a
         };
       });
@@ -540,6 +544,7 @@ export default function Andaimes() {
                 const isMobile = window.innerWidth < 640;
                 const isDesmontagem = data.tipo_servico === 'Desmontagem';
                 const isExcedente = data.excedeu_limite;
+                const isBacklog = data.somente_backlog;
                 
                 return (
                     <div 
@@ -551,6 +556,7 @@ export default function Andaimes() {
                       }}
                       className={cn(
                         "p-1 h-full flex flex-col gap-0.5 overflow-visible border-2 rounded-md relative transition-all",
+                        isBacklog && !isSelected ? "border-slate-200 bg-slate-50/80" : 
                         isExcedente && data.status === 'pendente' ? "border-red-500 bg-red-50/40" :
                         isDesmontagem ? (data.status === 'aprovado' ? "border-slate-500 bg-slate-50/40" : "border-slate-300 bg-slate-50/40") :
                         (data.status === 'aprovado' ? "border-green-500 bg-green-50/40" : "border-yellow-500 bg-yellow-50/40"),
@@ -558,6 +564,15 @@ export default function Andaimes() {
                         (isWeekView && isMobile) && "p-0.5 gap-0"
                       )}
                     >
+                    {/* Backlog Indicator */}
+                    {isBacklog && (
+                      <div className="absolute top-0.5 left-0.5 z-10">
+                        <div className="bg-amber-500 text-white text-[7px] font-black w-3 h-3 rounded-full flex items-center justify-center shadow-sm border border-white">
+                          B
+                        </div>
+                      </div>
+                    )}
+
                     {/* Execution Status Button */}
                     <div className="absolute -top-1 -right-1 z-20 flex flex-col items-end">
                       <button

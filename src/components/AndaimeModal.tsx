@@ -150,12 +150,12 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     const diffTime = Math.abs(dateDesmontagem.getTime() - dateMontagem.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays > 30) {
+    if (diffDays > 30 && !formData.somente_backlog) {
       setErrorMessage('A data de desmontagem deve ser no máximo 30 dias após a data de montagem.');
       return;
     }
 
-    if (formData.excedeu_limite && !formData.justificativa_excesso) {
+    if (formData.excedeu_limite && !formData.justificativa_excesso && !formData.somente_backlog) {
       setErrorMessage('Aviso de Limite: O limite de pontos para esta área foi excedido. Por favor, insira uma justificativa para prosseguir.');
       setShowLimitAlert(true);
       setTimeout(() => setShowLimitAlert(false), 5000);
@@ -164,6 +164,9 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
 
     // Scaffolding Conflict Rules & Global Limits
     const checkConflicts = (dates: string[], area: string, currentId?: number) => {
+      // IF Adjust Backlog flow, bypass conflict rules as requested
+      if (formData.somente_backlog) return null;
+
       // 1. Global Daily Limit (Max 2 per day)
       for (const targetDateStr of dates) {
         const dailyTotal = andaimes.filter(a => a.data_montagem === targetDateStr && a.id !== currentId).length;
