@@ -28,7 +28,7 @@ import { AREAS, STATUS_EXECUCAO_OPTIONS, STATUS_COLORS } from '../constants/anda
 export default function Andaimes() {
   const calendarRef = useRef<FullCalendar>(null);
   const calendarContainerRef = useRef<HTMLDivElement>(null);
-  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchUpdateAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime } = useStore();
+  const { andaimes, fetchAndaimes, approveAndaime, deleteAndaime, batchDeleteAndaimes, batchUpdateAndaimes, batchApproveAndaimes, updateStatusExecucaoAndaime, updateAndaime } = useStore();
   const [activeTab, setActiveTab] = useState<'calendario' | 'backlog' | 'panorama'>('calendario');
   const [currentView, setCurrentView] = useState<string>(window.innerWidth < 768 ? 'timeGridDay' : 'timeGridWeek');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -43,9 +43,10 @@ export default function Andaimes() {
     isOpen: boolean, 
     id: number | null, 
     ids?: number[], 
-    action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve' | 'adjust-backlog' | 'move-card', 
+    action: 'approve' | 'delete' | 'batch-delete' | 'batch-approve' | 'adjust-backlog' | 'move-card' | 'drag-card', 
     deleteChoice?: 'backlog-only' | 'both',
-    targetArea?: string
+    targetArea?: string,
+    targetDate?: string
   }>({
     isOpen: false,
     id: null,
@@ -117,6 +118,15 @@ export default function Andaimes() {
         if (password === 'Itf2026') {
           if (passwordModal.id && passwordModal.targetArea) {
             await batchUpdateAndaimes([passwordModal.id], { area: passwordModal.targetArea }, password);
+            fetchAndaimes();
+          }
+        } else {
+          throw new Error('Senha incorreta');
+        }
+      } else if (passwordModal.action === 'drag-card') {
+        if (password === 'Itf2026') {
+          if (passwordModal.id && passwordModal.targetDate) {
+            await updateAndaime(passwordModal.id, { data_montagem: passwordModal.targetDate }, password);
             fetchAndaimes();
           }
         } else {
@@ -254,6 +264,45 @@ export default function Andaimes() {
       action: 'move-card', 
       targetArea 
     });
+  };
+
+  const handleEventDrop = async (info: any) => {
+    const andaimeId = parseInt(info.event.id);
+    const originalAndaime = andaimes.find(a => a.id === andaimeId);
+    if (!originalAndaime) {
+      info.revert();
+      return;
+    }
+
+    if (!info.event.start) {
+      info.revert();
+      return;
+    }
+
+    const newDateStr = format(info.event.start, 'yyyy-MM-dd');
+    const oldDateStr = originalAndaime.data_montagem?.split('T')[0];
+
+    if (newDateStr === oldDateStr) {
+      return;
+    }
+
+    if (originalAndaime.status === 'aprovado') {
+      setPasswordModal({
+        isOpen: true,
+        id: andaimeId,
+        action: 'drag-card',
+        targetDate: newDateStr
+      });
+      info.revert();
+    } else {
+      try {
+        await updateAndaime(andaimeId, { data_montagem: newDateStr });
+        fetchAndaimes();
+      } catch (err: any) {
+        alert(err.message || 'Falha ao atualizar data do andaime');
+        info.revert();
+      }
+    }
   };
 
   const totalPoints = pointsPerArea.reduce((sum, a) => sum + a.points, 0);
@@ -521,6 +570,10 @@ export default function Andaimes() {
             showNonCurrentDates={false}
             fixedWeekCount={false}
             rerenderDelay={10}
+            editable={true}
+            eventStartEditable={true}
+            eventDurationEditable={false}
+            eventDrop={handleEventDrop}
             datesSet={(arg) => {
                 setCurrentView(arg.view.type);
                 // Force a small delay to ensure rendering completion

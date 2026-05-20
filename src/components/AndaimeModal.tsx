@@ -186,8 +186,12 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       const weekStartStr = weekStart.toISOString().split('T')[0];
       const weekEndStr = weekEnd.toISOString().split('T')[0];
 
+      const checkAreas = (area === 'Brassagem' || area === 'Filtração/Adegas')
+        ? ['Brassagem', 'Filtração/Adegas']
+        : [area];
+
       const areaWeekAndaimes = andaimes.filter(a => 
-        a.area === area && 
+        checkAreas.includes(a.area) && 
         a.data_montagem >= weekStartStr && 
         a.data_montagem <= weekEndStr &&
         a.id !== currentId
@@ -196,8 +200,12 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
       const uniqueDays = new Set(areaWeekAndaimes.map(a => a.data_montagem.split('T')[0]));
       dates.forEach(d => uniqueDays.add(d));
 
+      const areaLabel = (area === 'Brassagem' || area === 'Filtração/Adegas')
+        ? 'Brassagem e Filtração/Adegas'
+        : area;
+
       if (uniqueDays.size > 3) {
-        return `Limite por área: A área ${area} não pode solicitar mais de 3 dias na mesma semana nesta combinação de montagem e desmontagem.`;
+        return `Limite por área: A área ${areaLabel} não pode solicitar mais de 3 dias na mesma semana nesta combinação de montagem e desmontagem.`;
       }
 
       const sortedDays = Array.from(uniqueDays).sort();
@@ -209,7 +217,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
         if (diff === 1) {
           consecutive++;
           if (consecutive > 2) {
-            return `Limite por área: A área ${area} não pode solicitar andaime por mais de 2 dias consecutivos na mesma semana.`;
+            return `Limite por área: A área ${areaLabel} não pode solicitar andaime por mais de 2 dias consecutivos na mesma semana.`;
           }
         } else {
           consecutive = 1;
