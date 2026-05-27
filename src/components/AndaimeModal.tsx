@@ -17,6 +17,130 @@ const HORARIOS = Array.from({ length: 24 }, (_, i) => {
   return `${hour}:00`;
 });
 
+const WEEKDAY_NAMES_MODAL = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+const formatDateBR_Modal = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.slice(0, 10).split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+};
+
+const parseUTCDate_Modal = (dateStr: string) => {
+  const parts = dateStr.slice(0, 10).split('-');
+  return new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+};
+
+const getWeekdayName_Modal = (dateStr: string) => {
+  const date = parseUTCDate_Modal(dateStr);
+  return WEEKDAY_NAMES_MODAL[date.getUTCDay()];
+};
+
+const getWeekStartStr_Modal = (dateStr: string) => {
+  const parts = dateStr.slice(0, 10).split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(Date.UTC(y, m, d));
+  const day = date.getUTCDay(); // 0 is Sunday, 1 is Monday, etc.
+  const diffToSun = -day;
+  const sunday = new Date(Date.UTC(y, m, d + diffToSun));
+  return sunday.toISOString().split('T')[0];
+};
+
+const getWeekEndStr_Modal = (startStr: string) => {
+  const parts = startStr.split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(Date.UTC(y, m, d + 6));
+  return date.toISOString().split('T')[0];
+};
+
+const getDetailedConflictMessage_Modal = (
+  weekStartStr: string,
+  targetArea: string,
+  existingAndaimes: any[],
+  newDates: string[]
+) => {
+  const areaLabel = (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas')
+    ? 'Brassagem e Filtração/Adegas'
+    : targetArea;
+
+  const formatKey = (d: string) => d.split('T')[0];
+
+  const existingByDate: { [date: string]: any[] } = {};
+  existingAndaimes.forEach(a => {
+    const k = formatKey(a.data_montagem);
+    if (!existingByDate[k]) existingByDate[k] = [];
+    existingByDate[k].push(a);
+  });
+
+  const uniqueDays = new Set<string>();
+  existingAndaimes.forEach(a => uniqueDays.add(formatKey(a.data_montagem)));
+  newDates.forEach(d => uniqueDays.add(formatKey(d)));
+
+  const sortedDays = Array.from(uniqueDays).sort();
+
+  const formatDayWithDetails = (dateStr: string) => {
+    const k = formatKey(dateStr);
+    const weekday = getWeekdayName_Modal(k);
+    const dateFormatted = formatDateBR_Modal(k);
+    
+    if (existingByDate[k] && existingByDate[k].length > 0) {
+      const details = existingByDate[k].map(a => `${a.tipo_servico === 'Desmontagem' ? 'Desmontagem' : 'Montagem'} (${a.area} - ${a.local_setor})`).join(', ');
+      return `- ${weekday} (${dateFormatted}): já ocupado por ${details}`;
+    } else {
+      return `- ${weekday} (${dateFormatted}): sua nova solicitação`;
+    }
+  };
+
+  if (uniqueDays.size > 3) {
+    let msg = `Calendário travado: A área "${areaLabel}" não pode ter mais que 3 dias com agendamento na mesma semana (Domingo a Sábado) para evitar travar a semana toda para outros trabalhos.\n\n`;
+    msg += `Nesta semana (${formatDateBR_Modal(weekStartStr)} a ${formatDateBR_Modal(getWeekEndStr_Modal(weekStartStr))}), identificamos:\n`;
+    
+    sortedDays.forEach(day => {
+      msg += formatDayWithDetails(day) + '\n';
+    });
+    msg += `\nTotal: ${uniqueDays.size} dias diferentes com programação. Por favor, ajuste as datas.`;
+    return msg;
+  }
+
+  let consecutiveDaysSeq: string[] = [];
+  let consecutive = 1;
+  let hasLimitViolation = false;
+  let tempSeq = [sortedDays[0]];
+
+  for (let i = 1; i < sortedDays.length; i++) {
+    const d1 = parseUTCDate_Modal(sortedDays[i-1]);
+    const d2 = parseUTCDate_Modal(sortedDays[i]);
+    const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diff === 1) {
+      consecutive++;
+      tempSeq.push(sortedDays[i]);
+      if (consecutive > 2) {
+        hasLimitViolation = true;
+        consecutiveDaysSeq = [...tempSeq];
+      }
+    } else {
+      consecutive = 1;
+      tempSeq = [sortedDays[i]];
+    }
+  }
+
+  if (hasLimitViolation) {
+    let msg = `Calendário travado: A área "${areaLabel}" não pode ter mais que 2 dias consecutivos de andaime na mesma semana para garantir a rotatividade de outras frentes.\n\n`;
+    msg += `Foi detectada uma sequência de ${consecutiveDaysSeq.length} dias seguidos com agendamento:\n`;
+    consecutiveDaysSeq.forEach(day => {
+      msg += formatDayWithDetails(day) + '\n';
+    });
+    msg += `\nPor favor, deixe pelo menos um dia de intervalo para quebrar a sequência de consecutivos.`;
+    return msg;
+  }
+
+  return null;
+};
+
 export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { isOpen: boolean, onClose: () => void, andaime?: any, isBacklog?: boolean }) {
   const { addAndaime, updateAndaime } = useStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,64 +287,53 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
     }
 
     // Scaffolding Conflict Rules & Global Limits
+    let isSameWeekMove = false;
+    if (andaime?.id) {
+      const oldMontagemWeek = getWeekStartStr_Modal(andaime.data_montagem);
+      const newMontagemWeek = getWeekStartStr_Modal(formData.data_montagem);
+      if (oldMontagemWeek === newMontagemWeek) {
+        isSameWeekMove = true;
+      }
+    }
+
     const checkConflicts = (dates: string[], area: string, currentId?: number) => {
-      // IF Adjust Backlog flow, bypass conflict rules as requested
-      if (formData.somente_backlog) return null;
+      // IF Adjust Backlog flow or Same Week Move, bypass conflict rules as requested
+      if (formData.somente_backlog || isSameWeekMove) return null;
 
       // 1. Global Daily Limit (Max 2 per day)
       for (const targetDateStr of dates) {
         const dailyTotal = andaimes.filter(a => a.data_montagem === targetDateStr && a.id !== currentId).length;
         if (dailyTotal >= 2) {
-          return `Limite global atingido: Já existem ${dailyTotal} solicitações para o dia ${new Date(targetDateStr).toLocaleDateString('pt-BR')}. Não é permitido mais que 2 solicitações por dia no total.`;
+          return `Limite global atingido: Já existem ${dailyTotal} solicitações para o dia ${formatDateBR_Modal(targetDateStr)}. Não é permitido mais que 2 solicitações por dia no total.`;
         }
       }
 
-      // 2. Area Week Limits
-      // Use the first date to define the week context
-      const mon = new Date(dates[0]);
-      const day = mon.getDay();
-      const diffToMon = mon.getDate() - day + (day === 0 ? -6 : 1);
-      const weekStart = new Date(new Date(mon).setDate(diffToMon));
-      const weekEnd = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6));
+      // Group target dates by their week (Monday to Sunday)
+      const weekGroups: { [weekStart: string]: string[] } = {};
       
-      const weekStartStr = weekStart.toISOString().split('T')[0];
-      const weekEndStr = weekEnd.toISOString().split('T')[0];
+      dates.forEach(date => {
+        const weekStart = getWeekStartStr_Modal(date);
+        if (!weekGroups[weekStart]) weekGroups[weekStart] = [];
+        weekGroups[weekStart].push(date);
+      });
 
-      const checkAreas = (area === 'Brassagem' || area === 'Filtração/Adegas')
-        ? ['Brassagem', 'Filtração/Adegas']
-        : [area];
+      for (const weekStartStr of Object.keys(weekGroups)) {
+        const weekEndStr = getWeekEndStr_Modal(weekStartStr);
 
-      const areaWeekAndaimes = andaimes.filter(a => 
-        checkAreas.includes(a.area) && 
-        a.data_montagem >= weekStartStr && 
-        a.data_montagem <= weekEndStr &&
-        a.id !== currentId
-      );
+        const checkAreas = (area === 'Brassagem' || area === 'Filtração/Adegas')
+          ? ['Brassagem', 'Filtração/Adegas']
+          : [area];
 
-      const uniqueDays = new Set(areaWeekAndaimes.map(a => a.data_montagem.split('T')[0]));
-      dates.forEach(d => uniqueDays.add(d));
+        const areaWeekAndaimes = andaimes.filter(a => 
+          checkAreas.includes(a.area) && 
+          a.data_montagem >= weekStartStr && 
+          a.data_montagem <= weekEndStr &&
+          a.id !== currentId
+        );
 
-      const areaLabel = (area === 'Brassagem' || area === 'Filtração/Adegas')
-        ? 'Brassagem e Filtração/Adegas'
-        : area;
-
-      if (uniqueDays.size > 3) {
-        return `Limite por área: A área ${areaLabel} não pode solicitar mais de 3 dias na mesma semana nesta combinação de montagem e desmontagem.`;
-      }
-
-      const sortedDays = Array.from(uniqueDays).sort();
-      let consecutive = 1;
-      for (let i = 1; i < sortedDays.length; i++) {
-        const d1 = new Date(sortedDays[i-1]);
-        const d2 = new Date(sortedDays[i]);
-        const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-        if (diff === 1) {
-          consecutive++;
-          if (consecutive > 2) {
-            return `Limite por área: A área ${areaLabel} não pode solicitar andaime por mais de 2 dias consecutivos na mesma semana.`;
-          }
-        } else {
-          consecutive = 1;
+        const explanation = getDetailedConflictMessage_Modal(weekStartStr, area, areaWeekAndaimes, weekGroups[weekStartStr]);
+        if (explanation) {
+          return explanation;
         }
       }
       return null;
@@ -538,7 +651,7 @@ export default function AndaimeModal({ isOpen, onClose, andaime, isBacklog }: { 
                       <Lock size={18} className="shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Erro de Solicitação</p>
-                        <p className="text-xs font-bold leading-tight">{errorMessage}</p>
+                        <p className="text-xs font-bold leading-relaxed whitespace-pre-line">{errorMessage}</p>
                       </div>
                     </div>
                   </div>

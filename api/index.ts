@@ -27,6 +27,130 @@ try {
 
 const MASTER_PASSWORD = 'Itf2026';
 
+const WEEKDAY_NAMES = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+const formatDateBR = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.slice(0, 10).split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+};
+
+const parseUTCDate = (dateStr: string) => {
+  const parts = dateStr.slice(0, 10).split('-');
+  return new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+};
+
+const getWeekdayName = (dateStr: string) => {
+  const date = parseUTCDate(dateStr);
+  return WEEKDAY_NAMES[date.getUTCDay()];
+};
+
+const getWeekStartStr = (dateStr: string) => {
+  const parts = dateStr.slice(0, 10).split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(Date.UTC(y, m, d));
+  const day = date.getUTCDay(); // 0 is Sunday, 1 is Monday, etc.
+  const diffToSun = -day;
+  const sunday = new Date(Date.UTC(y, m, d + diffToSun));
+  return sunday.toISOString().split('T')[0];
+};
+
+const getWeekEndStr = (startStr: string) => {
+  const parts = startStr.split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(Date.UTC(y, m, d + 6));
+  return date.toISOString().split('T')[0];
+};
+
+const getDetailedConflictMessage = (
+  weekStartStr: string,
+  targetArea: string,
+  existingAndaimes: any[],
+  newDates: string[]
+) => {
+  const areaLabel = (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas')
+    ? 'Brassagem e Filtração/Adegas'
+    : targetArea;
+
+  const formatKey = (d: string) => d.split('T')[0];
+
+  const existingByDate: { [date: string]: any[] } = {};
+  existingAndaimes.forEach(a => {
+    const k = formatKey(a.data_montagem);
+    if (!existingByDate[k]) existingByDate[k] = [];
+    existingByDate[k].push(a);
+  });
+
+  const uniqueDays = new Set<string>();
+  existingAndaimes.forEach(a => uniqueDays.add(formatKey(a.data_montagem)));
+  newDates.forEach(d => uniqueDays.add(formatKey(d)));
+
+  const sortedDays = Array.from(uniqueDays).sort();
+
+  const formatDayWithDetails = (dateStr: string) => {
+    const k = formatKey(dateStr);
+    const weekday = getWeekdayName(k);
+    const dateFormatted = formatDateBR(k);
+    
+    if (existingByDate[k] && existingByDate[k].length > 0) {
+      const details = existingByDate[k].map(a => `${a.tipo_servico === 'Desmontagem' ? 'Desmontagem' : 'Montagem'} (${a.area} - ${a.local_setor})`).join(', ');
+      return `- ${weekday} (${dateFormatted}): já ocupado por ${details}`;
+    } else {
+      return `- ${weekday} (${dateFormatted}): sua nova solicitação`;
+    }
+  };
+
+  if (uniqueDays.size > 3) {
+    let msg = `Calendário travado: A área "${areaLabel}" não pode ter mais que 3 dias com agendamento na mesma semana (Domingo a Sábado) para evitar travar a semana toda para outros trabalhos.\n\n`;
+    msg += `Nesta semana (${formatDateBR(weekStartStr)} a ${formatDateBR(getWeekEndStr(weekStartStr))}), identificamos:\n`;
+    
+    sortedDays.forEach(day => {
+      msg += formatDayWithDetails(day) + '\n';
+    });
+    msg += `\nTotal: ${uniqueDays.size} dias diferentes com programação. Por favor, ajuste as datas.`;
+    return msg;
+  }
+
+  let consecutiveDaysSeq: string[] = [];
+  let consecutive = 1;
+  let hasLimitViolation = false;
+  let tempSeq = [sortedDays[0]];
+
+  for (let i = 1; i < sortedDays.length; i++) {
+    const d1 = parseUTCDate(sortedDays[i-1]);
+    const d2 = parseUTCDate(sortedDays[i]);
+    const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diff === 1) {
+      consecutive++;
+      tempSeq.push(sortedDays[i]);
+      if (consecutive > 2) {
+        hasLimitViolation = true;
+        consecutiveDaysSeq = [...tempSeq];
+      }
+    } else {
+      consecutive = 1;
+      tempSeq = [sortedDays[i]];
+    }
+  }
+
+  if (hasLimitViolation) {
+    let msg = `Calendário travado: A área "${areaLabel}" não pode ter mais que 2 dias consecutivos de andaime na mesma semana para garantir a rotatividade de outras frentes.\n\n`;
+    msg += `Foi detectada uma sequência de ${consecutiveDaysSeq.length} dias seguidos com agendamento:\n`;
+    consecutiveDaysSeq.forEach(day => {
+      msg += formatDayWithDetails(day) + '\n';
+    });
+    msg += `\nPor favor, deixe pelo menos um dia de intervalo para quebrar a sequência de consecutivos.`;
+    return msg;
+  }
+
+  return null;
+};
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -173,21 +297,17 @@ async function startServer() {
           const weekGroups: { [weekStart: string]: string[] } = {};
           
           targetDates.forEach(date => {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
-            const weekStart = new Date(new Date(d).setDate(diffToMon)).toISOString().split('T')[0];
+            const weekStart = getWeekStartStr(date);
             if (!weekGroups[weekStart]) weekGroups[weekStart] = [];
             weekGroups[weekStart].push(date.split('T')[0]);
           });
 
           for (const weekStartStr of Object.keys(weekGroups)) {
-            const weekStart = new Date(weekStartStr);
-            const weekEndStr = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6)).toISOString().split('T')[0];
+            const weekEndStr = getWeekEndStr(weekStartStr);
 
             let query = supabase
               .from('solicitacoes_andaime')
-              .select('data_montagem');
+              .select('id, area, local_setor, tipo_servico, data_montagem');
 
             if (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas') {
               query = query.in('area', ['Brassagem', 'Filtração/Adegas']);
@@ -207,32 +327,9 @@ async function startServer() {
             const { data: weekAndaimes, error: weekError } = await query;
             if (weekError) throw weekError;
 
-            const uniqueDays = new Set<string>();
-            weekAndaimes?.forEach(a => uniqueDays.add(a.data_montagem.split('T')[0]));
-            weekGroups[weekStartStr].forEach(d => uniqueDays.add(d));
-
-            const areaLabel = (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas')
-              ? 'Brassagem e Filtração/Adegas'
-              : targetArea;
-
-            if (uniqueDays.size > 3) {
-              return `Limite por área: A área ${areaLabel} excedeu 3 dias de solicitações na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}. Por favor, verifique montagens e desmontagens agendadas.`;
-            }
-
-            const sortedDays = Array.from(uniqueDays).sort() as string[];
-            let consecutive = 1;
-            for (let i = 1; i < sortedDays.length; i++) {
-              const d1 = new Date(sortedDays[i-1]);
-              const d2 = new Date(sortedDays[i]);
-              const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-              if (diff === 1) {
-                consecutive++;
-                if (consecutive > 2) {
-                  return `Limite por área: A área ${areaLabel} não pode realizar solicitações por mais de 2 dias consecutivos na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.`;
-                }
-              } else {
-                consecutive = 1;
-              }
+            const explanation = getDetailedConflictMessage(weekStartStr, targetArea, weekAndaimes || [], weekGroups[weekStartStr]);
+            if (explanation) {
+              return explanation;
             }
           }
           return null;
@@ -329,21 +426,24 @@ async function startServer() {
 
       const isSomenteBacklog = updates.somente_backlog !== undefined ? updates.somente_backlog : request.somente_backlog;
 
-      // Helper to calculate week start date
-      const getWeekStartStr = (dateStr: string) => {
-        const d = new Date(dateStr);
-        const day = d.getDay();
-        const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(new Date(d).setDate(diffToMon)).toISOString().split('T')[0];
-      };
-
       const dateMontagemChanged = updates.data_montagem && updates.data_montagem !== request.data_montagem;
       const dateDesmontagemChanged = updates.data_desmontagem && updates.data_desmontagem !== request.data_desmontagem;
       const areaChanged = updates.area && updates.area !== request.area;
 
-      const oldWeekStart = request.data_montagem ? getWeekStartStr(request.data_montagem) : null;
-      const newWeekStart = updates.data_montagem ? getWeekStartStr(updates.data_montagem) : null;
-      const isSameWeekMove = oldWeekStart && newWeekStart && oldWeekStart === newWeekStart;
+      let isSameWeekMove = false;
+      if (updates.data_montagem && request.data_montagem) {
+        const oldWeek = getWeekStartStr(request.data_montagem);
+        const newWeek = getWeekStartStr(updates.data_montagem);
+        if (oldWeek === newWeek) {
+          isSameWeekMove = true;
+        }
+      } else if (updates.data_desmontagem && request.data_desmontagem) {
+        const oldWeek = getWeekStartStr(request.data_desmontagem);
+        const newWeek = getWeekStartStr(updates.data_desmontagem);
+        if (oldWeek === newWeek) {
+          isSameWeekMove = true;
+        }
+      }
 
       if ((dateMontagemChanged || areaChanged || dateDesmontagemChanged) && !isSomenteBacklog && !isSameWeekMove) {
         // 1. Global Daily Limit (Max 2)
@@ -360,14 +460,14 @@ async function startServer() {
         if (dateMontagemChanged) {
           const dailyCount = await checkGlobalLimit(updates.data_montagem, id as any);
           if (dailyCount >= 2) {
-            return res.status(400).json({ error: `Limite global atingido: Já existem ${dailyCount} solicitações para o dia ${new Date(updates.data_montagem).toLocaleDateString('pt-BR')}.` });
+            return res.status(400).json({ error: `Limite global atingido: Já existem ${dailyCount} solicitações para o dia ${formatDateBR(updates.data_montagem)}.` });
           }
         }
 
         if (dateDesmontagemChanged && updates.data_desmontagem !== targetDate) {
           const disCount = await checkGlobalLimit(updates.data_desmontagem, id as any);
           if (disCount >= 2) {
-            return res.status(400).json({ error: `Limite global atingido na data de desmontagem: Já existem ${disCount} solicitações para o dia ${new Date(updates.data_desmontagem).toLocaleDateString('pt-BR')}.` });
+            return res.status(400).json({ error: `Limite global atingido na data de desmontagem: Já existem ${disCount} solicitações para o dia ${formatDateBR(updates.data_desmontagem)}.` });
           }
         }
 
@@ -394,12 +494,11 @@ async function startServer() {
         });
 
         for (const weekStartStr of Object.keys(weekGroups)) {
-          const weekStart = new Date(weekStartStr);
-          const weekEndStr = new Date(new Date(weekStart).setDate(weekStart.getDate() + 6)).toISOString().split('T')[0];
+          const weekEndStr = getWeekEndStr(weekStartStr);
 
           let query = supabase
             .from('solicitacoes_andaime')
-            .select('data_montagem');
+            .select('id, area, local_setor, tipo_servico, data_montagem');
 
           if (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas') {
             query = query.in('area', ['Brassagem', 'Filtração/Adegas']);
@@ -417,32 +516,9 @@ async function startServer() {
 
           if (weekError) throw weekError;
 
-          const uniqueDays = new Set<string>();
-          weekAndaimes?.forEach(a => uniqueDays.add(a.data_montagem.split('T')[0]));
-          weekGroups[weekStartStr].forEach(d => uniqueDays.add(d));
-
-          const areaLabel = (targetArea === 'Brassagem' || targetArea === 'Filtração/Adegas')
-            ? 'Brassagem e Filtração/Adegas'
-            : targetArea;
-
-          if (uniqueDays.size > 3) {
-            return res.status(400).json({ error: `Limite por área: A área ${areaLabel} excederia 3 dias de solicitações na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.` });
-          }
-
-          const sortedDays = Array.from(uniqueDays).sort() as string[];
-          let consecutive = 1;
-          for (let i = 1; i < sortedDays.length; i++) {
-            const d1 = new Date(sortedDays[i-1]);
-            const d2 = new Date(sortedDays[i]);
-            const diff = (d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24);
-            if (diff === 1) {
-              consecutive++;
-              if (consecutive > 2) {
-                return res.status(400).json({ error: `Limite por área: A área ${areaLabel} não pode realizar solicitações por mais de 2 dias consecutivos na semana de ${new Date(weekStartStr).toLocaleDateString('pt-BR')}.` });
-              }
-            } else {
-              consecutive = 1;
-            }
+          const explanation = getDetailedConflictMessage(weekStartStr, targetArea, weekAndaimes || [], weekGroups[weekStartStr]);
+          if (explanation) {
+            return res.status(400).json({ error: explanation });
           }
         }
       }
