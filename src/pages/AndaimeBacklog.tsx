@@ -67,18 +67,78 @@ export default function AndaimeBacklog({
     setDraggedId(null);
   };
 
+  const totalPoints = andaimes
+    .filter(a => {
+      if (a.esconder_no_backlog) return false;
+      const isDesmontagem = a.tipo_servico === 'Desmontagem';
+      if (isDesmontagem) return false;
+      return a.status === 'aprovado';
+    })
+    .reduce((sum, a) => sum + (a.quantidade_pontos || 0), 0);
+
+  const getDaysMountedText = (dataMontagem: string) => {
+    if (!dataMontagem) return null;
+    try {
+      const datePart = dataMontagem.split('T')[0];
+      const montagemDate = new Date(datePart + 'T00:00:00');
+      const today = new Date();
+      
+      montagemDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      
+      const diffTime = today.getTime() - montagemDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        const absDays = Math.abs(diffDays);
+        return {
+          text: `Agendado em ${absDays} ${absDays === 1 ? 'dia' : 'dias'}`,
+          color: 'text-sky-600 bg-sky-50/50 border-sky-100',
+        };
+      } else if (diffDays === 0) {
+        return {
+          text: 'Montado hoje',
+          color: 'text-green-600 bg-green-50 border-green-200',
+        };
+      } else {
+        return {
+          text: `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'} montado`,
+          color: diffDays > 15 ? 'text-red-600 bg-red-50 border-red-200 font-extrabold animate-pulse' : 'text-slate-600 bg-slate-50 border-slate-200',
+        };
+      }
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible">
-      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
-          <p className="text-[10px] md:text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest">Gestão de solicitações por área operacional</p>
+      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center gap-4 lg:gap-8">
+          <div>
+            <h1 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight uppercase leading-none">BACKLOG DE ANDAIMES</h1>
+            <p className="text-[9px] md:text-xs text-gray-500 font-bold mt-1 uppercase tracking-widest">Gestão de solicitações por área operacional</p>
+          </div>
+          
+          {/* Somatório Total de Pontos Ativos/Montados (Green Rectangle region) */}
+          <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 p-2 px-4 rounded-xl">
+            <div className="bg-green-600 text-white p-1 rounded-lg shrink-0 shadow-sm">
+              <Layers size={14} />
+            </div>
+            <div>
+              <p className="text-[7px] font-black text-green-700 uppercase tracking-widest leading-none">Soma Total Pontos Montados</p>
+              <p className="text-sm md:text-base font-black text-green-900 mt-1 leading-none">
+                {totalPoints} <span className="text-[9px] font-bold text-green-600">PTS</span>
+              </p>
+            </div>
+          </div>
         </div>
+        
         <button
           onClick={onAdjustBacklog}
-          className="flex items-center gap-2 bg-ambev-blue text-white font-black px-4 py-2.5 rounded-xl shadow-lg shadow-ambev-blue/20 hover:bg-ambev-blue/90 transition-all active:scale-[0.98] uppercase tracking-widest text-[10px]"
+          className="flex items-center justify-center gap-2 bg-ambev-blue text-white font-black px-4 py-2 rounded-xl shadow-lg shadow-ambev-blue/20 hover:bg-ambev-blue/90 transition-all active:scale-[0.98] uppercase tracking-widest text-[9px] cursor-pointer"
         >
-          <Settings2 size={16} />
+          <Settings2 size={14} />
           Ajustar Backlog
         </button>
       </div>
@@ -356,6 +416,21 @@ export default function AndaimeBacklog({
                           "{item.descricao_local}"
                         </p>
                       )}
+
+                      {/* Display days mounted counter (Red Rectangle region) */}
+                      {(() => {
+                        const daysInfo = getDaysMountedText(item.data_montagem);
+                        if (!daysInfo) return null;
+                        return (
+                          <div className={cn(
+                            "flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[8px] md:text-[9px] font-black uppercase tracking-wider mt-2 w-fit",
+                            daysInfo.color
+                          )}>
+                            <Clock size={10} className="shrink-0" />
+                            <span>{daysInfo.text}</span>
+                          </div>
+                        );
+                      })()}
 
                       {item.excedeu_limite && item.justificativa_excesso && (
                         <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
