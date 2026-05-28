@@ -332,7 +332,10 @@ export default function Andaimes() {
   };
 
   return (
-    <div className="flex flex-col gap-2 p-2 h-screen overflow-hidden bg-[#f8f9fa]">
+    <div className={cn(
+      "flex flex-col gap-2 p-2 bg-[#f8f9fa]",
+      activeTab === 'backlog' ? "min-h-full h-auto overflow-visible" : "h-screen overflow-hidden"
+    )}>
       {/* Compact Header & Toolbar */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-2 shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

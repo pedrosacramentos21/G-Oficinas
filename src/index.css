@@ -196,6 +196,16 @@
     right: auto !important;
   }
 
+  /* Custom explicit side overrides for backlog and any other non-calendar elements */
+  .details-on-hover.pop-left {
+    right: calc(100% + 10px) !important;
+    left: auto !important;
+  }
+  .details-on-hover.pop-right {
+    left: calc(100% + 10px) !important;
+    right: auto !important;
+  }
+
   /* First 4 columns - Pop to the right */
   .fc-timegrid-col:nth-child(-n+4) .details-on-hover,
   .fc-daygrid-day:nth-child(-n+4) .details-on-hover {
@@ -235,26 +245,34 @@
   }
 
   .fc-timegrid-col:nth-child(-n+4) .details-on-hover::before,
-  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::before {
+  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::before,
+  .details-on-hover.pop-right::before {
     right: 100% !important;
+    left: auto !important;
     border-color: transparent #1e293b transparent transparent !important;
   }
 
   .fc-timegrid-col:nth-child(-n+4) .details-on-hover::after,
-  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::after {
+  .fc-daygrid-day:nth-child(-n+4) .details-on-hover::after,
+  .details-on-hover.pop-right::after {
     right: 100% !important;
+    left: auto !important;
     border-color: transparent white transparent transparent !important;
   }
 
   .fc-timegrid-col:nth-child(n+5) .details-on-hover::before,
-  .fc-daygrid-day:nth-child(n+5) .details-on-hover::before {
+  .fc-daygrid-day:nth-child(n+5) .details-on-hover::before,
+  .details-on-hover.pop-left::before {
     left: 100% !important;
+    right: auto !important;
     border-color: transparent transparent transparent #1e293b !important;
   }
 
   .fc-timegrid-col:nth-child(n+5) .details-on-hover::after,
-  .fc-daygrid-day:nth-child(n+5) .details-on-hover::after {
+  .fc-daygrid-day:nth-child(n+5) .details-on-hover::after,
+  .details-on-hover.pop-left::after {
     left: 100% !important;
+    right: auto !important;
     border-color: transparent transparent transparent white !important;
   }
 
@@ -294,21 +312,21 @@
   /* Removed line-clamp expansion on card hover to prevent flickering */
   /* The popover is sufficient for details */
 
-  .fc-timegrid-event:hover .details-on-hover .info-grid {
+  .details-on-hover .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 8px;
   }
 
-  .fc-timegrid-event:hover .details-on-hover p {
+  .details-on-hover p {
     font-size: 13px;
     font-weight: 600;
     color: #1e293b;
     line-height: 1.5;
   }
 
-  .fc-timegrid-event:hover .details-on-hover .label {
+  .details-on-hover .label {
     display: block;
     font-size: 10px;
     font-weight: 800;
@@ -318,7 +336,7 @@
     margin-bottom: 4px;
   }
 
-  .fc-timegrid-event:hover .details-on-hover .badge-row {
+  .details-on-hover .badge-row {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;

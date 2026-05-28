@@ -136,16 +136,16 @@ export default function AndaimeBacklog({
         })}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-x-auto pb-4 custom-scrollbar">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 min-w-[1250px] xl:min-w-0 h-full">
-          {COLUMNS.map(column => (
+      <div className="w-full overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 min-w-[1250px] xl:min-w-0 h-fit">
+          {COLUMNS.map((column, colIndex) => (
             <div 
               key={column} 
               onDragOver={(e) => handleDragOver(e, column)}
               onDragLeave={() => setDragOverColumn(null)}
               onDrop={(e) => handleDrop(e, column)}
               className={cn(
-                "flex flex-col gap-3 md:gap-4 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border transition-all h-full min-h-[400px]",
+                "flex flex-col gap-3 md:gap-4 p-3 md:p-4 rounded-[1.25rem] md:rounded-[2rem] border transition-all h-fit min-h-[400px]",
                 dragOverColumn === column ? "bg-ambev-blue/5 border-ambev-blue border-dashed ring-4 ring-ambev-blue/10 scale-[1.02]" : "bg-gray-100/50 border-gray-200/50"
               )}
             >
@@ -162,7 +162,7 @@ export default function AndaimeBacklog({
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1 md:pr-2 custom-scrollbar space-y-2 md:space-y-4">
+            <div className="flex-1 overflow-visible pr-1 md:pr-2 space-y-2 md:space-y-4">
               {andaimes
                 .filter(a => {
                   if (a.esconder_no_backlog || a.tipo_servico === 'Desmontagem') return false;
@@ -237,7 +237,7 @@ export default function AndaimeBacklog({
                     )} />
                     
                     {/* Popover de Detalhes */}
-                    <div className="details-on-hover">
+                    <div className={cn("details-on-hover", colIndex >= 3 ? "pop-left" : "pop-right")}>
                       <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-200">
                         <div className="bg-ambev-blue p-1.5 rounded-lg">
                           <Layers className="text-ambev-gold w-4 h-4" />
