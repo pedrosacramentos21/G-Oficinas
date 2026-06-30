@@ -475,7 +475,7 @@ export default function Andaimes() {
              </div>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Capacidade (Pontos)</p>
-                <p className="text-2xl font-black text-ambev-blue">{andaimes.reduce((sum, a) => sum + (a.quantidade_pontos || 0), 0)} <span className="text-xs text-slate-400">Total</span></p>
+                <p className="text-2xl font-black text-ambev-blue">{andaimes.filter(a => a.tipo_servico !== 'Desmontagem').reduce((sum, a) => sum + (a.quantidade_pontos || 0), 0)} <span className="text-xs text-slate-400">Total</span></p>
              </div>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pendentes</p>

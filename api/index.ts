@@ -18,11 +18,50 @@ try {
       }
     });
     console.log('Supabase client initialized successfully');
+    syncExistingDesmontagemPoints();
   } else {
     console.error('Supabase credentials missing at startup');
   }
 } catch (e) {
   console.error('Failed to initialize Supabase client:', e);
+}
+
+async function syncExistingDesmontagemPoints() {
+  if (!supabase) return;
+  try {
+    const { data: desmontagens, error } = await supabase
+      .from('solicitacoes_andaime')
+      .select('id, descricao_local, quantidade_pontos')
+      .eq('tipo_servico', 'Desmontagem');
+    
+    if (error) throw error;
+    if (!desmontagens || desmontagens.length === 0) return;
+
+    for (const des of desmontagens) {
+      if (des.quantidade_pontos && des.quantidade_pontos > 0) continue;
+      
+      const desc = des.descricao_local || '';
+      const match = desc.match(/solicitação #(\d+)/);
+      if (match && match[1]) {
+        const montagemId = parseInt(match[1], 10);
+        const { data: montagem, error: mError } = await supabase
+          .from('solicitacoes_andaime')
+          .select('quantidade_pontos')
+          .eq('id', montagemId)
+          .single();
+        
+        if (!mError && montagem && montagem.quantidade_pontos > 0) {
+          await supabase
+            .from('solicitacoes_andaime')
+            .update({ quantidade_pontos: montagem.quantidade_pontos })
+            .eq('id', des.id);
+          console.log(`Synced ${montagem.quantidade_pontos} points to Desmontagem #${des.id} from Montagem #${montagemId}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error syncing existing Desmontagem points:', err);
+  }
 }
 
 const MASTER_PASSWORD = 'Itf2026';
@@ -377,7 +416,7 @@ async function startServer() {
             area, 
             local_setor: `${local_setor} (DESMONTAGEM)`, 
             tipo_servico: 'Desmontagem', 
-            quantidade_pontos: 0, 
+            quantidade_pontos, 
             data_montagem: data_desmontagem, 
             data_desmontagem: data_desmontagem, 
             data_montagem_original: data_montagem, // Use original montagem date
@@ -540,6 +579,7 @@ async function startServer() {
         if (updates.area) disUpdates.area = updates.area;
         if (updates.local_setor) disUpdates.local_setor = `${updates.local_setor} (DESMONTAGEM)`;
         if (updates.data_montagem) disUpdates.data_montagem_original = updates.data_montagem;
+        if (updates.quantidade_pontos !== undefined) disUpdates.quantidade_pontos = updates.quantidade_pontos;
 
         if (Object.keys(disUpdates).length > 0) {
           await supabase

@@ -72,7 +72,7 @@ export default function AndaimeBacklog({
       if (a.esconder_no_backlog) return false;
       const isDesmontagem = a.tipo_servico === 'Desmontagem';
       if (isDesmontagem) return false;
-      return a.status === 'aprovado';
+      return a.status === 'aprovado' && a.status_execucao === 'Concluído';
     })
     .reduce((sum, a) => sum + (a.quantidade_pontos || 0), 0);
 
@@ -152,9 +152,9 @@ export default function AndaimeBacklog({
               if (isDesmontagem) return false;
               
               if (column === 'Packaging, Bblend e Xaroparia') {
-                return (a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia') && a.status === 'aprovado';
+                return (a.area === 'Packaging' || a.area === 'Bblend' || a.area === 'Xaroparia' || a.area === 'Packaging, Bblend e Xaroparia') && a.status === 'aprovado' && a.status_execucao === 'Concluído';
               }
-              return a.area === column && a.status === 'aprovado';
+              return a.area === column && a.status === 'aprovado' && a.status_execucao === 'Concluído';
             })
             .reduce((sum, a) => sum + a.quantidade_pontos, 0);
           
@@ -194,6 +194,61 @@ export default function AndaimeBacklog({
             </div>
           );
         })}
+      </div>
+
+      {/* Legenda de Cores */}
+      <div className="shrink-0 bg-white p-4 rounded-xl border border-slate-150 shadow-sm flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-slate-100 p-2 rounded-xl text-slate-700">
+            <ListCheck size={16} />
+          </div>
+          <div>
+            <h4 className="text-[10px] md:text-xs font-black text-slate-800 uppercase tracking-wider leading-none">Legenda de Cores</h4>
+            <p className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase mt-1">Guia visual rápido para acompanhamento do backlog</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-8 text-[8px] md:text-[9px] w-full lg:w-auto">
+          {/* Grupo 1: Status de Execução */}
+          <div className="flex flex-col gap-1.5">
+            <span className="font-extrabold text-slate-400 uppercase tracking-widest text-[7px] md:text-[8px]">Status de Execução</span>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="px-1.5 py-0.5 rounded-full border text-[7px] md:text-[8px] font-black uppercase bg-amber-50 border-amber-200 text-amber-600">Pendente</span>
+              <span className="px-1.5 py-0.5 rounded-full border text-[7px] md:text-[8px] font-black uppercase bg-orange-50 border-orange-200 text-orange-600">Em andamento</span>
+              <span className="px-1.5 py-0.5 rounded-full border text-[7px] md:text-[8px] font-black uppercase bg-green-50 border-green-200 text-green-600">Concluído</span>
+            </div>
+          </div>
+
+          {/* Grupo 2: Faixa Lateral */}
+          <div className="flex flex-col gap-1.5">
+            <span className="font-extrabold text-slate-400 uppercase tracking-widest text-[7px] md:text-[8px]">Aprovação & Capacidade (Faixa)</span>
+            <div className="flex flex-wrap gap-2.5 items-center">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-3 rounded-sm bg-green-500 inline-block" />
+                <span className="font-black text-slate-600 uppercase tracking-wide text-[7px] md:text-[8px]">Aprovado</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-3 rounded-sm bg-ambev-blue inline-block" />
+                <span className="font-black text-slate-600 uppercase tracking-wide text-[7px] md:text-[8px]">Pendente Aprovação</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-3 rounded-sm bg-red-500 inline-block" />
+                <span className="font-black text-slate-600 uppercase tracking-wide text-[7px] md:text-[8px]">Excedente</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Grupo 3: Tempo de Uso */}
+          <div className="flex flex-col gap-1.5">
+            <span className="font-extrabold text-slate-400 uppercase tracking-widest text-[7px] md:text-[8px]">Tempo Montado (Dias)</span>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="px-1.5 py-0.5 rounded border text-[7px] md:text-[8px] font-black bg-sky-50/50 border-sky-100 text-sky-600">Agendado</span>
+              <span className="px-1.5 py-0.5 rounded border text-[7px] md:text-[8px] font-black bg-green-50 border-green-200 text-green-600">Hoje</span>
+              <span className="px-1.5 py-0.5 rounded border text-[7px] md:text-[8px] font-black bg-slate-50 border-slate-200 text-slate-600">&lt;= 15 d</span>
+              <span className="px-1.5 py-0.5 rounded border text-[7px] md:text-[8px] font-black bg-red-50 border-red-200 text-red-600 font-extrabold animate-pulse">&gt; 15 d</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
