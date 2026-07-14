@@ -31,7 +31,14 @@ export default function PTAs() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [selectedPTA, setSelectedPTA] = useState<any>(null);
-  const [passwordAction, setPasswordAction] = useState<'approve' | 'delete' | 'batch-delete' | 'edit'>('approve');
+  const [passwordAction, setPasswordAction] = useState<'approve' | 'delete' | 'batch-delete' | 'edit' | 'drag-card'>('approve');
+  const [draggedPTA, setDraggedPTA] = useState<{ 
+    id: number; 
+    targetDate: string;
+    targetHoraInicio: string;
+    targetHoraFim: string;
+    targetStatus: 'aprovado' | 'pendente';
+  } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [pendingIndex, setPendingIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -139,6 +146,76 @@ export default function PTAs() {
     setIsDetailModalOpen(true);
   };
 
+  const handleEventDrop = async (info: any) => {
+    const ptaId = parseInt(info.event.id);
+    const originalPTA = ptas.find(p => p.id === ptaId);
+    if (!originalPTA) {
+      info.revert();
+      return;
+    }
+
+    if (!info.event.start) {
+      info.revert();
+      return;
+    }
+
+    const newDateStr = format(info.event.start, 'yyyy-MM-dd');
+    const newHoraInicio = format(info.event.start, 'HH:mm');
+    const newHoraFim = info.event.end 
+      ? format(info.event.end, 'HH:mm')
+      : originalPTA.hora_fim;
+
+    const oldDateStr = originalPTA.data?.split('T')[0];
+    const oldHoraInicio = originalPTA.hora_inicio;
+    const oldHoraFim = originalPTA.hora_fim;
+
+    if (newDateStr === oldDateStr && newHoraInicio === oldHoraInicio && newHoraFim === oldHoraFim) {
+      return;
+    }
+
+    // Check for approved conflicts of the same equipment at the target date and time range (excluding this PTA)
+    const hasConflict = ptas.some(p => 
+      p.id !== ptaId &&
+      p.equipamento === originalPTA.equipamento &&
+      p.status === 'aprovado' &&
+      p.data === newDateStr &&
+      p.hora_inicio < newHoraFim && p.hora_fim > newHoraInicio
+    );
+
+    const targetStatus = hasConflict ? 'pendente' : 'aprovado';
+
+    // If original is approved, OR if it's pending but gets automatically approved (moving to a free slot),
+    // we require the master password to confirm.
+    const requiresPassword = originalPTA.status === 'aprovado' || targetStatus === 'aprovado';
+
+    if (requiresPassword) {
+      setDraggedPTA({ 
+        id: ptaId, 
+        targetDate: newDateStr,
+        targetHoraInicio: newHoraInicio,
+        targetHoraFim: newHoraFim,
+        targetStatus
+      });
+      setPasswordAction('drag-card');
+      setIsPasswordModalOpen(true);
+      info.revert();
+    } else {
+      // It remains pending (there is conflict, and it was pending before)
+      try {
+        await updatePTA(ptaId, { 
+          data: newDateStr,
+          hora_inicio: newHoraInicio,
+          hora_fim: newHoraFim,
+          status: 'pendente'
+        });
+        fetchPTAs();
+      } catch (err: any) {
+        alert(err.message);
+        info.revert();
+      }
+    }
+  };
+
   const [tempPassword, setTempPassword] = useState('');
 
   const handlePasswordSubmit = async (password: string) => {
@@ -150,6 +227,25 @@ export default function PTAs() {
         setIsPasswordModalOpen(false);
       } catch (err: any) {
         alert(err.message);
+      }
+      return;
+    }
+
+    if (passwordAction === 'drag-card') {
+      if (draggedPTA) {
+        try {
+          await updatePTA(draggedPTA.id, { 
+            data: draggedPTA.targetDate,
+            hora_inicio: draggedPTA.targetHoraInicio,
+            hora_fim: draggedPTA.targetHoraFim,
+            status: draggedPTA.targetStatus
+          }, password);
+          setIsPasswordModalOpen(false);
+          setDraggedPTA(null);
+          fetchPTAs();
+        } catch (err: any) {
+          alert(err.message);
+        }
       }
       return;
     }
@@ -427,6 +523,10 @@ export default function PTAs() {
           slotEventOverlap={false}
           handleWindowResize={window.innerWidth >= 640}
           rerenderDelay={10}
+          editable={true}
+          eventStartEditable={true}
+          eventDurationEditable={false}
+          eventDrop={handleEventDrop}
           datesSet={(arg) => {
             setCurrentView(arg.view.type);
             // Force a small delay to ensure rendering completion

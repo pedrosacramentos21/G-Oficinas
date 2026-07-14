@@ -190,7 +190,7 @@ interface StoreState {
   fetchPTAs: () => Promise<void>;
   addPTA: (pta: any) => Promise<any>;
   approvePTA: (id: number, password: string) => Promise<void>;
-  updatePTA: (id: number, updates: any, password: string) => Promise<void>;
+  updatePTA: (id: number, updates: any, password?: string) => Promise<void>;
   deletePTA: (id: number, password: string) => Promise<void>;
   batchDeletePTAs: (ids: number[], password: string) => Promise<void>;
   fetchSalaMotores: () => Promise<void>;

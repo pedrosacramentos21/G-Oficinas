@@ -856,20 +856,41 @@ async function startServer() {
     const { id } = req.params;
     const { updates, password } = req.body;
 
-    if (password !== MASTER_PASSWORD) {
-      return res.status(401).json({ error: 'Senha mestre incorreta.' });
-    }
-
     try {
+      // Fetch current PTA to check status
+      const { data: request, error: fetchError } = await supabase
+        .from('solicitacoes_pta')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !request) {
+        return res.status(404).json({ error: 'Solicitação não encontrada.' });
+      }
+
+      if ((request.status === 'aprovado' || updates.status === 'aprovado') && password !== MASTER_PASSWORD) {
+        return res.status(401).json({ error: 'Senha mestre necessária para alterar solicitações aprovadas ou aprovar solicitações.' });
+      }
+
+      // Filter updates to avoid updating columns that don't exist in Supabase
+      const allowedKeys = ['equipamento', 'area', 'responsavel', 'data', 'hora_inicio', 'hora_fim', 'descricao', 'prioridade', 'status'];
+      const filteredUpdates: any = {};
+      for (const key of allowedKeys) {
+        if (updates[key] !== undefined) {
+          filteredUpdates[key] = updates[key];
+        }
+      }
+
       const { error } = await supabase
         .from('solicitacoes_pta')
-        .update(updates)
+        .update(filteredUpdates)
         .eq('id', id);
       
       if (error) throw error;
       res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to update pta' });
+    } catch (error: any) {
+      console.error('Error updating pta:', error);
+      res.status(500).json({ error: error.message || 'Failed to update pta' });
     }
   });
 
