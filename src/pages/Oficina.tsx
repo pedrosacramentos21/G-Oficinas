@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, ClipboardCheck, History, Plus, ChevronLeft, Save, AlertCircle, CheckCircle2, User, Calendar, MapPin, Search, Settings2, Trash2, Edit3, X } from 'lucide-react';
+import { Wrench, ClipboardCheck, History, Plus, ChevronLeft, Save, AlertCircle, CheckCircle2, User, Calendar, MapPin, Search, Settings2, Trash2, Edit3, X, Eye, XCircle, MinusCircle, FileText } from 'lucide-react';
 import { useStore } from '../store';
 import { cn, formatDate } from '../lib/utils';
 import PasswordModal from '../components/PasswordModal';
@@ -16,6 +16,8 @@ export default function Oficina() {
   const [passwordAction, setPasswordAction] = useState<'management' | 'delete_record'>('management');
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [editingEquipment, setEditingEquipment] = useState<any | null>(null);
+  const [selectedDetailRecord, setSelectedDetailRecord] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState({
     responsavel: '',
@@ -119,6 +121,52 @@ export default function Oficina() {
       items: eqFormData.items.filter(i => i.id !== id)
     });
   };
+
+  const getRecordItems = (record: any) => {
+    if (!record || !record.items) return [];
+    const itemsObj = typeof record.items === 'string' ? JSON.parse(record.items) : record.items;
+    const eq = workshopEquipment.find(
+      e => e.name?.trim().toLowerCase() === record.equipamento?.trim().toLowerCase()
+    );
+
+    const result: { id: string; label: string; status: 'S' | 'N' | 'NA' }[] = [];
+    const processedKeys = new Set<string>();
+
+    if (eq && Array.isArray(eq.items)) {
+      eq.items.forEach((eqItem: any) => {
+        const val = itemsObj[eqItem.id] || 'NA';
+        result.push({
+          id: eqItem.id,
+          label: eqItem.label,
+          status: val
+        });
+        processedKeys.add(eqItem.id);
+      });
+    }
+
+    Object.keys(itemsObj).forEach((key) => {
+      if (!processedKeys.has(key)) {
+        result.push({
+          id: key,
+          label: key.replace(/_\d+$/, '').replace(/_/g, ' ').toUpperCase(),
+          status: itemsObj[key]
+        });
+      }
+    });
+
+    return result;
+  };
+
+  const filteredChecklists = workshopChecklists.filter((record) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      record.equipamento?.toLowerCase().includes(term) ||
+      record.responsavel?.toLowerCase().includes(term) ||
+      record.data?.toLowerCase().includes(term) ||
+      record.observacoes?.toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="flex flex-col h-full bg-[#f4f7f9] overflow-hidden">
@@ -481,70 +529,254 @@ export default function Oficina() {
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="FILTRAR REGISTROS..."
-                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl font-black uppercase tracking-widest text-[9px] outline-none shadow-sm"
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl font-black uppercase tracking-widest text-[9px] outline-none shadow-sm focus:border-ambev-blue transition-colors"
                   />
                 </div>
               </div>
 
-              {workshopChecklists.length === 0 ? (
+              {filteredChecklists.length === 0 ? (
                 <div className="bg-white rounded-3xl p-12 text-center border border-gray-200 border-dashed">
                   <History size={24} className="text-gray-300 mx-auto mb-4" />
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nenhum registro encontrado</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    {searchTerm ? 'Nenhum registro encontrado para este filtro' : 'Nenhum registro encontrado'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {workshopChecklists.map((record) => (
-                    <div key={record.id} className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                      <div className="flex flex-col md:flex-row">
-                        <div className={cn("w-full md:w-1.5", record.items && Object.values(record.items).includes('N') ? "bg-red-500" : "bg-green-500")} />
-                        <div className="flex-1 p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                          <div className="space-y-3">
+                  {filteredChecklists.map((record) => {
+                    const itemsMap = typeof record.items === 'string' ? JSON.parse(record.items) : (record.items || {});
+                    const isNaoConforme = Object.values(itemsMap).includes('N');
+
+                    return (
+                      <div 
+                        key={record.id} 
+                        onClick={() => setSelectedDetailRecord(record)}
+                        className="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-ambev-blue/50 transition-all cursor-pointer overflow-hidden group"
+                      >
+                        <div className="flex flex-col md:flex-row">
+                          <div className={cn("w-full md:w-1.5 transition-colors", isNaoConforme ? "bg-red-500" : "bg-green-500")} />
+                          <div className="flex-1 p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-[8px] font-black tracking-widest">{formatDate(record.data)}</span>
+                                <h3 className="text-xs md:text-sm font-black text-slate-900 uppercase group-hover:text-ambev-blue transition-colors">{record.equipamento}</h3>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-1.5 text-slate-400">
+                                  <User size={12} />
+                                  <span className="text-[9px] font-bold uppercase">{record.responsavel}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <CheckCircle2 size={12} className={isNaoConforme ? "text-red-500" : "text-green-500"} />
+                                  <span className={cn("text-[9px] font-black uppercase", isNaoConforme ? "text-red-600" : "text-green-600")}>
+                                    {isNaoConforme ? 'Não Conforme' : 'Conforme'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
                             <div className="flex items-center gap-3">
-                              <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-[8px] font-black tracking-widest">{formatDate(record.data)}</span>
-                              <h3 className="text-xs md:text-sm font-black text-slate-900 uppercase">{record.equipamento}</h3>
+                              {record.observacoes && (
+                                <div className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 max-w-sm">
+                                  <p className="text-[8px] font-bold text-gray-500 uppercase leading-tight italic truncate max-w-[200px]">"{record.observacoes}"</p>
+                                </div>
+                              )}
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedDetailRecord(record);
+                                }}
+                                className="px-3 py-2 bg-ambev-blue/10 hover:bg-ambev-blue text-ambev-blue hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 shrink-0"
+                              >
+                                <Eye size={12} />
+                                Ver Checklist
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPasswordAction('delete_record');
+                                  setRecordToDelete(record.id);
+                                  setShowPasswordModal(true);
+                                }}
+                                className="p-2.5 bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-xl transition-all border border-transparent hover:border-red-100 shrink-0"
+                                title="Excluir Registro"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                            <div className="flex flex-wrap items-center gap-4">
-                              <div className="flex items-center gap-1.5 text-slate-400">
-                                <User size={12} />
-                                <span className="text-[9px] font-bold uppercase">{record.responsavel}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <CheckCircle2 size={12} className={Object.values(record.items).includes('N') ? "text-red-500" : "text-green-500"} />
-                                <span className={cn("text-[9px] font-black uppercase", Object.values(record.items).includes('N') ? "text-red-600" : "text-green-600")}>
-                                  {Object.values(record.items).includes('N') ? 'Não Conforme' : 'Conforme'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {record.observacoes && (
-                              <div className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-100 max-w-sm">
-                                <p className="text-[8px] font-bold text-gray-500 uppercase leading-tight italic">"{record.observacoes}"</p>
-                              </div>
-                            )}
-                            <button
-                              onClick={() => {
-                                setPasswordAction('delete_record');
-                                setRecordToDelete(record.id);
-                                setShowPasswordModal(true);
-                              }}
-                              className="p-2.5 bg-gray-50 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-xl transition-all border border-transparent hover:border-red-100"
-                              title="Excluir Registro"
-                            >
-                              <Trash2 size={14} />
-                            </button>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal de Detalhes do Checklist */}
+      {selectedDetailRecord && (
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedDetailRecord(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-ambev-blue p-6 text-white border-b border-white/10 shrink-0 relative">
+              <button
+                onClick={() => setSelectedDetailRecord(null)}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="space-y-2 pr-10">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="bg-white/10 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest text-ambev-gold uppercase">
+                    {formatDate(selectedDetailRecord.data)}
+                  </span>
+                  <span className={cn(
+                    "px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase flex items-center gap-1",
+                    Object.values(typeof selectedDetailRecord.items === 'string' ? JSON.parse(selectedDetailRecord.items) : (selectedDetailRecord.items || {})).includes('N')
+                      ? "bg-red-500 text-white"
+                      : "bg-green-500 text-white"
+                  )}>
+                    {Object.values(typeof selectedDetailRecord.items === 'string' ? JSON.parse(selectedDetailRecord.items) : (selectedDetailRecord.items || {})).includes('N') ? (
+                      <><XCircle size={12} /> NÃO CONFORME</>
+                    ) : (
+                      <><CheckCircle2 size={12} /> CONFORME</>
+                    )}
+                  </span>
+                </div>
+
+                <h2 className="text-lg md:text-xl font-black uppercase tracking-wider text-white">
+                  {selectedDetailRecord.equipamento}
+                </h2>
+
+                <div className="flex items-center gap-2 text-white/80 text-[10px] font-bold uppercase tracking-wider">
+                  <User size={12} className="text-ambev-gold" />
+                  <span>Responsável: {selectedDetailRecord.responsavel}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1">
+              {/* Summary statistics */}
+              {(() => {
+                const itemList = getRecordItems(selectedDetailRecord);
+                const total = itemList.length;
+                const simCount = itemList.filter(i => i.status === 'S').length;
+                const naoCount = itemList.filter(i => i.status === 'N').length;
+                const naCount = itemList.filter(i => i.status === 'NA').length;
+
+                return (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-center">
+                        <span className="block text-lg font-black text-green-600">{simCount}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-green-700">Sim (Conforme)</span>
+                      </div>
+                      <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-center">
+                        <span className="block text-lg font-black text-red-600">{naoCount}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-red-700">Não (Não Conforme)</span>
+                      </div>
+                      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 text-center">
+                        <span className="block text-lg font-black text-gray-500">{naCount}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">N/A</span>
+                      </div>
+                    </div>
+
+                    {/* Detailed Items List */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                        <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                          Itens do Checklist ({total})
+                        </h3>
+                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                          Resposta Registrada
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {itemList.map((item, idx) => (
+                          <div 
+                            key={item.id || idx}
+                            className={cn(
+                              "p-3.5 rounded-2xl border flex items-center justify-between gap-4 transition-all",
+                              item.status === 'N' 
+                                ? "bg-red-50/50 border-red-200" 
+                                : item.status === 'S'
+                                ? "bg-gray-50/70 border-gray-100"
+                                : "bg-gray-50/30 border-gray-100"
+                            )}
+                          >
+                            <span className="text-[10px] font-bold text-slate-800 uppercase leading-snug">
+                              {item.label}
+                            </span>
+
+                            <div className="shrink-0">
+                              {item.status === 'S' && (
+                                <span className="px-3 py-1 bg-green-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                                  <CheckCircle2 size={12} /> SIM
+                                </span>
+                              )}
+                              {item.status === 'N' && (
+                                <span className="px-3 py-1 bg-red-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                                  <XCircle size={12} /> NÃO
+                                </span>
+                              )}
+                              {item.status === 'NA' && (
+                                <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                                  <MinusCircle size={12} /> N/A
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* Observações */}
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                  <FileText size={12} className="text-ambev-blue" />
+                  Observações do Checklist
+                </label>
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-[10px] font-bold text-slate-700 italic">
+                  {selectedDetailRecord.observacoes ? (
+                    `"${selectedDetailRecord.observacoes}"`
+                  ) : (
+                    <span className="text-gray-400 not-italic uppercase tracking-widest">Nenhuma observação registrada.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-gray-50 border-t border-gray-200 shrink-0 flex justify-end">
+              <button
+                onClick={() => setSelectedDetailRecord(null)}
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
