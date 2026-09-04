@@ -51,6 +51,7 @@ export default function PTAs() {
     equipamento: EQUIPAMENTOS[0].name,
     area: '',
     responsavel: '',
+    telefone: '',
     data: new Date().toISOString().split('T')[0],
     data_fim: new Date().toISOString().split('T')[0],
     hora_inicio: '08:00',
@@ -267,6 +268,7 @@ export default function PTAs() {
             equipamento: selectedPTA.equipamento,
             area: selectedPTA.area,
             responsavel: selectedPTA.responsavel,
+            telefone: selectedPTA.telefone || '',
             data: selectedPTA.data,
             data_fim: selectedPTA.data_fim || selectedPTA.data,
             hora_inicio: selectedPTA.hora_inicio,
@@ -288,6 +290,12 @@ export default function PTAs() {
   const handleActualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (!formData.telefone || !formData.telefone.trim()) {
+      alert('Por favor, informe o telefone do solicitante.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (isEditing && selectedPTA) {
@@ -630,6 +638,12 @@ export default function PTAs() {
                         <span className="label">Responsável</span>
                         <p>{data.responsavel}</p>
                       </div>
+                      {data.telefone && (
+                        <div>
+                          <span className="label">Telefone</span>
+                          <p>{data.telefone}</p>
+                        </div>
+                      )}
                       <div>
                         <span className="label">Prioridade</span>
                         <p className={cn(
@@ -774,6 +788,20 @@ export default function PTAs() {
                     />
                   </div>
 
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                      Telefone do Solicitante <span className="text-red-500 font-bold">*</span>
+                    </label>
+                    <input 
+                      type="tel"
+                      required
+                      className="w-full bg-gray-50 border-none rounded-xl sm:rounded-2xl p-4 font-bold text-gray-700 focus:ring-2 focus:ring-orange-500 transition-all text-sm sm:text-base"
+                      placeholder="Ex: (00) 00000-0000 ou Ramal"
+                      value={formData.telefone}
+                      onChange={e => setFormData({...formData, telefone: e.target.value})}
+                    />
+                  </div>
+
                   <div className="sm:col-span-1">
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Data</label>
                     <input 
@@ -908,6 +936,11 @@ export default function PTAs() {
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Área</label>
                   <p className="text-sm sm:text-lg font-bold text-slate-700 uppercase">{selectedPTA.area}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Telefone</label>
+                  <p className="text-sm sm:text-lg font-bold text-slate-700">{selectedPTA.telefone || '-'}</p>
                 </div>
 
                 <div className="space-y-1">

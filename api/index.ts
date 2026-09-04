@@ -743,7 +743,21 @@ async function startServer() {
         console.error('Supabase error fetching PTAs:', error);
         throw error;
       }
-      res.json(data || []);
+
+      const mapped = (data || []).map((item: any) => {
+        if (!item.telefone && item.descricao) {
+          const match = item.descricao.match(/\[Tel:\s*([^\]]+)\]/);
+          if (match) {
+            return {
+              ...item,
+              telefone: match[1].trim()
+            };
+          }
+        }
+        return item;
+      });
+
+      res.json(mapped);
     } catch (error: any) {
       console.error('Failed to fetch ptas:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch ptas' });
@@ -752,11 +766,13 @@ async function startServer() {
 
   app.post('/api/ptas', async (req, res) => {
     try {
-      const { equipamento, area, responsavel, data, data_fim, hora_inicio, hora_fim, descricao, prioridade, recorrente } = req.body;
+      const { equipamento, area, responsavel, telefone, data, data_fim, hora_inicio, hora_fim, descricao, prioridade, recorrente } = req.body;
       
-      if (!equipamento || !area || !responsavel || !data || !hora_inicio || !hora_fim) {
-        return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
+      if (!equipamento || !area || !responsavel || !telefone?.trim() || !data || !hora_inicio || !hora_fim) {
+        return res.status(400).json({ error: 'Campos obrigatórios ausentes: o telefone do solicitante é obrigatório' });
       }
+
+      const cleanTelefone = telefone.trim();
 
       const dates = [];
       if (recorrente && data && data_fim) {
@@ -788,21 +804,44 @@ async function startServer() {
 
         const status = (conflicts && conflicts.length > 0) ? 'pendente' : 'aprovado';
         
-        const { data: inserted, error } = await supabase
+        const payload: any = { 
+          equipamento, 
+          area, 
+          responsavel, 
+          telefone: cleanTelefone,
+          data: d, 
+          hora_inicio, 
+          hora_fim, 
+          descricao: descricao || '', 
+          prioridade: prioridade || 'Normal', 
+          status 
+        };
+
+        let { data: inserted, error } = await supabase
           .from('solicitacoes_pta')
-          .insert([{ 
-            equipamento, 
-            area, 
-            responsavel, 
-            data: d, 
-            hora_inicio, 
-            hora_fim, 
-            descricao: descricao || '', 
-            prioridade: prioridade || 'Normal', 
-            status 
-          }])
+          .insert([payload])
           .select();
         
+        // Se a coluna 'telefone' não existir ainda no Supabase, salva no fallback sem quebrar
+        if (error && (error.code === 'PGRST204' || error.message?.toLowerCase().includes('telefone') || error.message?.toLowerCase().includes('column'))) {
+          console.warn('Coluna telefone não encontrada no Supabase. Inserindo com fallback na descrição.');
+          const fallbackPayload = { ...payload };
+          delete fallbackPayload.telefone;
+          fallbackPayload.descricao = fallbackPayload.descricao 
+            ? `[Tel: ${cleanTelefone}] ${fallbackPayload.descricao}`
+            : `[Tel: ${cleanTelefone}]`;
+
+          const retry = await supabase
+            .from('solicitacoes_pta')
+            .insert([fallbackPayload])
+            .select();
+
+          if (!retry.error && retry.data) {
+            inserted = retry.data;
+            error = null;
+          }
+        }
+
         if (error) {
           console.error('Insert error:', error);
           throw error;
@@ -873,7 +912,7 @@ async function startServer() {
       }
 
       // Filter updates to avoid updating columns that don't exist in Supabase
-      const allowedKeys = ['equipamento', 'area', 'responsavel', 'data', 'hora_inicio', 'hora_fim', 'descricao', 'prioridade', 'status'];
+      const allowedKeys = ['equipamento', 'area', 'responsavel', 'telefone', 'data', 'hora_inicio', 'hora_fim', 'descricao', 'prioridade', 'status'];
       const filteredUpdates: any = {};
       for (const key of allowedKeys) {
         if (updates[key] !== undefined) {
@@ -881,11 +920,21 @@ async function startServer() {
         }
       }
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from('solicitacoes_pta')
         .update(filteredUpdates)
         .eq('id', id);
       
+      if (error && (error.code === 'PGRST204' || error.message?.toLowerCase().includes('telefone') || error.message?.toLowerCase().includes('column'))) {
+        const fallbackUpdates = { ...filteredUpdates };
+        delete fallbackUpdates.telefone;
+        const retry = await supabase
+          .from('solicitacoes_pta')
+          .update(fallbackUpdates)
+          .eq('id', id);
+        error = retry.error;
+      }
+
       if (error) throw error;
       res.json({ success: true });
     } catch (error: any) {

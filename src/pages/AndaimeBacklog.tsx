@@ -111,6 +111,40 @@ export default function AndaimeBacklog({
     }
   };
 
+  const sortBacklogCards = (a: any, b: any) => {
+    // 1. Prioridade máxima: Andaimes que já estão de fato montados (status_execucao === 'Concluído')
+    const isMontadoA = a.status_execucao === 'Concluído';
+    const isMontadoB = b.status_execucao === 'Concluído';
+
+    if (isMontadoA && !isMontadoB) return -1;
+    if (!isMontadoA && isMontadoB) return 1;
+
+    // Se ambos forem montados (Concluído)
+    if (isMontadoA && isMontadoB) {
+      // Ordena por data de montagem (mais antigos montados primeiro, maior tempo em campo)
+      const dateA = a.data_montagem || '';
+      const dateB = b.data_montagem || '';
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+      return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
+    }
+
+    // 2. Intermediário: "Em andamento" antes de "Pendente"
+    const isEmAndamentoA = a.status_execucao === 'Em andamento';
+    const isEmAndamentoB = b.status_execucao === 'Em andamento';
+    if (isEmAndamentoA && !isEmAndamentoB) return -1;
+    if (!isEmAndamentoA && isEmAndamentoB) return 1;
+
+    // 3. Demais (pendentes / agendados): cronológico por data mais próxima
+    const dateA = a.data_montagem || '';
+    const dateB = b.data_montagem || '';
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB);
+    }
+    return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
+  };
+
   return (
     <div className="min-h-full h-auto flex flex-col gap-4 md:gap-6 lg:gap-8 animate-in fade-in duration-500 overflow-visible">
       <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
@@ -286,6 +320,7 @@ export default function AndaimeBacklog({
                   }
                   return a.area === column;
                 })
+                .sort(sortBacklogCards)
                 .map(item => {
                   const isSelected = selectedIds.includes(item.id);
                   return (

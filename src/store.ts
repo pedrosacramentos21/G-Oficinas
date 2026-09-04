@@ -27,6 +27,7 @@ interface PTA {
   equipamento: string;
   area: string;
   responsavel: string;
+  telefone?: string;
   data: string;
   hora_inicio: string;
   hora_fim: string;

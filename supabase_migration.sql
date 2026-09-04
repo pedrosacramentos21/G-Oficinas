@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS solicitacoes_pta (
     equipamento TEXT NOT NULL,
     area TEXT NOT NULL,
     responsavel TEXT NOT NULL,
+    telefone TEXT,
     data TEXT NOT NULL,
     hora_inicio TEXT NOT NULL,
     hora_fim TEXT NOT NULL,
@@ -37,6 +38,9 @@ CREATE TABLE IF NOT EXISTS solicitacoes_pta (
     status TEXT DEFAULT 'pendente',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Adicionar coluna se a tabela já existir:
+ALTER TABLE solicitacoes_pta ADD COLUMN IF NOT EXISTS telefone TEXT;
 
 -- Table: atividades_sala_motores
 CREATE TABLE IF NOT EXISTS atividades_sala_motores (
